@@ -15,18 +15,18 @@
 * MIT License
 
 PROFIT is a simple aggregation and analysis tool for personal finance. Its key characteristics are long-term maintainability and simplicity.
-All data is stored and manipulated locally, using simple text files that are human-readable for easy access and manipulation.
+All data is stored and manipulated locally, using simple text files that are human-readable.
 
-Two asset classes are considered: Accounts simply hold balances, whereas investments (e.g., stocks or funds), are analyzed in more detail with respect to valuation and returns.
+Two asset classes are considered: Accounts simply hold balances, whereas investments (e.g., stocks or funds) are analyzed in more detail with respect to valuation and returns.
 
-The assets can be of any currency, as foreign exchange rates and market prices are obtained automatically. A local database of market data is automatically maintained, such that historical prices are also available offline.
+The assets can be of any currency. Foreign exchange rates and market prices are obtained automatically. A local database of market data is automatically maintained, such that historical prices are also available offline and in the far future. 
 
-### Usage
-The tool comprises a set of python files that evaluate the given accounts and investments.
+### Screenshots:
+![screenshot all assets stackedplot](https://github.com/MauererM/profit/raw/master/doc/screenshots/screen_all_assets.png)
 
-##### Try it out:
-1. git clone "url" (or simply download the repository)
-2. Run "main.py" and look at the results (Some exemplary assets are provided)
+### Try the tool out:
+1. git clone https://github.com/MauererM/profit.git (or simply download the repository)
+2. Run "PROFIT_main.py" and look at the results (Some exemplary assets are provided)
 3. Modify the files in the "accounts" and "investments" folder to your liking
 4. As simple as that
 
