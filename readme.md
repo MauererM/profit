@@ -9,7 +9,7 @@
 	- Consideration of different asset purposes (e.g., retirement, liquidity etc.)
 * Focus on long-term maintainability, scalability and simplicity
 	- Python-based
-	- Simple, local data storage (human readable text files)
+	- Simple, local data storage (human readable text files): No privacy issues
 * Automatic gathering of market prices and foreign exchange rates
 	- Data can also be provided manually
 * MIT License
