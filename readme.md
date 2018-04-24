@@ -2,41 +2,47 @@
 ##### Python-Based Return On Investment and Financial Investigation Tool
 
 ### Features
-* Data aggregation from different banks, accounts, investments etc.
-* Long-term financial data analysis and plotting
+* Data aggregation: Accounts, investments, cash etc.
+* Long-term financial data analysis, tracking and plotting
 	- Asset values and returns
 	- Payouts and fees
 	- Consideration of different asset purposes (e.g., retirement, liquidity etc.)
-* Focus on long-term maintainability and simplicity
+* Focus on long-term maintainability, scalability and simplicity
 	- Python-based
-	- Local data storage (human readable text files)
+	- Simple, local data storage (human readable text files)
 * Automatic gathering of market prices and foreign exchange rates
 	- Data can also be provided manually
 * MIT License
 
-PROFIT is a simple aggregation and analysis tool for personal finance. Its key characteristics are long-term maintainability and simplicity.
-All data is stored and manipulated locally, using simple text files that are human-readable.
+PROFIT is a simple aggregation and analysis tool for personal finance. It provides a comprehensive overview of the tracked assets. This is usually complicated by the fact that assets are commonly held in different banks and accounts, with numerous currencies. Furthermore, office software, which is often used to track personal assets, scales badly, i.e., adding/removing assets requires new spreadsheets or updated formulas. PROFIT is simple and focuses on long-term maintainability, simplicity and scalability.
 
-Two asset classes are considered: Accounts simply hold balances, whereas investments (e.g., stocks or funds) are analyzed in more detail with respect to valuation and returns.
+All data is stored and manipulated locally, using simple text files that are human-readable. Hence, there are no privacy concerns and no complex data bases. This allows the evaluation of the data also in the far future, when maybe not even Python exists anymore :speak_no_evil:.
 
-The assets can be of any currency. Foreign exchange rates and market prices are obtained automatically. A local database of market data is automatically maintained, such that historical prices are also available offline and in the far future. 
+Two asset classes are considered: Accounts simply hold balances, whereas investments (e.g., stocks or funds) are analyzed in more detail with respect to valuation and returns. Market prices of traded securities are obtained automatically, if possible. The data can also be provided manually. The assets can be of any currency. Foreign exchange rates are also obtained automatically.
 
 ### Screenshots:
+Below are some of the outputs of the tool. Different PDF plots are created. Assets can be grouped for more detailed insights.
 ![screenshot all assets stackedplot](https://github.com/MauererM/profit/raw/master/doc/screenshots/screen_all_assets.png)
+![screenshot all assets stackedplot](https://github.com/MauererM/profit/raw/master/doc/screenshots/screen_indices.png)
+![screenshot all assets stackedplot](https://github.com/MauererM/profit/raw/master/doc/screenshots/screen_returns.png)
+![screenshot all assets stackedplot](https://github.com/MauererM/profit/raw/master/doc/screenshots/screen_values_groups.png)
+![screenshot all assets stackedplot](https://github.com/MauererM/profit/raw/master/doc/screenshots/screen_returns.png)
+
 
 ### Try the tool out:
-1. git clone https://github.com/MauererM/profit.git (or simply download the repository)
-2. Run "PROFIT_main.py" and look at the results (Some exemplary assets are provided)
+1. `git clone https://github.com/MauererM/profit.git` (or simply download the repository with the direct link)
+2. Run "PROFIT_main.py" (with a Python 3 interpreter) and look at the results in the "plots" folder (Some exemplary assets are provided). Some packages might have to be installed
 3. Modify the files in the "accounts" and "investments" folder to your liking
-4. As simple as that
-
-Data is provided and maintained as text-files that must adhere to certain formatting rules. Further information is given in the manual (doc folder)
+4. As simple as that :moneybag:
+5. The short manual provides more information: [PROFIT manual (PDF from doc folder)](https://github.com/MauererM/profit/raw/master/doc/manual.pdf "PROFIT manual (PDF)")
 
 ### Contribution:
-
+`git clone https://github.com/MauererM/profit.git`
 #### To Do:
 - [ ] Test on Windows
 - [ ] Plot some moving averages
 - [ ] Plot Forex-rates
-- [ ] More parsing-checks while file parsing: e.g., missing delimiters, wrong date format nonzero numbers when they should be zero etc.
+- [ ] Some stacked plots don't sort according to the most recent values: Add this
+- [ ] More file parsing-checks: e.g., missing delimiters, wrong date format nonzero numbers when they should be zero etc.
 - [ ] More financial data providers (e.g., with pandas-datareader), maybe with automatic fallbacks
+- [ ] Handling of more complex stock operations, e.g., splits
