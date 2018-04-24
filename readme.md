@@ -27,7 +27,7 @@ Below are some of the outputs of the tool. Different PDF plots are created. Asse
 ![screenshot all assets stackedplot](https://github.com/MauererM/profit/raw/master/doc/screenshots/screen_returns.png)
 ![screenshot all assets stackedplot](https://github.com/MauererM/profit/raw/master/doc/screenshots/screen_values_groups.png)
 ![screenshot all assets stackedplot](https://github.com/MauererM/profit/raw/master/doc/screenshots/screen_returns.png)
-
+![screenshot all assets stackedplot](https://github.com/MauererM/profit/raw/master/doc/figures/Account_Example_Labelled.png)
 
 ### Try the tool out:
 1. `git clone https://github.com/MauererM/profit.git` (or simply download the repository with the direct link)
