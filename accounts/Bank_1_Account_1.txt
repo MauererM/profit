@@ -1,0 +1,13 @@
+ID;		Bank_XYZ_Account_nr_xyz_somethingsomething
+Type;		Account
+Purpose;	Liquidity
+Currency;	USD
+Transactions;
+Date(DD.MM.YYYY);	Action;		Amount;		Balance;	Notes;
+01.12.2014;		Update;		0;		4500.00;	Creation of account
+31.12.2014;		Interest;	9.40;		4530.70;	The balance can be arbitrary
+31.12.2015;		Interest;	5.90;		5116.60;
+31.12.2015;		Fee;		10.00;		5100.00;	Multiple transactions with the same date are OK
+31.12.2016;		Interest;	3.75;		5120.35;
+31.12.2017;		Interest;	2.35;		5222.70;	Yey, Money!
+EOF

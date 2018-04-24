@@ -1,0 +1,10 @@
+ID;		SomethingSomething
+Type;		Security
+Purpose;	Retirement_Closed
+Currency;	CHF
+Symbol;		IBGL
+Exchange;	SWX
+Transactions;
+Date(DD.MM.YYYY);	Action;		Quantity;	Price;	Cost;	Payout;		Balance;	Notes;
+22.01.2018;		Buy;		20;		267.50;	15.05;	0.0;		20;		The first transaction must be a buy with investments!
+EOF

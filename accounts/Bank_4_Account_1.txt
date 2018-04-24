@@ -1,0 +1,16 @@
+ID;		Bank_XYZ_Account_nr_xyz_somethingsomething
+Type;		Account
+Purpose;	Savings_Car
+Currency;	CHF
+Transactions;
+Date(DD.MM.YYYY);	Action;		Amount;		Balance;	Notes;
+17.07.2015;		Update;		0;		8000.00;	
+31.12.2015;		Update;		0;		8500.00;
+30.12.2016;		Fee;		16.20;		8300.00;	Mario was here.
+31.03.2017;		Fee;		16.20;		8200.00;
+30.06.2017;		Fee;		16.20;		8100.00;
+29.09.2017;		Fee;		16.20;		8250.00;
+29.12.2017;		Fee;		16.20;		8368.00;
+02.04.2018;		Fee;		16.16;		8436.00;
+20.04.2018;		Update;		0;		9500.00;
+EOF

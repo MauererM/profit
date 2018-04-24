@@ -1,0 +1,10 @@
+ID;		Bank_XYZ_Account_nr_xyz_somethingsomething
+Type;		Account
+Purpose;	Cash
+Currency;	CHF
+Transactions;
+Date(DD.MM.YYYY);	Action;		Amount;		Balance;	Notes;
+31.12.2017;		Update;		0;		8962.0;	
+05.01.2018;		Update;		0;		9000.0;		Yey, Money!
+10.02.2018;		Interest;	0;		10000.0;
+EOF
