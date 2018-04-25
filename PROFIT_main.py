@@ -19,6 +19,13 @@ import prices
 import setup
 
 """
+These strings specify the folders from which the account and investment files
+are taken.
+"""
+ACCOUNT_FOLDER = "accounts_examples"
+INVESTMENT_FOLDER = "investments_examples"
+
+"""
 All asset values are calculated in the base currency.
 Provide a string like "CHF", "USD", "HKD" etc.
 """
@@ -78,7 +85,7 @@ ASSET_PURPOSES = ["Liquidity", "Cash", "Retirement_Open", "Retirement_Closed", "
 
 """
 Asset Purpose-Groups
-The different assets can be grouped according to their purpose, which is used for some plots and provides some insight 
+The different assets can be grouped according to their purpose, which is used for some plots and provides some insight
 into the distribution of asset values.
 The groups are given below as list of strings (with arbitrary names).
 However, the overall list of lists that collects the groups must be named "ASSET_GROUPS".
@@ -93,7 +100,7 @@ ASSET_GROUPS = [ASSET_GROUP_1, ASSET_GROUP_2, ASSET_GROUP_3, ASSET_GROUP_4]
 ASSET_GROUPNAMES = ["Freely Available Money", "Retirement", "Safety", "Savings"]
 
 """
-Stockmarket-Indices. These are used in certain plots. They are also obtained from the dataprovider. 
+Stockmarket-Indices. These are used in certain plots. They are also obtained from the dataprovider.
 They are given in the following as dicts, with a Name, Symbol and Exchange, whereas the latter two are required by the
 data-provider tool.
 """
@@ -106,7 +113,7 @@ INDEX_NASDAQ = {"Name": "NASDAQ", "Symbol": ".IXIC", "Exchange": "INDEXNASDAQ"}
 # This list collects the dictionaries, its name must be INDICES!
 INDICES = [INDEX_SMI, INDEX_DOW, INDEX_NASDAQ]
 
-""" 
+"""
 ########################################################################################################################
 ########################################################################################################################
 END OF USER_CONFIG
@@ -123,14 +130,14 @@ if __name__ == '__main__':
     Parse Investments:
     """
     print("\nAcquiring and parsing investments")
-    invstmtfiles = files.get_file_list(setup.INVESTMENT_FOLDER, ".txt")
+    invstmtfiles = files.get_file_list(INVESTMENT_FOLDER, ".txt")
     invstmtfiles.sort()  # Sort alphabetically
     print("Found the following " + str(len(invstmtfiles)) + " textfiles (.txt) in the investment-folder:")
     [print(x) for x in invstmtfiles]
     # Parsing; also creates the investment-objects
     investments = []
     for file in invstmtfiles:
-        filepath = files.create_path(setup.INVESTMENT_FOLDER, file)  # Get path of file, including its folder
+        filepath = files.create_path(INVESTMENT_FOLDER, file)  # Get path of file, including its folder
         investments.append(investmentparser.parse_investment_file(filepath, setup.FORMAT_DATE))
     if len(investments) > 0:
         print("Successfully parsed " + str(len(investments)) + " investments.")
@@ -139,14 +146,14 @@ if __name__ == '__main__':
     Parse Accounts:
     """
     print("\nAcquiring and parsing account files")
-    accountfiles = files.get_file_list(setup.ACCOUNT_FOLDER, ".txt")
+    accountfiles = files.get_file_list(ACCOUNT_FOLDER, ".txt")
     accountfiles.sort()  # Sort alphabetically
     print("Found the following " + str(len(accountfiles)) + " textfiles (.txt) in the account-folder:")
     [print(x) for x in accountfiles]
     # Parsing; also creates the account-objects
     accounts = []
     for file in accountfiles:
-        filepath = files.create_path(setup.ACCOUNT_FOLDER, file)  # Get path of file, including its folder
+        filepath = files.create_path(ACCOUNT_FOLDER, file)  # Get path of file, including its folder
         accounts.append(accountparser.parse_account_file(filepath, setup.FORMAT_DATE))
     if len(accounts) > 0:
         print("Successfully parsed " + str(len(accounts)) + " accounts.")
@@ -215,7 +222,7 @@ if __name__ == '__main__':
         asset.write_forex_obj(forexdict[asset.get_currency()])
 
     """
-    Set the analysis-data in the assets. This obtains market prices, among others, and may take a short while. 
+    Set the analysis-data in the assets. This obtains market prices, among others, and may take a short while.
     """
     print("\nPreparing analysis-data for accounts and investments. "
           "\nThis also obtains market prices and may take a while")
@@ -224,7 +231,7 @@ if __name__ == '__main__':
 
     """
     Obtain Stockmarket-Indices
-    The prices are obtained from the dataprovider, and a MarketPrices-object is generated. 
+    The prices are obtained from the dataprovider, and a MarketPrices-object is generated.
     """
     # This is only required if there are any investments
     if len(investments) > 0:

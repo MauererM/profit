@@ -5,10 +5,6 @@ MIT License
 Copyright (c) 2018 Mario Mauerer
 """
 
-# Account-files are located in the account-folder
-ACCOUNT_FOLDER = "accounts"
-# Investment-files are in the investment-folder
-INVESTMENT_FOLDER = "investments"
 # The marketdata-folder stores different files containing historic prices and forex-rates
 MARKETDATA_FOLDER = "marketdata"
 # The plots-folder:
