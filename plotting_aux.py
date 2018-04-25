@@ -55,8 +55,8 @@ def configure_gridplot():
     plt.rcParams['lines.linewidth'] = 0.8  # Line width in points
     plt.rcParams['lines.markeredgewidth'] = 0.2  # line width around the marker symbol
     plt.rcParams['lines.markersize'] = 4  # markersize, in points
-    plt.rcParams['legend.handlelength'] = 1.5  # length of the legend lines in fraction of fontsize
-    plt.rcParams['legend.fontsize'] = 8.0
+    plt.rcParams['legend.handlelength'] = 2.5  # length of the legend lines in fraction of fontsize
+    plt.rcParams['legend.fontsize'] = 6.0
     plt.rcParams['legend.markerscale'] = 1  # the relative size of legend markers vs. original
     plt.rcParams['axes.titlesize'] = 8.0  # fontsize of axes title
     plt.rcParams['axes.labelsize'] = 8.0  # fontsize of axes labels

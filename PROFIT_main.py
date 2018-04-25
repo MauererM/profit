@@ -48,6 +48,11 @@ Select, if existing plots are deleted before new ones are created. Might prevent
 PURGE_OLD_PLOTS = True
 
 """
+Window length (in days) of moving average filter. Some plots contain filtered data.
+"""
+WINLEN_MA = 50
+
+"""
 The following strings name the paths of the different plots that will be generated.
 Do not provide the file-extension; PDF files will be created.
 The plots are stored in the "plots" folder

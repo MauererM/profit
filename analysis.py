@@ -9,6 +9,44 @@ import stringoperations
 import helper
 
 
+def calc_moving_avg(xlist, ylist, winlen):
+    """Calculates the moving-average of a XY data-set. The correspondingly filtered tuple is returned
+    (which might be of a shorter length, if winlen > 1) ==> Values are only added, once the moving window is full of
+    samples.
+    If the list is shorter than the window, the average of the list is returned, together with the last entry in xlist
+    :param xlist: List of x-values
+    :param ylist: List of to-be-filtered y-values
+    :param winlen: Length of the window, must be >= 1
+    :return: tuple of filtered x,y values
+    """
+    if winlen < 1:
+        raise RuntimeError("Window length of moving average filter must be >= 1")
+    if len(xlist) != len(ylist):
+        raise RuntimeError("X, Y lists of moving-avg filter must be of same length")
+
+    # make sure the winlen is an integer:
+    n = int(round(winlen, 0))
+
+    # If the data is shorter than the window: simply return the averaged ylist
+    if len(xlist) <= n:
+        yfilt = sum(ylist) / len(ylist)
+        xfilt = xlist[-1]
+        return xfilt, yfilt
+
+    # Window shorter than data lists:
+    else:
+        xfilt = []
+        yfilt = []
+        for i, y in enumerate(ylist, n):
+            if i == len(ylist) + 1:
+                break
+            win = ylist[i - n:i]
+            avg = sum(win) / n
+            xfilt.append(xlist[i - 1])
+            yfilt.append(avg)
+        return xfilt, yfilt
+
+
 def get_asset_values_summed(assets):
     """Sum the daily values of the given assets
     :param assets: List of asset-objects
@@ -376,6 +414,14 @@ if __name__ == '__main__':
 
     # print(dates)
     # print(ror)
+    # xvals = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+    # yvals = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100]
+    # winlen = 3
+
+    #xfilt, yfilt = calc_moving_avg(xvals, yvals, winlen)
+    #print(repr(yvals))
+    #print(repr(xfilt))
+    #print(repr(yfilt))
 
     # lista = [1, 3, 4]
     # listb = [2, 3, 5]

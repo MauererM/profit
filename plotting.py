@@ -280,7 +280,11 @@ def plot_asset_values_indices(assetlist, indexlist, fname, titlestr):
     x = [stringoperations.str2datetime(x, dateformat) for x in datelist]
     ax.plot(x, sumlist, alpha=1.0, zorder=3, clip_on=False, color=setup.PLOTS_COLORS[0], marker='', label="Asset Value",
             linewidth=2.4)
-    # ax.fill_between(x, 0, sumlist, alpha = 0.3, facecolor = "#e8690c")
+    # Also plot the moving average:
+    x_ma, y_ma = analysis.calc_moving_avg(x, sumlist, cfg.WINLEN_MA)
+    ax.plot(x_ma, y_ma, alpha=1.0, zorder=3, clip_on=False, color=setup.PLOTS_COLORS[0], marker='',
+            label="Asset Value, Moving Avg",
+            linewidth=1.2, dashes=setup.DASHES_MA)
 
     # Plot the indexes:
     # Obtain some colors for the indexes:
@@ -290,6 +294,11 @@ def plot_asset_values_indices(assetlist, indexlist, fname, titlestr):
             raise RuntimeError("Ran out of colors. Supply more in PLOTS_COLORS (configuration-file)")
         ax.plot(x, val, alpha=1.0, zorder=3, clip_on=False, color=setup.PLOTS_COLORS[i + 1], marker='',
                 label=indexname[i])
+        # Also plot the moving average:
+        x_ma, y_ma = analysis.calc_moving_avg(x, val, cfg.WINLEN_MA)
+        label_ma = indexname[i] + ", Moving Avg"
+        ax.plot(x_ma, y_ma, alpha=1.0, zorder=3, clip_on=False, color=setup.PLOTS_COLORS[i + 1], marker='',
+                label=label_ma, dashes=setup.DASHES_MA)
 
     plt.legend(fancybox=True, shadow=True, ncol=1, framealpha=1.0, loc='upper left',
                bbox_to_anchor=(0.01, 0.99))
@@ -471,6 +480,10 @@ def plot_asset_values_cost_payout_individual(assetlist, fname):
             ax.plot(x, values, alpha=1.0, zorder=3, clip_on=False, color=setup.PLOTS_COLORS[0], marker='o',
                     label="Asset Value",
                     markevery=marker_div)
+            # Also plot the moving average:
+            x_ma, y_ma = analysis.calc_moving_avg(x, values, cfg.WINLEN_MA)
+            ax.plot(x_ma, y_ma, alpha=1.0, zorder=3, clip_on=False, color='k', marker='',
+                    label="Asset Value, Moving Avg", dashes=setup.DASHES_MA)
 
             if helper.list_all_zero(payouts_accu) is False:
                 values_payouts = helper.sum_lists(values, payouts_accu)

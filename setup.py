@@ -92,3 +92,6 @@ STRING_TRANSACTIONS = "Transactions"
 
 # Version of PROFIT:
 PROFIT_VERSION = 1.0
+
+# Dashes for moving averages:
+DASHES_MA = [4, 2]
