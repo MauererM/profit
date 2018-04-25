@@ -134,6 +134,13 @@ if __name__ == '__main__':
     print("PROFIT V{:.1f} starting".format(setup.PROFIT_VERSION))
 
     """
+    Sanity checks:
+    """
+    if len(ASSET_GROUPNAMES) != len(ASSET_GROUPS):
+        raise RuntimeError("ASSET_GROUPNAMES and ASSET_GROUPS (in the user configuration section of PROFIT_main) must "
+                           "be lists with identical length.")
+
+    """
     Parse Investments:
     """
     print("\nAcquiring and parsing investments")
