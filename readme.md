@@ -29,10 +29,10 @@ Below are some of the outputs of the tool. Different PDF plots are created. Asse
 ![screenshot all assets stackedplot](https://github.com/MauererM/profit/raw/master/doc/screenshots/screen_returns.png)
 ![screenshot all assets stackedplot](https://github.com/MauererM/profit/raw/master/doc/figures/Account_Example_Labelled.png)
 
-### Try the tool out:
-1. `git clone https://github.com/MauererM/profit.git` (or simply download the repository with the direct link)
-2. Run "PROFIT_main.py" (with a Python 3 interpreter) and look at the results in the "plots" folder (Some exemplary assets are provided). Some packages might have to be installed
-3. Modify the files in the "accounts" and "investments" folder to your liking
+### Try it out::
+1. `git clone https://github.com/MauererM/profit.git` (or simply download the repository with the direct link).
+2. Run "PROFIT_main.py" (with a Python 3 interpreter) and look at the results in the "plots" folder (Some exemplary assets are provided). Some packages might have to be installed.
+3. Move the provided examples to the "accounts" and "investments" folders and modify them to your liking. Change the names of the folders in PYTHON_main.py to use the real folders (ACCOUNT_FOLDER and INVESTMENT_FOLDER strings).
 4. As simple as that :moneybag:
 5. The short manual provides more information: [PROFIT manual (PDF from doc folder)](https://github.com/MauererM/profit/raw/master/doc/manual.pdf "PROFIT manual (PDF)")
 
