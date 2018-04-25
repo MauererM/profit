@@ -26,23 +26,25 @@ Below are some of the outputs of the tool. Different PDF plots are created. Asse
 ![screenshot all assets stackedplot](https://github.com/MauererM/profit/raw/master/doc/screenshots/screen_indices.png)
 ![screenshot all assets stackedplot](https://github.com/MauererM/profit/raw/master/doc/screenshots/screen_returns.png)
 ![screenshot all assets stackedplot](https://github.com/MauererM/profit/raw/master/doc/screenshots/screen_values_groups.png)
-![screenshot all assets stackedplot](https://github.com/MauererM/profit/raw/master/doc/screenshots/screen_returns.png)
 ![screenshot all assets stackedplot](https://github.com/MauererM/profit/raw/master/doc/figures/Account_Example_Labelled.png)
 
 ### Try it out::
 1. `git clone https://github.com/MauererM/profit.git` (or simply download the repository with the direct link).
-2. Run "PROFIT_main.py" (with a Python 3 interpreter) and look at the results in the "plots" folder (Some exemplary assets are provided). Some packages might have to be installed.
-3. Move the provided examples to the "accounts" and "investments" folders and modify them to your liking. Change the names of the folders in PYTHON_main.py to use the real folders (ACCOUNT_FOLDER and INVESTMENT_FOLDER strings).
+2. Run *PROFIT_main.py* (with a Python 3 interpreter) and look at the results in the *plots* folder (Some exemplary assets are provided). Some packages might have to be installed, most probably *googlefinance.client* and *matplotlib*.
+3. Move the provided examples to the *accounts* and *investments* folders and modify them to your liking. Change the names of the folders in *PYTHON_main.py* to use the real folders (*ACCOUNT_FOLDER* and *INVESTMENT_FOLDER* strings).
 4. As simple as that :moneybag:
 5. The short manual provides more information: [PROFIT manual (PDF from doc folder)](https://github.com/MauererM/profit/raw/master/doc/manual.pdf "PROFIT manual (PDF)")
 
+Note that the contents of the folders *accounts* and *investments*, where your personal data resides, are ignored by git, such that the project can remain in a git repository while being used.
+
 ### Contribution:
 `git clone https://github.com/MauererM/profit.git`
+
 #### To Do:
-- [ ] Test on Windows
 - [ ] Plot some moving averages
 - [ ] Plot Forex-rates
 - [ ] Some stacked plots don't sort according to the most recent values: Add this
 - [ ] More file parsing-checks: e.g., missing delimiters, wrong date format nonzero numbers when they should be zero etc.
 - [ ] More financial data providers (e.g., with pandas-datareader), maybe with automatic fallbacks
 - [ ] Handling of more complex stock operations, e.g., splits
+- [x] Test on Windows
