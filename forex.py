@@ -178,3 +178,11 @@ class ForexRates:
     def get_basecurrency(self):
         """Return the basecurrency (as string)"""
         return self.basecurrency
+
+    def get_dates_rates(self):
+        """Returns a tuple of the stored forex dates and rates"""
+        if self.pricedata_avail is True:
+            return self.rate_dates, self.rates
+        else:
+            raise RuntimeError("No forex rates available. Currency: " + self.currency + "Basecurrency: " +
+                               self.basecurrency)

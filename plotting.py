@@ -19,6 +19,54 @@ import plotting_aux
 import helper
 
 
+def plot_forex_rates(forexobjdict, fname, titlestr):
+    """Plot the forex rates.
+    The forex-objects are stored in a dictionary, whose keys are the strings of the currencies, e.g., "USD".
+    :param forexobjdict: Dictionary with the forex-objects
+    :param fname: String of the filename of the plot
+    :param titlestr: String of the title of the plot
+    """
+
+    # Get the full path of the file:
+    fname = plotting_aux.modify_plot_path(setup.PLOTS_FOLDER, fname)
+
+    fig = plt.figure()
+    ax = fig.add_subplot(111)  # Only one plot
+
+    colorlist = plotting_aux.create_colormap("rainbow", len(forexobjdict), False)
+    i = 0
+    # Iterate through the dictionary, only plot foreign currencies:
+    for key, obj in forexobjdict.items():
+        # Only plot foreign rates:
+        if key != cfg.BASECURRENCY:
+            date, rate = obj.get_dates_rates()
+            xlist = [stringoperations.str2datetime(x, setup.FORMAT_DATE) for x in date]
+            ax.plot(xlist, rate, alpha=1.0, zorder=3, clip_on=False, color=colorlist[i], marker='',
+                    label=obj.get_currency(), linewidth=1.2)
+            # Also plot the moving average:
+            x_ma, y_ma = analysis.calc_moving_avg(xlist, rate, cfg.WINLEN_MA)
+            linelabel = obj.get_currency() + ", Moving Avg"
+            ax.plot(x_ma, y_ma, alpha=1.0, zorder=3, clip_on=False, color=colorlist[i], marker='',
+                    label=linelabel,linewidth=1.2, dashes=setup.DASHES_MA)
+        i += 1
+
+    plt.legend(fancybox=True, shadow=True, ncol=1, framealpha=1.0, loc='best')
+
+    ax.set_xlabel("Dates")
+    ax.set_ylabel("Exchange Rates with " + cfg.BASECURRENCY)
+    plt.title(titlestr)
+
+    # Nicer date-plotting:
+    fig.autofmt_xdate()
+    ax.fmt_xdata = matplotlib.dates.DateFormatter('%d.%m.%Y')
+
+    # PDF Export:
+    plt.savefig(fname)
+
+    if cfg.OPEN_PLOTS is True:
+        plotting_aux.open_plot(fname)
+
+
 def plot_assets_grouped(assetlist, fname, titlestr, plottype):
     """Plots the values of the assets, grouped according to their groups (see main-file)
     A stacked plot is used.

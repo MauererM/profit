@@ -1,7 +1,7 @@
 ID;		Bank_XYZ_Account_nr_xyz_somethingsomething
 Type;		Account
 Purpose;	Liquidity
-Currency;	CHF
+Currency;	HKD
 Transactions;
 Date(DD.MM.YYYY);	Action;		Amount;		Balance;	Notes;
 31.12.2010;		Update;		0;		120.50;

@@ -78,6 +78,8 @@ FILENAME_ASSETS_VALUES_PURPOSE = "Assets_Values_Purpose"
 # Value of the groups of assets (see below for groups), two plots are done; one line, one stacked
 FILENAME_ASSETS_VALUES_GROUPS_STACKED = "Assets_Values_Groups_Stacked"
 FILENAME_ASSETS_VALUES_GROUPS_LINE = "Assets_Values_Groups_Line"
+# Forex rates:
+FILENAME_FOREX_RATES = "Forex_Rates"
 
 """
 Purposes of the Assets
@@ -302,5 +304,9 @@ if __name__ == '__main__':
                                      "line")
         # Plot the value of all assets:
         plotting.plot_asset_values_stacked(assets, FILENAME_STACKPLOT_ASSET_VALUES, "Value: All Assets")
+
+    # Plot the forex-rates. Note: one element of the forex-dict is the basecurrency, hence >1 and not >= 1
+    if len(forexdict) > 1:
+        plotting.plot_forex_rates(forexdict, FILENAME_FOREX_RATES , "Forex Rates with the Basecurrency (" + BASECURRENCY + ")")
 
     print("\nPROFIT is done.")

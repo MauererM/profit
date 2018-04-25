@@ -1,7 +1,7 @@
 ID;		Bank_XYZ_Account_nr_xyz_somethingsomething
 Type;		Account
 Purpose;	Savings_Car
-Currency;	CHF
+Currency;	SGD
 Transactions;
 Date(DD.MM.YYYY);	Action;		Amount;		Balance;	Notes;
 17.07.2015;		Update;		0;		8000.00;	
