@@ -22,6 +22,19 @@ def filename_append_number(pathstr, separator, num):
     return filename
 
 
+def filename_append_string(pathstr, separator, addstring):
+    """Adds a string to a filename. E.g., /test.pdf ==> /test_group.pdf
+    :param pathstr: Path of the file, or filename (string)
+    :param separator: String, encoding the desired character before the number is added, e.g., "_"
+    :param addstring: String to be added to the file-path
+    :return: String of the modified path
+    """
+    filename = pathstr.split('.')
+    filename[-2] = filename[-2] + separator + addstring
+    filename = '.'.join(filename)
+    return filename
+
+
 def get_filename(pathstr, keep_type=False):
     """Obtains the filename from paths that are separated with '/'
     :param pathstr: String of the path
@@ -50,8 +63,8 @@ def check_allowed_strings(strlist, reflist):
 
 def strip_whitespaces(string):
     """Strips all whitespace-characters from a line (i.e., a string)
-    :param string: input string
-    :return: output string without whitespace characters
+    :param string: Input string
+    :return: String without whitespace characters
     """
     return re.sub(r'\s+', '', string)
 

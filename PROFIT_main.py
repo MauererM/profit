@@ -34,7 +34,7 @@ BASECURRENCY = "CHF"
 """
 Data is analyzed a certain number of days into the past, from today
 """
-DAYS_ANALYSIS = 770
+DAYS_ANALYSIS = 730
 
 """
 This switch determines whether the plots are opened directly after creation or not.
@@ -50,7 +50,7 @@ PURGE_OLD_PLOTS = True
 """
 Window length (in days) of moving average filter. Some plots contain filtered data.
 """
-WINLEN_MA = 50
+WINLEN_MA = 30
 
 """
 The following strings name the paths of the different plots that will be generated.
@@ -80,6 +80,8 @@ FILENAME_ASSETS_VALUES_GROUPS_STACKED = "Assets_Values_Groups_Stacked"
 FILENAME_ASSETS_VALUES_GROUPS_LINE = "Assets_Values_Groups_Line"
 # Forex rates:
 FILENAME_FOREX_RATES = "Forex_Rates"
+# Plots of the groups (can be multiple plots), will be extended with the corresponding group name.
+FILENAME_PLOT_GROUP = "Group"
 
 """
 Purposes of the Assets
@@ -312,8 +314,15 @@ if __name__ == '__main__':
         # Plot the value of all assets:
         plotting.plot_asset_values_stacked(assets, FILENAME_STACKPLOT_ASSET_VALUES, "Value: All Assets")
 
+        # Plot the values of each group:
+        if len(ASSET_GROUPS) > 0:
+            plotting.plot_asset_groups(assets, ASSET_GROUPS, ASSET_GROUPNAMES, FILENAME_PLOT_GROUP,
+                                       "Group Value (" + BASECURRENCY + ")")
+
     # Plot the forex-rates. Note: one element of the forex-dict is the basecurrency, hence >1 and not >= 1
     if len(forexdict) > 1:
         plotting.plot_forex_rates(forexdict, FILENAME_FOREX_RATES , "Forex Rates with the Basecurrency (" + BASECURRENCY + ")")
+
+
 
     print("\nPROFIT is done.")
