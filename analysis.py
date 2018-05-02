@@ -26,23 +26,29 @@ def calc_moving_avg(xlist, ylist, winlen):
 
     # make sure the winlen is an integer:
     n = int(round(winlen, 0))
+    if n == 1:
+        return xlist, ylist
 
     # If the data is shorter than the window: simply return the averaged ylist
     if len(xlist) <= n:
         yfilt = sum(ylist) / len(ylist)
-        xfilt = xlist[-1]
+        # Get the middle index of the list:
+        mididx = int(round(len(xlist)/2.0))-1
+        xfilt = xlist[mididx]
         return xfilt, yfilt
 
     # Window shorter than data lists:
     else:
         xfilt = []
         yfilt = []
+        # Middle index:
+        mididx = int(round(n / 2.0))
         for i, y in enumerate(ylist, n):
             if i == len(ylist) + 1:
                 break
             win = ylist[i - n:i]
             avg = sum(win) / n
-            xfilt.append(xlist[i - 1])
+            xfilt.append(xlist[i - n + mididx - 1])
             yfilt.append(avg)
         return xfilt, yfilt
 
@@ -414,9 +420,9 @@ if __name__ == '__main__':
 
     # print(dates)
     # print(ror)
-    # xvals = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
-    # yvals = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100]
-    # winlen = 3
+    #xvals = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+    #yvals = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100]
+    #winlen = 8
 
     #xfilt, yfilt = calc_moving_avg(xvals, yvals, winlen)
     #print(repr(yvals))
