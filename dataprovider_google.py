@@ -80,6 +80,12 @@ def get_forex_data(sym_a, sym_b, startdate, stopdate, dateformat):
     # But this is OK, we also don't raise a warning, the caller is left to deal with this, since he then can take
     # action. This reduces the complexity of this module.
 
+    # It is possible that the price (closing...) of today is not yet known. Extrapolate forwards:
+    # Do this before the cropping, otherwise cropping returns an empty list, if the only date is today...
+    if stopdate_dt > forexdates_dt[-1]:
+        forexdates, forexrates = dateoperations.extend_data_future(forexdates, forexrates, stopdate, dateformat,
+                                                                   zero_padding=False)
+
     # Crop the data to the desired range. It may still contain non-consecutive days.
     # The crop-function will not throw errors if the start/stop-dates are outside the date-list from the data provider.
     forexdates, forexrates = dateoperations.crop_datelist(forexdates, forexrates, startdate, stopdate, dateformat)
@@ -88,10 +94,6 @@ def get_forex_data(sym_a, sym_b, startdate, stopdate, dateformat):
         raise RuntimeError("Forex data is not available for desired interval. " +
                            "Symbol a: " + sym_a + ".Symbol b: " + sym_b)
 
-    # It is possible that the price (closing...) of today is not yet known. Extrapolate forwards:
-    if stopdate_dt > forexdates_dt[-1]:
-        forexdates, forexrates = dateoperations.extend_data_future(forexdates, forexrates, stopdate, dateformat,
-                                                                   zero_padding=False)
     # Fill in missing data in the vector
     forexdates_full, forexrates_full = dateoperations.interpolate_data(forexdates, forexrates, dateformat)
 
@@ -163,6 +165,12 @@ def get_stock_data(sym_stock, sym_exchange, startdate, stopdate, dateformat):
     # But this is OK, we also don't raise a warning, the caller is left to deal with this, since he then can take
     # action. This reduces the complexity of this module.
 
+    # It is possible that the price (closing...) of today is not yet known. Extrapolate forwards:
+    # Do this before the cropping, otherwise cropping returns an empty list, if the only date is today...
+    if stopdate_dt > pricedates_dt[-1]:
+        pricedates, stockprices = dateoperations.extend_data_future(pricedates, stockprices, stopdate, dateformat,
+                                                                    zero_padding=False)
+
     # Crop the data to the desired range. It may still contain non-consecutive days.
     # The crop-function will not throw errors if the start/stop-dates are outside the date-list from the data provider.
     pricedates, stockprices = dateoperations.crop_datelist(pricedates, stockprices, startdate, stopdate, dateformat)
@@ -171,10 +179,6 @@ def get_stock_data(sym_stock, sym_exchange, startdate, stopdate, dateformat):
         raise RuntimeError("Stock data is not available for desired interval. " +
                            sym_stock + ". Exchange: " + sym_exchange)
 
-    # It is possible that the price (closing...) of today is not yet known. Extrapolate forwards:
-    if stopdate_dt > pricedates_dt[-1]:
-        pricedates, stockprices = dateoperations.extend_data_future(pricedates, stockprices, stopdate, dateformat,
-                                                                    zero_padding=False)
     # Fill in missing data in the vector
     pricedates_full, stockprices_full = dateoperations.interpolate_data(pricedates, stockprices, dateformat)
 
