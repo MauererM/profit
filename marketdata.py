@@ -80,8 +80,9 @@ def update_check_marketdata_in_file(filepath, dateformat_marketdata, dateformat,
                 price_new = newvals[indexes[0]]
                 # The values should match within 0.5% at least.
                 if helper.within_tol(price_cur, price_new, 0.5 / 100.0) is False:
-                    raise RuntimeError("The obtained market-price does not match with the recorded value. Path: " +
-                                       filepath + ". Line-Nr: " + repr(idx))
+                    print("WARNING: The obtained market-price does not match with the recorded value. Path: " +
+                                       filepath + ". Line-Nr: " + repr(idx) + ". Recorded Value=" + repr(price_cur) +
+                                       ". New Value=" + repr(price_new) + ". Date: " + date_cur)
 
         # The obtained new values now match the existing values (if there are double entries), which is good.
         # In the following: the new values are sorted into the existing market-data, and the file is updated
