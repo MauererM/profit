@@ -41,11 +41,12 @@ Note that the contents of the folders *accounts* and *investments*, where your p
 `git clone https://github.com/MauererM/profit.git`
 
 #### To Do:
-- [ ] Plot ratios of foreign currencies in portfolio
-- [ ] Some stacked plots don't sort according to the most recent values: Add this
+- [ ] Plot value ratios of foreign currencies in portfolio
+
 - [ ] More file parsing-checks: e.g., missing/wrong delimiters, wrong date format nonzero numbers when they should be zero etc.
 - [ ] More financial data providers (e.g., with pandas-datareader), maybe with automatic fallbacks
 - [ ] Handling of more complex stock operations, e.g., splits (necessary?)
+- [x] Some stacked plots don't sort according to the most recent values: Add this
 - [x] One plot for each purpose-group, with individual group members
 - [x] Plot Forex-rates
 - [x] Test on Windows

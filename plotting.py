@@ -861,14 +861,6 @@ def plot_asset_values_stacked(assetlist, fname, title):
         ylists.append(asset.get_analysis_valuelist())
         legendlist.append(asset.get_filename())
 
-    # Sort the lists according to the most recent value
-    sortlist = [x[-1] for x in ylists]  # Contains the latest balances
-    sortedidx = sorted(range(len(sortlist)), key=lambda x: sortlist[x])
-    sortedidx.reverse()
-    # Sort the lists:
-    ylists = [ylists[i] for i in sortedidx]
-    legendlist = [legendlist[i] for i in sortedidx]
-
     colorlist = plotting_aux.create_colormap("rainbow", len(ylists), False)
 
     titlestring = title + ". Currency: " + cfg.BASECURRENCY

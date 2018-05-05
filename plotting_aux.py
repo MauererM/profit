@@ -120,6 +120,14 @@ def create_stackedplot(xlist, ylists, legendlist, colorlist, titlestring, xlabel
     fig = plt.figure()
     ax = fig.add_subplot(111)
 
+    # Sort the y-values according to the most recent value:
+    sortlist = [x[-1] for x in ylists]
+    sortedidx = sorted(range(len(sortlist)), key=lambda x: sortlist[x])
+    sortedidx.reverse()
+    # Sort the lists:
+    ylists = [ylists[i] for i in sortedidx]
+    legendlist = [legendlist[i] for i in sortedidx]
+
     # The list of lists needs to be re-formatted for matplotlib:
     ylists = [x for x in ylists]
 
@@ -134,7 +142,9 @@ def create_stackedplot(xlist, ylists, legendlist, colorlist, titlestring, xlabel
         pylab.matplotlib.ticker.FuncFormatter(lambda x, p: format(int(x), ',')))
     plt.title(titlestring)
 
-    plt.legend(fancybox=True, shadow=True, ncol=1, framealpha=1.0, loc='upper left', bbox_to_anchor=(0.01, 0.99))
+    # Revert the order of the legend entries, such that they correspond to the position in the stacked plot:
+    handles, labels = ax.get_legend_handles_labels()
+    plt.legend(handles[::-1], labels[::-1], fancybox=True, shadow=True, ncol=1, framealpha=1.0, loc='upper left', bbox_to_anchor=(0.01, 0.99))
 
     # Nicer date-plotting:
     fig.autofmt_xdate()
