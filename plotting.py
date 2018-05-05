@@ -19,6 +19,99 @@ import plotting_aux
 import helper
 
 
+def plot_currency_values(assetlist, fname, titlestring, drawstackedplot=True):
+    """Plots the values of the assets grouped according to their currencies
+    :param assetlist: List of asset-objects
+    :param fname: String of desired filename
+    :param titlestring: String of title of plot
+    :param drawstackedplot: If True, the absolute values are plotted as stacked plot. If false, the relative values are
+    plotted in a line plot
+    """
+    # Sanity checks:
+    if len(assetlist) < 1:
+        return
+
+    # Get the full path of the file:
+    fname = plotting_aux.modify_plot_path(setup.PLOTS_FOLDER, fname)
+
+    # x-data for the plots:
+    datelist = assetlist[0].get_analysis_datelist()  # Should be the same length everywhere -
+    # we consider the analysis range...
+    xlist = [stringoperations.str2datetime(x, setup.FORMAT_DATE) for x in datelist]
+
+    # Collect the currencies:
+    curlist = [asset.get_currency() for asset in assetlist]
+    curset = set(curlist)
+
+    # Collect the values, grouped by the currency:
+    curvals = []  # List of lists that stores the summed values of each currency:
+    for currency in curset:
+        # Iterate through all assets:
+        sumvals = [0] * len(xlist)
+        for idx, asset in enumerate(assetlist):
+            if curlist[idx] == currency:
+                values = asset.get_analysis_valuelist()
+                sumvals = helper.sum_lists(sumvals, values)
+        curvals.append(sumvals)
+
+    colorlist = plotting_aux.create_colormap("rainbow", len(curset), False)
+    xlabel = "Date"
+    if drawstackedplot is True:
+        ylabel = "Value (" + cfg.BASECURRENCY + ")"
+        alpha = 0.8
+        plotting_aux.create_stackedplot(xlist, curvals, list(curset), colorlist, titlestring, xlabel, ylabel, alpha,
+                                        fname)
+
+    else:  # Create a line-plot:
+        # The relative values of the currencies are plotted:
+        # Get the total value of the assets:
+        totvals = []
+        for idx, x in enumerate(xlist):
+            sumval = 0
+            for vallist in curvals:
+                sumval = sumval + vallist[idx]
+            totvals.append(sumval)
+        # Get the relative values of the currency-groups:
+        curvals_rel = []
+        for vallist in curvals:
+            rel = [val / totvals[i] * 100.0 for i, val in enumerate(vallist)]
+            curvals_rel.append(rel)
+
+        # Sort the values, such that the colors coincide with the stacked plot:
+        # Sort the y-values according to the most recent value:
+        sortlist = [x[-1] for x in curvals]
+        sortedidx = sorted(range(len(sortlist)), key=lambda x: sortlist[x])
+        sortedidx.reverse()
+        # Sort the lists:
+        curvals_rel = [curvals_rel[i] for i in sortedidx]
+        legendlist = list(curset)
+        legendlist = [legendlist[i] for i in sortedidx]
+
+        plotting_aux.configure_lineplot()
+        fig = plt.figure()
+        ax = fig.add_subplot(111)
+
+        for idx, rellist in enumerate(curvals_rel):
+            ax.plot(xlist, rellist, alpha=1.0, zorder=3, clip_on=False, color=colorlist[idx], marker='',
+                    label=legendlist[idx])
+
+        plt.legend(fancybox=True, shadow=True, ncol=1, framealpha=1.0, loc='best')
+
+        ax.set_xlabel(xlabel)
+        ax.set_ylabel("Relative Value (%)")
+        plt.title(titlestring)
+
+        # Nicer date-plotting:
+        fig.autofmt_xdate()
+        ax.fmt_xdata = matplotlib.dates.DateFormatter('%d.%m.%Y')
+
+        # PDF Export:
+        plt.savefig(fname)
+
+        if cfg.OPEN_PLOTS is True:
+            plotting_aux.open_plot(fname)
+
+
 def plot_asset_groups(assets, grouplist, groupnames, fname, titlestring):
     """Plots the values of each user-defined group.
     Each group is on a new plot.
@@ -106,7 +199,7 @@ def plot_asset_groups(assets, grouplist, groupnames, fname, titlestring):
         plt.savefig(fname_cur)
 
         if cfg.OPEN_PLOTS is True:
-            plotting_aux.open_plot(fname)
+            plotting_aux.open_plot(fname_cur)
 
 
 def plot_forex_rates(forexobjdict, fname, titlestr):

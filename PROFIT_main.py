@@ -82,6 +82,9 @@ FILENAME_ASSETS_VALUES_GROUPS_LINE = "Assets_Values_Groups_Line"
 FILENAME_FOREX_RATES = "Forex_Rates"
 # Plots of the groups (can be multiple plots), will be extended with the corresponding group name.
 FILENAME_PLOT_GROUP = "Group"
+# Plots of asset values according to currency:
+FILENAME_CURRENCIES_STACKED = "Asset_Values_Currencies_Stacked"
+FILENAME_CURRENCIES_LINE = "Asset_Values_Currencies_Line"
 
 """
 Purposes of the Assets
@@ -319,10 +322,15 @@ if __name__ == '__main__':
             plotting.plot_asset_groups(assets, ASSET_GROUPS, ASSET_GROUPNAMES, FILENAME_PLOT_GROUP,
                                        "Group Value (" + BASECURRENCY + ")")
 
+        # Plot the values grouped according to currency:
+        plotting.plot_currency_values(assets, FILENAME_CURRENCIES_STACKED, "Asset Values According to Currencies "
+                                                                           "(in Basecurrency)", drawstackedplot=True)
+        plotting.plot_currency_values(assets, FILENAME_CURRENCIES_LINE, "Relative Asset Values According to Currencies",
+                                      drawstackedplot=False)
+
     # Plot the forex-rates. Note: one element of the forex-dict is the basecurrency, hence >1 and not >= 1
     if len(forexdict) > 1:
-        plotting.plot_forex_rates(forexdict, FILENAME_FOREX_RATES , "Forex Rates with the Basecurrency (" + BASECURRENCY + ")")
-
-
+        plotting.plot_forex_rates(forexdict, FILENAME_FOREX_RATES,
+                                  "Forex Rates with the Basecurrency (" + BASECURRENCY + ")")
 
     print("\nPROFIT is done.")

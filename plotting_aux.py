@@ -62,6 +62,7 @@ def configure_gridplot():
     plt.rcParams['axes.labelsize'] = 8.0  # fontsize of axes labels
     plt.rcParams['xtick.labelsize'] = 6.0  # fontsize of the tick labels
     plt.rcParams['ytick.labelsize'] = 6.0
+    plt.rcParams['figure.max_open_warning'] = 100  # Override a warning generation
 
 
 def configure_lineplot():
@@ -144,7 +145,8 @@ def create_stackedplot(xlist, ylists, legendlist, colorlist, titlestring, xlabel
 
     # Revert the order of the legend entries, such that they correspond to the position in the stacked plot:
     handles, labels = ax.get_legend_handles_labels()
-    plt.legend(handles[::-1], labels[::-1], fancybox=True, shadow=True, ncol=1, framealpha=1.0, loc='upper left', bbox_to_anchor=(0.01, 0.99))
+    plt.legend(handles[::-1], labels[::-1], fancybox=True, shadow=True, ncol=1, framealpha=1.0, loc='upper left',
+               bbox_to_anchor=(0.01, 0.99))
 
     # Nicer date-plotting:
     fig.autofmt_xdate()
