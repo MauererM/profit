@@ -475,7 +475,8 @@ class Investment:
         # Investment is not a security: Derive value from given transaction-prices
         else:
             # print("Investment in file " + self.filename + " cannot obtain prices.")
-            print("Investment is not listed as security. Deriving prices from transactions-data. File: " + self.filename)
+            print(
+                "Investment is not listed as security. Deriving prices from transactions-data. File: " + self.filename)
 
             # Obtain the values
             trans_values = self.get_values(self.transactions[setup.DICT_KEY_ACTIONS],

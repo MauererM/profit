@@ -69,8 +69,8 @@ class Account:
 
         # Interpolate the balances, such that the entries in balancelist correspond to the days in datelist.
         _, self.balancelist = dateoperations.interpolate_data(self.transactions[setup.DICT_KEY_DATES],
-                                                                  self.transactions[setup.DICT_KEY_BALANCES],
-                                                                  self.dateformat)
+                                                              self.transactions[setup.DICT_KEY_BALANCES],
+                                                              self.dateformat)
 
         # The cost and interest does not need interpolation. The lists are populated (corresponding to datelist), i.e.,
         # the values correspond to the day they occur, all other values are set to zero
