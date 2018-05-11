@@ -158,13 +158,13 @@ def plot_asset_groups(assets, grouplist, groupnames, fname, titlestring):
         totsum = [0] * len(datelist)
 
         # Get the values of each purpose, from all assets:
+        plotted = False
         for k, purpose in enumerate(purposelist):
             # Get the indices of the assets with the current purpose:
             indexes = [i for i, x in enumerate(asset_purposes) if x == purpose]
             # Only plot, if there's actually an asset with the given purpose:
             if len(indexes) > 0:
                 # Sum the values of each purpose:
-
                 sumvals = [0] * len(datelist)
                 for idx in indexes:
                     values = assets[idx].get_analysis_valuelist()
@@ -174,32 +174,35 @@ def plot_asset_groups(assets, grouplist, groupnames, fname, titlestring):
                 totsum = helper.sum_lists(totsum, sumvals)
                 ax.plot(xlist, sumvals, alpha=1.0, zorder=3, clip_on=False, color=colorlist[k], marker='',
                         label=purpose)
+                plotted = True
 
         # Plot the total sum of the group (only, if there are multiple constituents in a group)
-        if len(purposelist) > 1:
+        if len(purposelist) > 1 and plotted is True:
             totlabel = "Total Group Value of " + groupnames[purpidx]
             ax.plot(xlist, totsum, alpha=1.0, zorder=3, clip_on=False, color=colorlist[len(purposelist)], marker='',
                     label=totlabel)
 
-        plt.legend(fancybox=True, shadow=True, ncol=1, framealpha=1.0, loc='best')
+        # Only plot if there is actually a value in a group:
+        if plotted is True:
+            plt.legend(fancybox=True, shadow=True, ncol=1, framealpha=1.0, loc='best')
 
-        ax.set_xlabel("Dates")
-        ax.set_ylabel("Value " + "(" + cfg.BASECURRENCY + ")")
-        titlestr_mod = titlestring + ". Group: " + groupnames[purpidx]
-        plt.title(titlestr_mod)
+            ax.set_xlabel("Dates")
+            ax.set_ylabel("Value " + "(" + cfg.BASECURRENCY + ")")
+            titlestr_mod = titlestring + ". Group: " + groupnames[purpidx]
+            plt.title(titlestr_mod)
 
-        # Nicer date-plotting:
-        fig.autofmt_xdate()
-        ax.fmt_xdata = matplotlib.dates.DateFormatter('%d.%m.%Y')
+            # Nicer date-plotting:
+            fig.autofmt_xdate()
+            ax.fmt_xdata = matplotlib.dates.DateFormatter('%d.%m.%Y')
 
-        # Modify the file name: add the name of the group:
-        fname_cur = stringoperations.filename_append_string(fname, "_", groupnames[purpidx])
+            # Modify the file name: add the name of the group:
+            fname_cur = stringoperations.filename_append_string(fname, "_", groupnames[purpidx])
 
-        # PDF Export:
-        plt.savefig(fname_cur)
+            # PDF Export:
+            plt.savefig(fname_cur)
 
-        if cfg.OPEN_PLOTS is True:
-            plotting_aux.open_plot(fname_cur)
+            if cfg.OPEN_PLOTS is True:
+                plotting_aux.open_plot(fname_cur)
 
 
 def plot_forex_rates(forexobjdict, fname, titlestr):
