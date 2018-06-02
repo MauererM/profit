@@ -74,7 +74,8 @@ def plot_currency_values(assetlist, fname, titlestring, drawstackedplot=True):
         # Get the relative values of the currency-groups:
         curvals_rel = []
         for vallist in curvals:
-            rel = [val / totvals[i] * 100.0 for i, val in enumerate(vallist)]
+            # careful with zero division...
+            rel = [(val / totvals[i] * 100.0) if totvals[i]>1e-9 else 0 for i, val in enumerate(vallist)]
             curvals_rel.append(rel)
 
         # Sort the values, such that the colors coincide with the stacked plot:
