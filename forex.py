@@ -74,6 +74,13 @@ class ForexRates:
                                                                                 self.marketdata_delimiter,
                                                                                 dates, rates)
 
+            # The returned forex data might not be available until today (e.g., if this is run on a weekend).
+            # Extend the data accordingly into the future.
+            lastdate_dt = stringoperations.str2datetime(dates_full[-1], self.dateformat)
+            if stopdate_dt > lastdate_dt:
+                dates_full, rates_full = dateoperations.extend_data_future(dates_full, rates_full, self.stopdate,
+                                                                           self.dateformat, zero_padding=False)
+
             # The available market-data (from the dataprovider and the database) might not reach back to the
             # desired startdate! Check it:
             dates_full_start = stringoperations.str2datetime(dates_full[0], self.dateformat)
@@ -105,6 +112,13 @@ class ForexRates:
                 dates, rates = marketdata.import_marketdata_from_file(self.marketdata_filepath,
                                                                       self.marketdata_dateformat,
                                                                       self.dateformat, self.marketdata_delimiter)
+
+                # The returned forex data might not be available until today.
+                # Extend the data accordingly into the future.
+                lastdate_dt = stringoperations.str2datetime(dates[-1], self.dateformat)
+                if stopdate_dt > lastdate_dt:
+                    dates, rates = dateoperations.extend_data_future(dates, rates, self.stopdate,
+                                                                     self.dateformat, zero_padding=False)
 
                 # Format the data such that it matches the analysis-range:
                 dates_start = stringoperations.str2datetime(dates[0], self.dateformat)

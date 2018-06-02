@@ -81,6 +81,14 @@ class MarketPrices:
                                                                                  self.dateformat,
                                                                                  self.marketdata_delimiter,
                                                                                  dates, prices)
+
+            # The returned market data might not be available until today (e.g., if this is run on a weekend).
+            # Extend the data accordingly into the future.
+            lastdate_dt = stringoperations.str2datetime(dates_full[-1], self.dateformat)
+            if stopdate_dt > lastdate_dt:
+                dates_full, prices_full = dateoperations.extend_data_future(dates_full, prices_full, self.stopdate,
+                                                                            self.dateformat, zero_padding=False)
+
             # Store the latest available price and date, for the holding-period return analysis
             # (It needs to be un-extrapolated)
             self.latestrealprice = prices_full[-1]
@@ -122,6 +130,13 @@ class MarketPrices:
                 dates, prices = marketdata.import_marketdata_from_file(self.marketdata_filepath,
                                                                        self.marketdata_dateformat,
                                                                        self.dateformat, self.marketdata_delimiter)
+
+                # The returned market data might not be available until today.
+                # Extend the data accordingly into the future.
+                lastdate_dt = stringoperations.str2datetime(dates[-1], self.dateformat)
+                if stopdate_dt > lastdate_dt:
+                    dates, prices = dateoperations.extend_data_future(dates, prices, self.stopdate,
+                                                                      self.dateformat, zero_padding=False)
 
                 # Store the latest available price and date, for the holding-period return analysis
                 # (It needs to be un-extrapolated)
