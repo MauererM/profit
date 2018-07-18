@@ -665,11 +665,12 @@ def plot_asset_values_cost_payout_individual(assetlist, fname):
         print("No assets given for plot: " + fname)
         return
 
-    # Only plot assets with a value > 0 in the last analysis-data-values:
+    # Only plot assets with some value during the analysis period:
     assetlist_plot = []
     for asset in assetlist:
-        if asset.get_analysis_valuelist()[-1] > 1e-9:
+        if any(x > 1e-9 for x in asset.get_analysis_valuelist()):
             assetlist_plot.append(asset)
+
     if len(assetlist_plot) == 0:
         print("No assets of value given at the end of the analysis-period. Not plotting. File: " + fname)
         return
@@ -789,11 +790,12 @@ def plot_asset_returns_individual(assetlist, fname):
         print("No assets given for plot: " + fname)
         return
 
-    # Only plot assets with a value > 0 in the last analysis-data-values:
+    # Only plot assets with some value during the analysis period:
     assetlist_plot = []
     for asset in assetlist:
-        if asset.get_analysis_valuelist()[-1] > 1e-9:
+        if any(x > 1e-9 for x in asset.get_analysis_valuelist()):
             assetlist_plot.append(asset)
+
     if len(assetlist_plot) == 0:
         print("No assets of value given at the end of the analysis-period. Not plotting. File: " + fname)
         return
