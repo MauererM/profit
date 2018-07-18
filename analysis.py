@@ -102,6 +102,15 @@ def get_return_asset_holdingperiod(asset, dateformat):
     # Try to get the most recent value of the asset.
     priceobj = asset.get_marketprice_obj()
 
+    # No prices are given:
+    if priceobj is None:
+        print("WARNING: Cannot calculate holding period return of "
+              + asset.get_filename() + " due to unavailable and missing price of today. "
+                                       "Update the assets marketdata-file with values from today or "
+                                       "add a price-defining update-transaction of today.")
+        # Return a seemingly impossible (negative!) value:
+        return -1e10
+
     # If the asset is with a foreign currency, the values must be adapted:
     if asset.get_currency() != asset.get_basecurrency():
         forex_obj = asset.get_forex_obj()
