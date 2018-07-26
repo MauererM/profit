@@ -627,6 +627,7 @@ def plot_asset_projections(assetlist, interest, num_years, fname, titlestr):
 
     ax.set_xlabel("Dates")
     ax.set_ylabel("Values (" + cfg.BASECURRENCY + ")")
+    ax.set_ylim(ymin=0) # Looks better
     plt.title(titlestr)
 
     # Nicer date-plotting:
