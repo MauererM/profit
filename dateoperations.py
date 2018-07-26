@@ -10,6 +10,32 @@ import datetime
 import stringoperations
 
 
+def add_years(date, num_years, dateformat):
+    """Adds (or subtracts) a number of years to a given date
+    :param date: String of origninal date
+    :param num_years: Number of years to add or subtract, can be negative. Will be rounded to nearest int!
+    :param dateformat: String that encodes the format of the dates, e.g. "%d.%m.%Y"
+    :return: String of newly obtained date
+    """
+    num_years_int = int(num_years)
+    date_dt = stringoperations.str2datetime(date, dateformat)
+    date_added_dt = date_dt + datetime.timedelta(days=num_years_int * 365)
+    return stringoperations.datetime2str(date_added_dt, dateformat)
+
+
+def add_days(date, num_days, dateformat):
+    """Adds (or subtracts) a number of days to a given date
+    :param date: String of origninal date
+    :param num_days: Number of days to add or subtract, can be negative. Will be rounded to nearest int!
+    :param dateformat: String that encodes the format of the dates, e.g. "%d.%m.%Y"
+    :return: String of newly obtained date
+    """
+    num_days_int = int(num_days)
+    date_dt = stringoperations.str2datetime(date, dateformat)
+    date_added_dt = date_dt + datetime.timedelta(days=num_days_int)
+    return stringoperations.datetime2str(date_added_dt, dateformat)
+
+
 def asset_get_earliest_forex_trans_date(assets, dateformat):
     """Returns the earliest recorded transaction-date of an asset with foreign currencies.
     :param assets: List of assets

@@ -9,6 +9,34 @@ import stringoperations
 import helper
 
 
+def project_values(datelist, valuelist, num_years, interest_percent, dateformat):
+    """Projects values into the future given a certian interest rate. Annual compounding is assumed.
+    Exponential growth will be displayed.
+    :param datelist: List of dates corresponding to the values in valuelist
+    :param valuelist: Values. The last value is used to start the projection
+    :param num_years: Number of years to calculate into the future
+    :param interest_percent: Annual interest rate in percent. Annual compounding is assumed
+    :param dateformat: String that encodes the format of the dates, e.g. "%d.%m.%Y"
+    :return: Tuple of two lists: dates and values of both the past and future values, assuming the exponential growth.
+    """
+    # The projection starts from the next subsequent day:
+    date_start = dateoperations.add_days(datelist[-1], 1, dateformat)
+    # Find the end-date:
+    date_end = dateoperations.add_years(datelist[-1], num_years, dateformat)
+    # Create a datelist for the days of the projection:
+    datelist_fut = dateoperations.create_datelist(date_start, date_end, dateformat)
+    interest_day = (interest_percent / 100.0) / 365.0  # The daily interest rate. Annual compounding is assumed.
+    vallist_fut = list(valuelist)
+    for _ in datelist_fut:
+        vallist_fut.append(vallist_fut[-1] * (1 + interest_day))
+    # Concat the date lists to get one continuous list:
+    datelist_fut = datelist + datelist_fut
+    # Sanity check:
+    if len(datelist_fut) != len(vallist_fut):
+        raise RuntimeError('Lists are of unequal length')
+    return datelist_fut, vallist_fut
+
+
 def calc_moving_avg(xlist, ylist, winlen):
     """Calculates the moving-average of a XY data-set. The correspondingly filtered tuple is returned
     (which might be of a shorter length, if winlen > 1) ==> Values are only added, once the moving window is full of
@@ -33,7 +61,7 @@ def calc_moving_avg(xlist, ylist, winlen):
     if len(xlist) <= n:
         yfilt = sum(ylist) / len(ylist)
         # Get the middle index of the list:
-        mididx = int(round(len(xlist)/2.0))-1
+        mididx = int(round(len(xlist) / 2.0)) - 1
         xfilt = xlist[mididx]
         return xfilt, yfilt
 
@@ -429,14 +457,14 @@ if __name__ == '__main__':
 
     # print(dates)
     # print(ror)
-    #xvals = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
-    #yvals = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100]
-    #winlen = 8
+    # xvals = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+    # yvals = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100]
+    # winlen = 8
 
-    #xfilt, yfilt = calc_moving_avg(xvals, yvals, winlen)
-    #print(repr(yvals))
-    #print(repr(xfilt))
-    #print(repr(yfilt))
+    # xfilt, yfilt = calc_moving_avg(xvals, yvals, winlen)
+    # print(repr(yvals))
+    # print(repr(xfilt))
+    # print(repr(yfilt))
 
     # lista = [1, 3, 4]
     # listb = [2, 3, 5]

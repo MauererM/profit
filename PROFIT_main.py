@@ -53,6 +53,16 @@ Window length (in days) of moving average filter. Some plots contain filtered da
 WINLEN_MA = 30
 
 """
+Number of years to project the values of the investments into the future. The interest rate is given below.
+"""
+NUM_YEARS_INVEST_PROJECTION = 40
+
+"""
+Assumed interest rate (annual compounding) for the projection, in percent
+"""
+INTEREST_PROJECTION_PERCENT = 3
+
+"""
 The following strings name the paths of the different plots that will be generated.
 Do not provide the file-extension; PDF files will be created.
 The plots are stored in the "plots" folder
@@ -85,6 +95,8 @@ FILENAME_PLOT_GROUP = "Group"
 # Plots of asset values according to currency:
 FILENAME_CURRENCIES_STACKED = "Asset_Values_Currencies_Stacked"
 FILENAME_CURRENCIES_LINE = "Asset_Values_Currencies_Line"
+# Projected investment values:
+FILENAME_INVESTMENT_PROJECTIONS = "Investments_Values_Projected"
 
 """
 Purposes of the Assets
@@ -301,6 +313,10 @@ if __name__ == '__main__':
         plotting.plot_asset_values_stacked(investments, FILENAME_STACKPLOT_INVESTMENT_VALUES, "Value: All Investments")
         # Plot the returns of all investments accumulated, for the desired period:
         plotting.plot_assets_returns_total(investments, FILENAME_TOTAL_INVESTMENT_RETURNS, "Returns of Investments")
+        # Project the value of the investments into the future:
+        plotting.plot_asset_projections(investments, INTEREST_PROJECTION_PERCENT, NUM_YEARS_INVEST_PROJECTION,
+                                        FILENAME_INVESTMENT_PROJECTIONS,
+                                        "Future Value of All Investments, Compounded Annual Interest")
         # Calculate the return of all investments, for the considered analysis-period:
         tot_return = analysis.get_returns_assets_accumulated_analysisperiod(investments, setup.FORMAT_DATE)
         print("\nThe return of the investments of the considered analysis-period (past {:d} days) is: {:.2f} %".format(
