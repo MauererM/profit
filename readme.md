@@ -1,6 +1,8 @@
 # PROFIT
 ##### Python-Based Return On Investment and Financial Investigation Tool
 
+###### NOTE: The google finance api is acting up recently. Workarounds are under development.
+
 ### Features
 * Data aggregation: Accounts, investments, cash etc.
 * Long-term financial data analysis, tracking and plotting
