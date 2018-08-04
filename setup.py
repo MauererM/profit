@@ -17,7 +17,7 @@ MARKETDATA_DELIMITER = ";"
 
 # Some colors for plotting.
 # Determined using http://colorbrewer2.org/
-PLOTS_COLORS = ["#d7191c", "#fdae61", "#5e3c99", "#2c7bb6", "k"]
+PLOTS_COLORS = ["#d7191c", "#fdae61", "#5e3c99", "#2c7bb6", "k", "r", "g", "b"]
 
 # Plotting-Settings:
 PLOTSIZE = (11.69, 8.27)  # Dimension of the plots, x,y, in inches
