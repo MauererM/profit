@@ -95,6 +95,9 @@ def plot_currency_values(assetlist, fname, titlestring, drawstackedplot=True):
         for idx, rellist in enumerate(curvals_rel):
             ax.plot(xlist, rellist, alpha=1.0, zorder=3, clip_on=False, color=colorlist[idx], marker='',
                     label=legendlist[idx])
+            # Label the last value:
+            last_val = f"{rellist[-1]:.2f}"
+            ax.text(xlist[-1], rellist[-1], last_val)
 
         plt.legend(fancybox=True, shadow=True, ncol=1, framealpha=1.0, loc='best')
 
@@ -176,12 +179,18 @@ def plot_asset_groups(assets, grouplist, groupnames, fname, titlestring):
                 ax.plot(xlist, sumvals, alpha=1.0, zorder=3, clip_on=False, color=colorlist[k], marker='',
                         label=purpose)
                 plotted = True
+                # Label the last value:
+                last_val = f"{sumvals[-1]:.2f}"
+                ax.text(xlist[-1], sumvals[-1], last_val)
 
         # Plot the total sum of the group (only, if there are multiple constituents in a group)
         if len(purposelist) > 1 and plotted is True:
             totlabel = "Total Group Value of " + groupnames[purpidx]
             ax.plot(xlist, totsum, alpha=1.0, zorder=3, clip_on=False, color=colorlist[len(purposelist)], marker='',
                     label=totlabel)
+            # Label the last value:
+            last_val = f"{totsum[-1]:.2f}"
+            ax.text(xlist[-1], totsum[-1], last_val)
 
         # Only plot if there is actually a value in a group:
         if plotted is True:
@@ -231,6 +240,9 @@ def plot_forex_rates(forexobjdict, fname, titlestr):
             xlist = [stringoperations.str2datetime(x, setup.FORMAT_DATE) for x in date]
             ax.plot(xlist, rate, alpha=1.0, zorder=3, clip_on=False, color=colorlist[i], marker='',
                     label=obj.get_currency())
+            # Label the last value:
+            last_val = f"{rate[-1]:.2f}"
+            ax.text(xlist[-1], rate[-1], last_val)
             # Also plot the moving average:
             x_ma, y_ma = analysis.calc_moving_avg(xlist, rate, cfg.WINLEN_MA)
             linelabel = obj.get_currency() + ", Moving Avg"
@@ -328,6 +340,9 @@ def plot_assets_grouped(assetlist, fname, titlestr, plottype):
                 raise RuntimeError("Not enough colors in PLOTS_COLORS (in config-file) given...")
             ax.plot(xlist, val, alpha=1.0, zorder=3, clip_on=False, color=setup.PLOTS_COLORS[idx], marker='',
                     label=labels_groups[idx])
+            # Label the last value:
+            last_val = f"{val[-1]:.2f}"
+            ax.text(xlist[-1], val[-1], last_val)
 
         plt.legend(fancybox=True, shadow=True, ncol=1, framealpha=1.0, loc='best')
 
@@ -517,6 +532,9 @@ def plot_asset_values_indices(assetlist, indexlist, fname, titlestr):
     x = [stringoperations.str2datetime(x, dateformat) for x in datelist]
     ax.plot(x, sumlist, alpha=1.0, zorder=3, clip_on=False, color=setup.PLOTS_COLORS[0], marker='', label="Asset Value",
             linewidth=1.6)
+    # Label the last value:
+    last_val = f"{sumlist[-1]:.2f}"
+    ax.text(x[-1], sumlist[-1], last_val)
     # Also plot the moving average:
     x_ma, y_ma = analysis.calc_moving_avg(x, sumlist, cfg.WINLEN_MA)
     ax.plot(x_ma, y_ma, alpha=1.0, zorder=3, clip_on=False, color=setup.PLOTS_COLORS[0], marker='',
@@ -530,6 +548,9 @@ def plot_asset_values_indices(assetlist, indexlist, fname, titlestr):
             raise RuntimeError("Ran out of colors. Supply more in PLOTS_COLORS (configuration-file)")
         ax.plot(x, val, alpha=1.0, zorder=3, clip_on=False, color=setup.PLOTS_COLORS[i + 1], marker='',
                 label=indexname[i])
+        # Label the last value:
+        last_val = f"{val[-1]:.2f}"
+        ax.text(x[-1], val[-1], last_val)
         # Also plot the moving average:
         x_ma, y_ma = analysis.calc_moving_avg(x, val, cfg.WINLEN_MA)
         label_ma = indexname[i] + ", Moving Avg"
@@ -609,14 +630,23 @@ def plot_asset_projections(assetlist, interest, num_years, fname, titlestr):
     labelstr = f"{(interest * fact_up):.2f} %"
     ax.plot(x, vallist_fut_upper, alpha=1.0, zorder=3, clip_on=False, color=setup.PLOTS_COLORS[0], marker='',
             label=labelstr, linewidth=1.6)
+    # Label the last value:
+    last_val = f"{vallist_fut_upper[-1]:.2f}"
+    ax.text(x[-1], vallist_fut_upper[-1], last_val)
 
     labelstr = f"{interest:.2f} %"
     ax.plot(x, vallist_fut_base, alpha=1.0, zorder=3, clip_on=False, color=setup.PLOTS_COLORS[1], marker='',
             label=labelstr, linewidth=1.6)
+    # Label the last value:
+    last_val = f"{vallist_fut_base[-1]:.2f}"
+    ax.text(x[-1], vallist_fut_base[-1], last_val)
 
     labelstr = f"{(interest * fact_low):.2f} %"
     ax.plot(x, vallist_fut_lower, alpha=1.0, zorder=3, clip_on=False, color=setup.PLOTS_COLORS[2], marker='',
             label=labelstr, linewidth=1.6)
+    # Label the last value:
+    last_val = f"{vallist_fut_lower[-1]:.2f}"
+    ax.text(x[-1], vallist_fut_lower[-1], last_val)
 
     plt.legend(fancybox=True, shadow=True, ncol=1, framealpha=1.0, loc='upper left',
                bbox_to_anchor=(0.01, 0.99))
@@ -627,7 +657,7 @@ def plot_asset_projections(assetlist, interest, num_years, fname, titlestr):
 
     ax.set_xlabel("Dates")
     ax.set_ylabel("Values (" + cfg.BASECURRENCY + ")")
-    ax.set_ylim(ymin=0) # Looks better
+    ax.set_ylim(ymin=0)  # Looks better
     plt.title(titlestr)
 
     # Nicer date-plotting:
