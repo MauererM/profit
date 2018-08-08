@@ -5,7 +5,6 @@ PROFIT - Python-Based Return on Investment and Financial Investigation Tool
 MIT License
 Copyright (c) 2018 Mario Mauerer
 """
-
 import accountparser
 import investmentparser
 import files
@@ -17,6 +16,7 @@ import plotting
 import analysis
 import prices
 import setup
+import time
 
 """
 These strings specify the folders from which the account and investment files
@@ -34,7 +34,7 @@ BASECURRENCY = "CHF"
 """
 Data is analyzed a certain number of days into the past, from today
 """
-DAYS_ANALYSIS = 730
+DAYS_ANALYSIS = 1100
 
 """
 This switch determines whether the plots are opened directly after creation or not.
@@ -129,13 +129,13 @@ They are given in the following as dicts, with a Name, Symbol and Exchange, wher
 data-provider tool.
 """
 # Swiss market index:
-INDEX_SMI = {"Name": "SMI", "Symbol": "SMI", "Exchange": "INDEXSWX"}
+INDEX_SP = {"Name": "S&P 500", "Symbol": "GSPC", "Exchange": " "}
 # Dow Jones industrial average:
-INDEX_DOW = {"Name": "Dow Jones", "Symbol": ".DJI", "Exchange": "INDEXDJX"}
+INDEX_DOW = {"Name": "Dow Jones", "Symbol": "DJI", "Exchange": "INDEXDJX"}
 # NASDAQ:
-INDEX_NASDAQ = {"Name": "NASDAQ", "Symbol": ".IXIC", "Exchange": "INDEXNASDAQ"}
+INDEX_NASDAQ = {"Name": "NASDAQ", "Symbol": "IXIC", "Exchange": "INDEXNASDAQ"}
 # This list collects the dictionaries, its name must be INDICES!
-INDICES = [INDEX_SMI, INDEX_DOW, INDEX_NASDAQ]
+INDICES = [INDEX_SP, INDEX_DOW, INDEX_NASDAQ]
 
 """
 ########################################################################################################################
@@ -149,6 +149,11 @@ if __name__ == '__main__':
 
     # Print the current version of the tool
     print("PROFIT V{:.1f} starting".format(setup.PROFIT_VERSION))
+
+    # Check, if the API key is provided:
+    if "ENTER_API_KEY" in setup.API_KEY_ALPHA_VANTAGE:
+        raise RuntimeError("Provide Alpha Vantage API Key in setup.py. See: https://www.alphavantage.co")
+    print("Your Alpha Vantage API Key is: " + setup.API_KEY_ALPHA_VANTAGE)
 
     """
     Sanity checks:
@@ -243,6 +248,9 @@ if __name__ == '__main__':
                                                       setup.MARKETDATA_FORMAT_DATE, setup.MARKETDATA_DELIMITER,
                                                       earliest_forex,
                                                       date_today_str, setup.FORMAT_DATE)
+            print(f"Waiting {setup.API_COOLDOWN_TIME_SECOND:.1f}s for API cooldown.")
+            time.sleep(setup.API_COOLDOWN_TIME_SECOND)
+
     # Store an empty object in the basecurrency-key of the forex-dict:
     forexdict[BASECURRENCY] = None
 
@@ -256,8 +264,13 @@ if __name__ == '__main__':
     Set the analysis-data in the assets. This obtains market prices, among others, and may take a short while.
     """
     print("\nPreparing analysis-data for accounts and investments. "
-          "\nThis also obtains market prices and may take a while")
+          "\nThis also obtains market prices and may take a while\n")
     for asset in assets:
+        if asset.is_investment() is True:
+            print(
+                f"Waiting {setup.API_COOLDOWN_TIME_SECOND:.1f}s for API cooldown. Then obtaining: " +
+                asset.get_symbol())
+            time.sleep(setup.API_COOLDOWN_TIME_SECOND)
         asset.set_analysis_data(date_analysis_start_str, date_today_str, setup.FORMAT_DATE)
 
     """
@@ -273,6 +286,8 @@ if __name__ == '__main__':
             ex = stockidx["Exchange"]
             currency = stockidx["Name"]  # The name of the stock-index is stored as the currency
             # Obtain the prices
+            print(f"Waiting {setup.API_COOLDOWN_TIME_SECOND:.1f}s for API cooldown.")
+            time.sleep(setup.API_COOLDOWN_TIME_SECOND)
             obj = prices.MarketPrices(sym, ex, currency, setup.MARKETDATA_FOLDER, setup.MARKETDATA_FORMAT_DATE,
                                       setup.MARKETDATA_DELIMITER, date_analysis_start_str, date_today_str,
                                       setup.FORMAT_DATE)
