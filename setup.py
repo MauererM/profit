@@ -5,6 +5,12 @@ MIT License
 Copyright (c) 2018 Mario Mauerer
 """
 
+# The API-Key for Alpha Vantage:
+API_KEY_ALPHA_VANTAGE = 'ENTER_API_KEY_HERE'
+
+# Cooldown time in seconds between API calls:
+API_COOLDOWN_TIME_SECOND = 20.0
+
 # The marketdata-folder stores different files containing historic prices and forex-rates
 MARKETDATA_FOLDER = "marketdata"
 # The plots-folder:
