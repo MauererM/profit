@@ -25,7 +25,12 @@ def within_tol(a, b, tol):
     :param tol: Relative tolerance
     :return: True, if the numbers are within tolerance
     """
-    return abs((a / b) - 1.0) <= tol
+    if b > 1e-9:
+        return abs((a / b) - 1.0) <= tol
+    elif a > 1e-9:
+        return abs((b / a) - 1.0) <= tol
+    else:
+        return True
 
 
 def list_all_zero(vallist):
