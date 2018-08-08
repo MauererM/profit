@@ -37,6 +37,44 @@ def project_values(datelist, valuelist, num_years, interest_percent, dateformat)
     return datelist_fut, vallist_fut
 
 
+def calc_median_filt(xlist, ylist, winlen):
+    """Calculates the median-filtered values of a XY data-set. The correspondingly filtered tuple is returned
+    (xlist is not altered)
+    The returned lists are of identical length than the input. The boundary values are not filtered.
+    If the list is shorter than the window or the window length is 1, the input is returned unaltered.
+    :param xlist: List of x-values. Must not necessarily be numeric.
+    :param ylist: List of to-be-filtered y-values
+    :param winlen: Length of the window, can be 0 or 1 or negative (no filtering performed then)
+    :return: tuple of filtered x,y values
+    """
+
+    if winlen <= 1 or len(ylist) < winlen:
+        return (xlist, ylist)
+    if len(xlist) != len(ylist):
+        raise RuntimeError("X, Y lists of moving-avg filter must be of same length")
+    if (winlen % 2) == 0:
+        raise RuntimeError("Window length of median filter must be odd!")
+
+    halfwin = int((winlen - 1) / 2)
+    filtval = []
+    # No filtering at lower list boundary:
+    for idx in range(0,halfwin):
+        filtval.append(ylist[idx])
+    # Filtering:
+    for idx in range(halfwin, len(ylist)-halfwin):
+        startidx = idx - halfwin
+        stopidx = idx + halfwin
+        win = ylist[startidx:stopidx+1]
+        win.sort()
+        filtval.append(win[halfwin])
+    # No filtering at upper list boundary:
+    for idx in range(len(ylist)-halfwin, len(ylist)):
+        filtval.append(ylist[idx])
+
+
+    return (xlist, filtval)
+
+
 def calc_moving_avg(xlist, ylist, winlen):
     """Calculates the moving-average of a XY data-set. The correspondingly filtered tuple is returned
     (which might be of a shorter length, if winlen > 1) ==> Values are only added, once the moving window is full of
@@ -454,6 +492,10 @@ if __name__ == '__main__':
     inflowlist = [0, 99, 0, 0, 0, 0]
     outflowlist = [0, 5, 0, 0, 50, 5]
     timestep = 4
+
+    #xfilt, yfilt = calc_median_filt(datelist, valuelist, 3)
+    #print(xfilt)
+    #print(yfilt)
 
     # print(dates)
     # print(ror)
