@@ -4,6 +4,9 @@ It is possible that at some point, google finance does not exist anymore, or the
 Then, this file has to be adapted for the new source of exchange rates and stock prices.
 A potential option is pandas-datareader...
 
+NOTE: As of August 2018, Google seems to have terminated its API and the functions provided with this file
+no longer work.
+
 The interface to/from these functions is string-based. The functions return a list of strings for the dates,
 to which the returned prices/rates correspond.
 
