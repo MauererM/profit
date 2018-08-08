@@ -79,7 +79,7 @@ def update_check_marketdata_in_file(filepath, dateformat_marketdata, dateformat,
                 price_cur = mketprices_cur[idx]
                 price_new = newvals[indexes[0]]
                 # The values should match within 0.5% at least.
-                if helper.within_tol(price_cur, price_new, 0.5 / 100.0) is False:
+                if helper.within_tol(price_cur, price_new, 2.0 / 100.0) is False:
                     print("WARNING: The obtained market-price does not match with the recorded value. Path: " +
                           filepath + ". Line-Nr: " + repr(idx) + ". Recorded Value=" + repr(price_cur) +
                           ". New Value=" + repr(price_new) + ". Date: " + date_cur)

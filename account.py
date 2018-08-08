@@ -255,3 +255,7 @@ class Account:
     def get_type(self):
         """Returns the type of the account (as string)"""
         return self.type
+
+    def is_investment(self):
+        """Returns False, as the account is not an investment."""
+        return False

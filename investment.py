@@ -645,3 +645,7 @@ class Investment:
     def get_dateformat(self):
         """Return the dateformat"""
         return self.dateformat
+
+    def is_investment(self):
+        """Returns True, if the object is an Investment"""
+        return True
