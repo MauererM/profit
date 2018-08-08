@@ -6,7 +6,7 @@ Copyright (c) 2018 Mario Mauerer
 """
 
 import files
-import dataprovider_google as dataprovider
+import dataprovider_alphavantage as dataprovider
 import stringoperations
 import dateoperations
 import marketdata
@@ -66,6 +66,7 @@ class MarketPrices:
             dates, prices = dataprovider.get_stock_data(self.symbol, self.exchange, self.startdate, self.stopdate,
                                                         self.dateformat)
             success = True
+            print("Obtained market data for " + self.symbol)
         except:
             success = False
 
@@ -131,19 +132,6 @@ class MarketPrices:
                                                                        self.marketdata_dateformat,
                                                                        self.dateformat, self.marketdata_delimiter)
 
-                # The returned market data might not be available until today.
-                # Extend the data accordingly into the future.
-                lastdate_dt = stringoperations.str2datetime(dates[-1], self.dateformat)
-                if stopdate_dt > lastdate_dt:
-                    dates, prices = dateoperations.extend_data_future(dates, prices, self.stopdate,
-                                                                      self.dateformat, zero_padding=False)
-
-                # Store the latest available price and date, for the holding-period return analysis
-                # (It needs to be un-extrapolated)
-                self.latestrealprice = prices[-1]
-                self.latestrealpricedate = dates[-1]
-
-                # Format the data such that it matches the analysis-range:
                 dates_start = stringoperations.str2datetime(dates[0], self.dateformat)
                 dates_stop = stringoperations.str2datetime(dates[-1], self.dateformat)
                 if dates_start > startdate_dt:
@@ -154,6 +142,19 @@ class MarketPrices:
                           dates[-1] + ". Latest available data will be extrapolated forwards.")
                     print("CAREFUL: Update the market-data file manually with the most recent value, "
                           "or the holding period returns cannot be calculated.")
+
+                # The returned market data might not be available until today.
+                # Extend the data accordingly into the future.
+                # DO NOT DO THIS
+                # lastdate_dt = stringoperations.str2datetime(dates[-1], self.dateformat)
+                # if stopdate_dt > lastdate_dt:
+                #    dates, prices = dateoperations.extend_data_future(dates, prices, self.stopdate,
+                #                                                      self.dateformat, zero_padding=False)
+
+                # Store the latest available price and date, for the holding-period return analysis
+                # (It needs to be un-extrapolated)
+                self.latestrealprice = prices[-1]
+                self.latestrealpricedate = dates[-1]
 
                 # Crop the data to the desired period:
                 dates_crop, prices_crop = dateoperations.format_datelist(dates, prices,

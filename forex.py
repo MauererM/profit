@@ -5,7 +5,7 @@ MIT License
 Copyright (c) 2018 Mario Mauerer
 """
 
-import dataprovider_google as dataprovider
+import dataprovider_alphavantage as dataprovider
 import dateoperations
 import stringoperations
 import files
@@ -113,14 +113,6 @@ class ForexRates:
                                                                       self.marketdata_dateformat,
                                                                       self.dateformat, self.marketdata_delimiter)
 
-                # The returned forex data might not be available until today.
-                # Extend the data accordingly into the future.
-                lastdate_dt = stringoperations.str2datetime(dates[-1], self.dateformat)
-                if stopdate_dt > lastdate_dt:
-                    dates, rates = dateoperations.extend_data_future(dates, rates, self.stopdate,
-                                                                     self.dateformat, zero_padding=False)
-
-                # Format the data such that it matches the analysis-range:
                 dates_start = stringoperations.str2datetime(dates[0], self.dateformat)
                 dates_stop = stringoperations.str2datetime(dates[-1], self.dateformat)
                 if dates_start > startdate_dt:
@@ -129,6 +121,14 @@ class ForexRates:
                 if dates_stop < stopdate_dt:
                     print("Available rates (stored market-data) are only available until the " +
                           dates[-1] + ". Latest available data will be extrapolated forwards.")
+
+                # The returned forex data might not be available until today.
+                # Extend the data accordingly into the future.
+                # DO NOT DO THIS!
+                # lastdate_dt = stringoperations.str2datetime(dates[-1], self.dateformat)
+                # if stopdate_dt > lastdate_dt:
+                #    dates, rates = dateoperations.extend_data_future(dates, rates, self.stopdate,
+                #                                                     self.dateformat, zero_padding=False)
 
                 # Crop the data to the desired period:
                 dates_crop, rates_crop = dateoperations.format_datelist(dates, rates,
