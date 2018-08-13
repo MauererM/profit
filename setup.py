@@ -1,4 +1,4 @@
-"""Provides various low-level configuration constants used throughout PROFIT
+p"""Provides various low-level configuration constants used throughout PROFIT
 
 PROFIT - Python-Based Return on Investment and Financial Investigation Tool
 MIT License
@@ -9,7 +9,7 @@ Copyright (c) 2018 Mario Mauerer
 API_KEY_ALPHA_VANTAGE = 'ENTER_API_KEY_HERE'
 
 # Cooldown time in seconds between API calls:
-API_COOLDOWN_TIME_SECOND = 20.0
+API_COOLDOWN_TIME_SECOND = 31.0
 
 # The marketdata-folder stores different files containing historic prices and forex-rates
 MARKETDATA_FOLDER = "marketdata"
@@ -97,7 +97,7 @@ STRING_EXCHANGE = "Exchange"
 STRING_TRANSACTIONS = "Transactions"
 
 # Version of PROFIT:
-PROFIT_VERSION = 1.0
+PROFIT_VERSION = 1.1
 
 # Dashes for moving averages:
 DASHES_MA = [4, 2]
