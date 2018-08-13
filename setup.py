@@ -1,4 +1,4 @@
-p"""Provides various low-level configuration constants used throughout PROFIT
+"""Provides various low-level configuration constants used throughout PROFIT
 
 PROFIT - Python-Based Return on Investment and Financial Investigation Tool
 MIT License
