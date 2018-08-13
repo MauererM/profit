@@ -1,8 +1,6 @@
 # PROFIT
 ##### Python-Based Return On Investment and Financial Investigation Tool
 
-###### NOTE: The google finance api is acting up recently. Workarounds are under development.
-
 ### Features
 * Data aggregation: Accounts, investments, cash etc.
 * Long-term financial data analysis, tracking and plotting
@@ -15,6 +13,7 @@
 * Automatic gathering of market prices and foreign exchange rates
 	- Data can also be provided manually
 * MIT License
+* Uses the Alpha Vantage API to automatically obtain market data
 
 PROFIT is a simple aggregation and analysis tool for personal finance. It provides a comprehensive overview of the tracked assets. This is usually complicated by the fact that assets are commonly held in different banks and accounts, with numerous currencies. Furthermore, office software, which is often used to track personal assets, scales badly, i.e., adding/removing assets requires new spreadsheets or updated formulas. PROFIT is simple and focuses on long-term maintainability, simplicity and scalability.
 
@@ -32,10 +31,11 @@ Below are some of the outputs of the tool. Different PDF plots are created. Asse
 
 ### Try it out::
 1. `git clone https://github.com/MauererM/profit.git` (or simply download the repository with the direct link).
-2. Run *PROFIT_main.py* (with a Python 3 interpreter) and look at the results in the *plots* folder (Some exemplary assets are provided). Some packages might have to be installed, most probably *googlefinance.client* and *matplotlib*.
-3. Move the provided examples to the *accounts* and *investments* folders and modify them to your liking. Change the names of the folders in *PYTHON_main.py* to use the real folders (*ACCOUNT_FOLDER* and *INVESTMENT_FOLDER* strings).
-4. As simple as that :moneybag:
-5. The short manual provides more information: [PROFIT manual (PDF from doc folder)](https://github.com/MauererM/profit/raw/master/doc/manual.pdf "PROFIT manual (PDF)")
+2. (Optional) Obtain an API key from Alpha Vantage (for free, https://www.alphavantage.co/) and enter it in *setup.py*.
+3. Run *PROFIT_main.py* (with a Python 3 interpreter) and look at the results in the *plots* folder (Some exemplary assets are provided). Some packages might have to be installed, most probably *alpha_vantage* and *matplotlib*.
+4. Move the provided examples to the *accounts* and *investments* folders and modify them to your liking. Change the names of the folders in *PYTHON_main.py* to use the real folders (*ACCOUNT_FOLDER* and *INVESTMENT_FOLDER* strings).
+5. As simple as that :moneybag:
+6. The short manual provides more information: [PROFIT manual (PDF from doc folder)](https://github.com/MauererM/profit/raw/master/doc/manual.pdf "PROFIT manual (PDF)")
 
 Note that the contents of the folders *accounts* and *investments*, where your personal data resides, are ignored by git, such that the project can remain in a git repository while being used.
 
@@ -43,8 +43,10 @@ Note that the contents of the folders *accounts* and *investments*, where your p
 `git clone https://github.com/MauererM/profit.git`
 
 #### To Do:
-- [ ] The Google Finance API seems very spotty at the moment - port to pandas datareader and/or other fallback options
-- [ ] More file parsing-checks: e.g., missing/wrong delimiters, wrong date format nonzero numbers when they should be zero etc.
+- [ ] Observe the behavior of the Google Finance API in the future. Maybe it comes back...
+- [x] Migrated to the Alpha Vantage API, as the Google finance API closed down in August 2018.
+- [x] Added an extrapolation of the investment values, assuming a (configurable) interest rate
+- [x] Displaying the most recent numeric values in some line plots
 - [x] Plot value ratios of foreign currencies in portfolio
 - [x] Some stacked plots don't sort according to the most recent values: Add this
 - [x] One plot for each purpose-group, with individual group members
