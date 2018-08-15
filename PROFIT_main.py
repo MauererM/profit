@@ -128,14 +128,13 @@ Stockmarket-Indices. These are used in certain plots. They are also obtained fro
 They are given in the following as dicts, with a Name, Symbol and Exchange, whereas the latter two are required by the
 data-provider tool.
 """
-# Swiss market index:
-INDEX_SP = {"Name": "S&P 500", "Symbol": "GSPC", "Exchange": " "}
+
 # Dow Jones industrial average:
 INDEX_DOW = {"Name": "Dow Jones", "Symbol": "DJI", "Exchange": "INDEXDJX"}
 # NASDAQ:
 INDEX_NASDAQ = {"Name": "NASDAQ", "Symbol": "IXIC", "Exchange": "INDEXNASDAQ"}
 # This list collects the dictionaries, its name must be INDICES!
-INDICES = [INDEX_SP, INDEX_DOW, INDEX_NASDAQ]
+INDICES = [INDEX_DOW, INDEX_NASDAQ]
 
 """
 ########################################################################################################################
