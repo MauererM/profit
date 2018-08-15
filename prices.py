@@ -95,6 +95,9 @@ class MarketPrices:
             self.latestrealprice = prices_full[-1]
             self.latestrealpricedate = dates_full[-1]
 
+            # Interpolate the data to get a consecutive list:
+            dates_full, prices_full = dateoperations.interpolate_data(dates_full, prices_full, self.dateformat)
+
             # The available market-data (from the dataprovider and the database) might not reach back to the
             # desired startdate! Check it:
             dates_full_start = stringoperations.str2datetime(dates_full[0], self.dateformat)
@@ -112,14 +115,12 @@ class MarketPrices:
                       self.symbol + ", exchange: " + self.exchange)
 
             # Crop the data to the desired period:
-            dates_crop, prices_crop = dateoperations.format_datelist(dates_full, prices_full,
-                                                                     self.startdate, self.stopdate,
-                                                                     self.dateformat,
-                                                                     zero_padding_past=False,
-                                                                     zero_padding_future=False)
-            # Interpolate the data to get a consecutive list:
-            self.market_dates, self.market_prices = dateoperations.interpolate_data(dates_crop, prices_crop,
-                                                                                    self.dateformat)
+            self.market_dates, self.market_prices = dateoperations.format_datelist(dates_full, prices_full,
+                                                                                   self.startdate, self.stopdate,
+                                                                                   self.dateformat,
+                                                                                   zero_padding_past=False,
+                                                                                   zero_padding_future=False)
+
             self.pricedata_avail = True
 
         # It was not possible to obtain market-data: Use potentially recorded historic data in the marketdata-folder
@@ -156,15 +157,16 @@ class MarketPrices:
                 self.latestrealprice = prices[-1]
                 self.latestrealpricedate = dates[-1]
 
-                # Crop the data to the desired period:
-                dates_crop, prices_crop = dateoperations.format_datelist(dates, prices,
-                                                                         self.startdate, self.stopdate,
-                                                                         self.dateformat,
-                                                                         zero_padding_past=False,
-                                                                         zero_padding_future=False)
                 # Interpolate the data to get a consecutive list:
-                self.market_dates, self.market_prices = dateoperations.interpolate_data(dates_crop, prices_crop,
-                                                                                        self.dateformat)
+                dates, prices = dateoperations.interpolate_data(dates, prices, self.dateformat)
+
+                # Crop the data to the desired period:
+                self.market_dates, self.market_prices = dateoperations.format_datelist(dates, prices,
+                                                                                       self.startdate, self.stopdate,
+                                                                                       self.dateformat,
+                                                                                       zero_padding_past=False,
+                                                                                       zero_padding_future=False)
+
                 self.pricedata_avail = True
 
             # Really no price-data available:

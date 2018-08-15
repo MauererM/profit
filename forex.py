@@ -81,6 +81,10 @@ class ForexRates:
                 dates_full, rates_full = dateoperations.extend_data_future(dates_full, rates_full, self.stopdate,
                                                                            self.dateformat, zero_padding=False)
 
+            # Interpolate the data to get a consecutive list:
+            dates_full, rates_full = dateoperations.interpolate_data(dates_full, rates_full,
+                                                                     self.dateformat)
+
             # The available market-data (from the dataprovider and the database) might not reach back to the
             # desired startdate! Check it:
             dates_full_start = stringoperations.str2datetime(dates_full[0], self.dateformat)
@@ -93,14 +97,12 @@ class ForexRates:
                       dates_full[-1] + ". Latest available data will be extrapolated forwards.")
 
             # Crop the data to the desired period:
-            dates_crop, rates_crop = dateoperations.format_datelist(dates_full, rates_full,
-                                                                    self.startdate, self.stopdate,
-                                                                    self.dateformat,
-                                                                    zero_padding_past=False,
-                                                                    zero_padding_future=False)
-            # Interpolate the data to get a consecutive list:
-            self.rate_dates, self.rates = dateoperations.interpolate_data(dates_crop, rates_crop,
-                                                                          self.dateformat)
+            self.rate_dates, self.rates = dateoperations.format_datelist(dates_full, rates_full,
+                                                                         self.startdate, self.stopdate,
+                                                                         self.dateformat,
+                                                                         zero_padding_past=False,
+                                                                         zero_padding_future=False)
+
             self.pricedata_avail = True
 
         # It was not possible to obtain rates-data: Use potentially recorded historic data in the marketdata-folder
@@ -130,15 +132,16 @@ class ForexRates:
                 #    dates, rates = dateoperations.extend_data_future(dates, rates, self.stopdate,
                 #                                                     self.dateformat, zero_padding=False)
 
-                # Crop the data to the desired period:
-                dates_crop, rates_crop = dateoperations.format_datelist(dates, rates,
-                                                                        self.startdate, self.stopdate,
-                                                                        self.dateformat,
-                                                                        zero_padding_past=False,
-                                                                        zero_padding_future=False)
                 # Interpolate the data to get a consecutive list:
-                self.rate_dates, self.rates = dateoperations.interpolate_data(dates_crop, rates_crop,
-                                                                              self.dateformat)
+                dates, rates = dateoperations.interpolate_data(dates, rates, self.dateformat)
+
+                # Crop the data to the desired period:
+                self.rate_dates, self.rates = dateoperations.format_datelist(dates, rates,
+                                                                             self.startdate, self.stopdate,
+                                                                             self.dateformat,
+                                                                             zero_padding_past=False,
+                                                                             zero_padding_future=False)
+
                 self.pricedata_avail = True
 
             # Really no price-data available:
