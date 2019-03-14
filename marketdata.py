@@ -22,6 +22,8 @@ def update_check_marketdata_in_file(filepath, dateformat_marketdata, dateformat,
     an updated version of the file is written. The values of the updated file are returned as tuple.
     The last second entries of the marketdata (the two most recent dates) are ignored when checking for matching data,
     since the daily data is end-of-day and might be extrapolated one day forward, which changes it...
+    It is assumed that the data in the marketdata-file is always correct and hence, this data is used. A warning is
+    issued if this happens.
     :param filepath: String of the path of the marketdata-file
     :param dateformat_marketdata: String of the dateformat used in the marketdata-file
     :param dateformat: String of the dateformat as used by the rest of the functions
@@ -79,10 +81,13 @@ def update_check_marketdata_in_file(filepath, dateformat_marketdata, dateformat,
                 price_cur = mketprices_cur[idx]
                 price_new = newvals[indexes[0]]
                 # The values should match within 0.5% at least.
-                if helper.within_tol(price_cur, price_new, 2.0 / 100.0) is False:
+                if helper.within_tol(price_cur, price_new, 0.5 / 100.0) is False:
+                    # It is assumed that the marketdata-file is always correct:
+                    newvals[indexes[0]] = price_cur
                     print("WARNING: The obtained market-price does not match with the recorded value. Path: " +
-                          filepath + ". Line-Nr: " + repr(idx) + ". Recorded Value=" + repr(price_cur) +
-                          ". New Value=" + repr(price_new) + ". Date: " + date_cur)
+                          filepath + ". Recorded Value=" + repr(price_cur) +
+                          ". New Value=" + repr(price_new) + ". Date: " + date_cur + ". Using recorded data from file. "
+                                                                                     "Double-check data/source.")
 
         # The obtained new values now match the existing values (if there are double entries), which is good.
         # In the following: the new values are sorted into the existing market-data, and the file is updated
