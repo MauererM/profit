@@ -16,7 +16,6 @@ import plotting
 import analysis
 import prices
 import setup
-import time
 
 """
 These strings specify the folders from which the account and investment files
@@ -34,7 +33,7 @@ BASECURRENCY = "CHF"
 """
 Data is analyzed a certain number of days into the past, from today
 """
-DAYS_ANALYSIS = 1100
+DAYS_ANALYSIS = 1000
 
 """
 This switch determines whether the plots are opened directly after creation or not.
@@ -247,8 +246,6 @@ if __name__ == '__main__':
                                                       setup.MARKETDATA_FORMAT_DATE, setup.MARKETDATA_DELIMITER,
                                                       earliest_forex,
                                                       date_today_str, setup.FORMAT_DATE)
-            print(f"Waiting {setup.API_COOLDOWN_TIME_SECOND:.1f}s for API cooldown.")
-            time.sleep(setup.API_COOLDOWN_TIME_SECOND)
 
     # Store an empty object in the basecurrency-key of the forex-dict:
     forexdict[BASECURRENCY] = None
@@ -265,11 +262,6 @@ if __name__ == '__main__':
     print("\nPreparing analysis-data for accounts and investments. "
           "\nThis also obtains market prices and may take a while\n")
     for asset in assets:
-        if asset.is_investment() is True:
-            print(
-                f"Waiting {setup.API_COOLDOWN_TIME_SECOND:.1f}s for API cooldown. Then obtaining: " +
-                asset.get_symbol())
-            time.sleep(setup.API_COOLDOWN_TIME_SECOND)
         asset.set_analysis_data(date_analysis_start_str, date_today_str, setup.FORMAT_DATE)
 
     """
@@ -285,8 +277,6 @@ if __name__ == '__main__':
             ex = stockidx["Exchange"]
             currency = stockidx["Name"]  # The name of the stock-index is stored as the currency
             # Obtain the prices
-            print(f"Waiting {setup.API_COOLDOWN_TIME_SECOND:.1f}s for API cooldown.")
-            time.sleep(setup.API_COOLDOWN_TIME_SECOND)
             obj = prices.MarketPrices(sym, ex, currency, setup.MARKETDATA_FOLDER, setup.MARKETDATA_FORMAT_DATE,
                                       setup.MARKETDATA_DELIMITER, date_analysis_start_str, date_today_str,
                                       setup.FORMAT_DATE)

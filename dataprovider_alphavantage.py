@@ -20,6 +20,7 @@ import setup
 from alpha_vantage.timeseries import TimeSeries
 import pandas
 import requests
+import time
 
 
 def get_forex_data(sym_a, sym_b, startdate, stopdate, dateformat):
@@ -41,6 +42,10 @@ def get_forex_data(sym_a, sym_b, startdate, stopdate, dateformat):
         raise RuntimeError("Startdate has to be before stopdate")
     if stopdate_dt > today:
         raise RuntimeError("Cannot (unfortunately) obtain forex-data from the future.")
+
+    # Wait for the API to cool down (frequent requests are not allowed)
+    print(f"Waiting {setup.API_COOLDOWN_TIME_SECOND:.1f}s for API cooldown")
+    time.sleep(setup.API_COOLDOWN_TIME_SECOND)
 
     # The github-provided API from Alpha Vantage cannot be used, as it does not provide historic forex data.
     # Hence, we request data from the API directly:
@@ -118,6 +123,10 @@ def get_stock_data(sym_stock, sym_exchange, startdate, stopdate, dateformat):
         raise RuntimeError("Startdate has to be before stopdate")
     if stopdate_dt > today:
         raise RuntimeError("Cannot (unfortunately) obtain stock-data from the future.")
+
+    # Wait for the API to cool down (frequent requests are not allowed)
+    print(f"Waiting {setup.API_COOLDOWN_TIME_SECOND:.1f}s for API cooldown")
+    time.sleep(setup.API_COOLDOWN_TIME_SECOND)
 
     ts_alphavantage = TimeSeries(key=setup.API_KEY_ALPHA_VANTAGE, output_format='pandas')
     dataframe, test = ts_alphavantage.get_daily(symbol=sym_stock, outputsize='full')
