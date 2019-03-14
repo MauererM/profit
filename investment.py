@@ -432,6 +432,10 @@ class Investment:
                 # transactions.
                 # BUT: It's possible that the obtained data has been extrapolated and is thus not matching ==> issue
                 # only a warning.
+                """
+                NOTE: This is not being done, as it's sort of redundant/annoying. The recorded transactions-price is
+                usually not the end-of-day price, and hence this warning pops up often. Also, sometimes the market-
+                price is extrapolated backwards, which is also OK. Use the marketdata-file to provide up-to-date data.
                 for idx, date in enumerate(marketdates):
                     indexes = [i for i, x in enumerate(self.analysis_dates) if x == date]
                     trans_price = self.analysis_prices[indexes[0]]
@@ -445,6 +449,7 @@ class Investment:
                               repr(market_price) + ". Recorded price: " +
                               repr(trans_price) + ". This might be OK (backwards-extrapolation of missing data). "
                                                   "Potentially double-check.")
+                """
 
             # No asset prices are available whatsoever.
             else:
