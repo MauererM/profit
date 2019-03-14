@@ -6,7 +6,7 @@ Copyright (c) 2018 Mario Mauerer
 """
 
 # The API-Key for Alpha Vantage:
-API_KEY_ALPHA_VANTAGE = 'ENTER_API_KEY_HERE'
+API_KEY_ALPHA_VANTAGE = 'ENTER_KEY_HERE'
 
 # Cooldown time in seconds between API calls:
 API_COOLDOWN_TIME_SECOND = 31.0
@@ -30,7 +30,7 @@ PLOTSIZE = (11.69, 8.27)  # Dimension of the plots, x,y, in inches
 
 # Price-Sanity-Check threshold (in percent)
 # Market-data prices are compared to recorded transactions-prices. If they deviate too much, a warning is printed.
-PRICE_COMPARISON_THRESHOLD = 2.0
+PRICE_COMPARISON_THRESHOLD = 1.0
 
 # Delimiter used in the database-files
 DELIMITER = ";"
