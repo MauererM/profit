@@ -443,9 +443,8 @@ class Investment:
                               "transaction-price. File: " + self.filename
                               + ". Transaction-date: " + date + ". Expected price: " +
                               repr(market_price) + ". Recorded price: " +
-                              repr(trans_price) + ". This might be OK; if obtained marked-data has been "
-                                                  "extrapolated backwards. Otherwise: Fix, potentially by adapting the "
-                                                  "marketdata-file.")
+                              repr(trans_price) + ". This might be OK (backwards-extrapolation of missing data). "
+                                                  "Potentially double-check.")
 
             # No asset prices are available whatsoever.
             else:
