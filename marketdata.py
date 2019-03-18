@@ -69,6 +69,8 @@ def update_check_marketdata_in_file(filepath, dateformat_marketdata, dateformat,
 
         # Iterate over all lines of the marketdata-file and
         # check if stored values match with newdates,newvals (if possible)
+        # If not, a list of non-matching strings is output afterwards.
+        discrepancy_entries = []
         for idx, date_cur in enumerate(mketdates_cur):
             # Check, if the currently selected date is available in the newdates, too:
             indexes = [i for i, x in enumerate(newdates) if x == date_cur]
@@ -84,10 +86,24 @@ def update_check_marketdata_in_file(filepath, dateformat_marketdata, dateformat,
                 if helper.within_tol(price_cur, price_new, 0.5 / 100.0) is False:
                     # It is assumed that the marketdata-file is always correct:
                     newvals[indexes[0]] = price_cur
+                    # Record a string for later output:
+                    discrepancy_str = repr(date_cur) + ";\t" + repr(price_cur) + ";\t" + repr(
+                        price_new)
+                    discrepancy_entries.append(discrepancy_str)
+                    """
+                    Don't create an output yet
                     print("WARNING: The obtained market-price does not match with the recorded value. Path: " +
                           filepath + ". Recorded Value=" + repr(price_cur) +
                           ". New Value=" + repr(price_new) + ". Date: " + date_cur + ". Using recorded data from file. "
                                                                                      "Double-check data/source.")
+                    """
+        # Output the mismatching entries of the market data file:
+        if len(discrepancy_entries) > 0:
+            print("WARNING: Some obtained market data does not match the recorded values. Potentially double-check.")
+            print("File: " + filepath + ". Entries:")
+            print("Date;\tRecorded Price;\tObtained Price")
+            for _,lineout in enumerate(discrepancy_entries):
+                print(lineout)
 
         # The obtained new values now match the existing values (if there are double entries), which is good.
         # In the following: the new values are sorted into the existing market-data, and the file is updated
