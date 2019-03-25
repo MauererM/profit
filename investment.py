@@ -59,7 +59,7 @@ class Investment:
         # Check, if the transaction-dates are in order. Allow identical successive days
         if dateoperations.check_date_order(self.transactions[setup.DICT_KEY_DATES], dateformat=setup.FORMAT_DATE,
                                            allow_ident_days=True) is False:
-            raise RuntimeError("Transaction-dates are not in temporal order. (Note: Identical successive dates are allowed). "
+            raise RuntimeError("Transaction-dates are not in temporal order (Note: Identical successive dates are allowed). "
                                "Filename: " + self.filename)
 
         # Check, if the transactions-actions-column only contains allowed strings:

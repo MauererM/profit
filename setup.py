@@ -6,7 +6,7 @@ Copyright (c) 2018 Mario Mauerer
 """
 
 # The API-Key for Alpha Vantage:
-API_KEY_ALPHA_VANTAGE = 'ENTER_KEY_HERE'
+API_KEY_ALPHA_VANTAGE = 'ENTER_API_KEY'
 
 # Cooldown time in seconds between API calls:
 API_COOLDOWN_TIME_SECOND = 31.0
