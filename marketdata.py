@@ -23,7 +23,7 @@ def update_check_marketdata_in_file(filepath, dateformat_marketdata, dateformat,
     The last second entries of the marketdata (the two most recent dates) are ignored when checking for matching data,
     since the daily data is end-of-day and might be extrapolated one day forward, which changes it...
     It is assumed that the data in the marketdata-file is always correct and hence, this data is used. A warning is
-    issued if this happens.
+    issued if mismatches are detected.
     :param filepath: String of the path of the marketdata-file
     :param dateformat_marketdata: String of the dateformat used in the marketdata-file
     :param dateformat: String of the dateformat as used by the rest of the functions
@@ -37,6 +37,7 @@ def update_check_marketdata_in_file(filepath, dateformat_marketdata, dateformat,
     if len(newdates) != len(newvals):
         raise RuntimeError("Length of date- and value-lists must be identical. Cannot update market-data. Path: "
                            + filepath)
+
     # Convert the newdates to datetime-objects and back, to be sure they are of the correct format:
     newdates_dt = [stringoperations.str2datetime(x, dateformat) for x in newdates]
     newdates = [stringoperations.datetime2str(x, dateformat) for x in newdates_dt]
@@ -62,10 +63,12 @@ def update_check_marketdata_in_file(filepath, dateformat_marketdata, dateformat,
         mketdates_cur, mketprices_cur = import_marketdata_from_file(filepath, dateformat_marketdata, dateformat,
                                                                     marketdata_delimiter)
 
-        # Crop the last two entries out of the list; it might change after a day, due to end-of-day data and/or
-        # potential extrapolation. It will be re-added anyways further below.
-        mketdates_cur = mketdates_cur[0:-3]
-        mketprices_cur = mketprices_cur[0:-3]
+        # Crop the last entry out of the list; it might change after a day, due to end-of-day data and/or
+        # potential extrapolation. It will be re-added anyways further below by the data-source. But: Only do this if
+        # there is sufficient data in the file (the dataprovider sometimes only provides data of a single day).
+        if len(mketdates_cur) > 1:
+            mketdates_cur = mketdates_cur[0:-1]
+            mketprices_cur = mketprices_cur[0:-1]
 
         # Iterate over all lines of the marketdata-file and
         # check if stored values match with newdates,newvals (if possible)
@@ -102,7 +105,7 @@ def update_check_marketdata_in_file(filepath, dateformat_marketdata, dateformat,
             print("WARNING: Some obtained market data does not match the recorded values. Potentially double-check.")
             print("File: " + filepath + ". Entries:")
             print("Date;\tRecorded Price;\tObtained Price")
-            for _,lineout in enumerate(discrepancy_entries):
+            for _, lineout in enumerate(discrepancy_entries):
                 print(lineout)
 
         # The obtained new values now match the existing values (if there are double entries), which is good.
