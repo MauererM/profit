@@ -54,9 +54,9 @@ def create_path(foldername, filename):
     :param filename: String of file-name
     :return: String of joined path
     """
-    # Strip "^", which is sometimes used in stock market index symbols, from the path:
+    # Strip "^" and ":", which are sometimes used in stock market index symbols, from the path:
     p =  os.path.join(foldername, filename)  # Get path of file, including its folder
-    p = re.sub('\^', '', p)
+    p = re.sub('\^|\:', '', p)
     return p
 
 
@@ -95,6 +95,6 @@ if __name__ == '__main__':
 
     test = 3.4452
     test2 = str(test)
-    test3 = create_path("folder", "fi^le")
+    test3 = create_path("folder", "fi^l:e")
     print(test3)
     pass
