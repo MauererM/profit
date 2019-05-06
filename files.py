@@ -6,6 +6,7 @@ Copyright (c) 2018 Mario Mauerer
 """
 
 import os
+import re
 
 
 def write_file_lines(filepath, lines, overwrite=False):
@@ -53,7 +54,10 @@ def create_path(foldername, filename):
     :param filename: String of file-name
     :return: String of joined path
     """
-    return os.path.join(foldername, filename)  # Get path of file, including its folder
+    # Strip "^", which is sometimes used in stock market index symbols, from the path:
+    p =  os.path.join(foldername, filename)  # Get path of file, including its folder
+    p = re.sub('\^', '', p)
+    return p
 
 
 def delete_file(path):
@@ -81,14 +85,16 @@ def get_file_list(folderpath, extension):
     Stand-alone execution for testing:
 """
 if __name__ == '__main__':
-    filepath = "investments_test/testfile.txt"
-    print(file_exists(filepath))
+    # filepath = "investments_test/testfile.txt"
+    # print(file_exists(filepath))
 
     # test = get_file_lines(filepath)
     # print("Done")
 
-    write_file_lines(filepath, ["First line", "Second Line"], overwrite=True)
+    # write_file_lines(filepath, ["First line", "Second Line"], overwrite=True)
 
     test = 3.4452
     test2 = str(test)
+    test3 = create_path("folder", "fi^le")
+    print(test3)
     pass
