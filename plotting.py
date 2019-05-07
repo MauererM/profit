@@ -509,8 +509,12 @@ def plot_asset_values_indices(assetlist, indexlist, fname, titlestr):
     # Subtract/Add the in/outflows to the summed value. Like this, there are not spikes in the value, and the
     # performance can be compared to the portfolio:
     sumlist_corr = []
+    sum_inflow = 0.0
+    sum_outflow = 0.0
     for idx, val in enumerate(sumlist):
-        sumlist_corr.append(val - sumlist_inflows[idx] + sumlist_outflows[idx])
+        sum_inflow += sumlist_inflows[idx]
+        sum_outflow += sumlist_outflows[idx]
+        sumlist_corr.append(val - sum_inflow + sum_outflow)
 
     # Obtain stock-market indices:
     indexvals = []  # List of lists
