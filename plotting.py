@@ -495,13 +495,22 @@ def plot_asset_values_indices(assetlist, indexlist, fname, titlestr):
     datelist = assetlist[0].get_analysis_datelist()
     # The summed value for each day, over all assets:
     sumlist = analysis.get_asset_values_summed(assetlist)
+    # The out/inflows are also considered to match the graphs better:
+    sumlist_inflows = analysis.get_asset_inflows_summed(assetlist)
+    sumlist_outflows = analysis.get_asset_outflows_summed(assetlist)
     # Sanity check:
-    if len(datelist) != len(sumlist):
-        raise RuntimeError("The summed list and date-list must correspond in length.")
+    if len(datelist) != len(sumlist) or len(datelist) != len(sumlist_inflows) or len(datelist) != len(sumlist_outflows):
+        raise RuntimeError("The summed list(s) and date-list must all correspond in length.")
 
     if helper.list_all_zero(sumlist) is True:
         print("All summed asset values are zero. Not plotting. File: " + fname)
         return
+
+    # Subtract/Add the in/outflows to the summed value. Like this, there are not spikes in the value, and the
+    # performance can be compared to the portfolio:
+    sumlist_corr = []
+    for idx, val in enumerate(sumlist):
+        sumlist_corr.append(val - sumlist_inflows[idx] + sumlist_outflows[idx])
 
     # Obtain stock-market indices:
     indexvals = []  # List of lists
@@ -515,12 +524,16 @@ def plot_asset_values_indices(assetlist, indexlist, fname, titlestr):
             indexvals.append(dat)
             indexname.append(stockidx.get_currency())  # The name of the index is stored as currency
 
+    # Rescale the summed values such that the first entry is "100":
+    startidx = [i for i, x in enumerate(sumlist_corr) if x > 1e-9][0]
+    fact = sumlist_corr[startidx]/100.0
+    sumlist_corr = [x/fact for x in sumlist_corr]
+
     # The index-values have to be rescaled to the asset-values (at the beginning of the analysis-period)
     # Find the first (summed) asset-value > 0:
-    startidx = [i for i, x in enumerate(sumlist) if x > 1e-9][0]
     indexvals_rs = []
     for vals in indexvals:
-        fact = vals[startidx] / sumlist[startidx]
+        fact = vals[startidx] / sumlist_corr[startidx]
         indexvals_rs.append([x / fact for x in vals])
 
     # Plot:
@@ -530,13 +543,13 @@ def plot_asset_values_indices(assetlist, indexlist, fname, titlestr):
 
     dateformat = assetlist[0].get_dateformat()
     x = [stringoperations.str2datetime(x, dateformat) for x in datelist]
-    ax.plot(x, sumlist, alpha=1.0, zorder=3, clip_on=False, color=setup.PLOTS_COLORS[0], marker='', label="Asset Value",
+    ax.plot(x, sumlist_corr, alpha=1.0, zorder=3, clip_on=False, color=setup.PLOTS_COLORS[0], marker='', label="Asset Value",
             linewidth=1.6)
     # Label the last value:
-    last_val = f"{sumlist[-1]:.2f}"
-    ax.text(x[-1], sumlist[-1], last_val)
+    last_val = f"{sumlist_corr[-1]:.2f}"
+    ax.text(x[-1], sumlist_corr[-1], last_val)
     # Also plot the moving average:
-    x_ma, y_ma = analysis.calc_moving_avg(x, sumlist, cfg.WINLEN_MA)
+    x_ma, y_ma = analysis.calc_moving_avg(x, sumlist_corr, cfg.WINLEN_MA)
     ax.plot(x_ma, y_ma, alpha=1.0, zorder=3, clip_on=False, color=setup.PLOTS_COLORS[0], marker='',
             label="Asset Value, Moving Avg", dashes=setup.DASHES_MA, linewidth=1.6)
 
