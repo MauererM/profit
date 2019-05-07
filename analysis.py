@@ -58,19 +58,18 @@ def calc_median_filt(xlist, ylist, winlen):
     halfwin = int((winlen - 1) / 2)
     filtval = []
     # No filtering at lower list boundary:
-    for idx in range(0,halfwin):
+    for idx in range(0, halfwin):
         filtval.append(ylist[idx])
     # Filtering:
-    for idx in range(halfwin, len(ylist)-halfwin):
+    for idx in range(halfwin, len(ylist) - halfwin):
         startidx = idx - halfwin
         stopidx = idx + halfwin
-        win = ylist[startidx:stopidx+1]
+        win = ylist[startidx:stopidx + 1]
         win.sort()
         filtval.append(win[halfwin])
     # No filtering at upper list boundary:
-    for idx in range(len(ylist)-halfwin, len(ylist)):
+    for idx in range(len(ylist) - halfwin, len(ylist)):
         filtval.append(ylist[idx])
-
 
     return (xlist, filtval)
 
@@ -134,6 +133,42 @@ def get_asset_values_summed(assets):
         return sumval
     else:
         sumval = assets[0].get_analysis_valuelist()
+        return sumval
+
+
+def get_asset_inflows_summed(assets):
+    """Sum the daily inflows of the given assets
+    :param assets: List of asset-objects
+    :return: List of values, corresponding to the length of the analysis-period
+    """
+    if len(assets) > 1:
+        sumval = assets[0].get_analysis_inflowlist()
+        for asset in assets[1:]:
+            val = asset.get_analysis_inflowlist()
+            if len(val) != len(sumval):
+                raise RuntimeError("Assets contain value-lists of differing length.")
+            sumval = [x + y for x, y in zip(sumval, val)]
+        return sumval
+    else:
+        sumval = assets[0].get_analysis_inflowlist()
+        return sumval
+
+
+def get_asset_outflows_summed(assets):
+    """Sum the daily outflows of the given assets
+    :param assets: List of asset-objects
+    :return: List of values, corresponding to the length of the analysis-period
+    """
+    if len(assets) > 1:
+        sumval = assets[0].get_analysis_outflowlist()
+        for asset in assets[1:]:
+            val = asset.get_analysis_outflowlist()
+            if len(val) != len(sumval):
+                raise RuntimeError("Assets contain value-lists of differing length.")
+            sumval = [x + y for x, y in zip(sumval, val)]
+        return sumval
+    else:
+        sumval = assets[0].get_analysis_outflowlist()
         return sumval
 
 
@@ -493,9 +528,9 @@ if __name__ == '__main__':
     outflowlist = [0, 5, 0, 0, 50, 5]
     timestep = 4
 
-    #xfilt, yfilt = calc_median_filt(datelist, valuelist, 3)
-    #print(xfilt)
-    #print(yfilt)
+    # xfilt, yfilt = calc_median_filt(datelist, valuelist, 3)
+    # print(xfilt)
+    # print(yfilt)
 
     # print(dates)
     # print(ror)
