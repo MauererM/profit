@@ -33,23 +33,9 @@ Below are some of the outputs of the tool. Different PDF plots are created. Asse
 1. `git clone https://github.com/MauererM/profit.git` (or simply download the repository with the direct link).
 2. (Optional) Obtain an API key from Alpha Vantage (for free, https://www.alphavantage.co/) and enter it in *setup.py*.
 3. Run *PROFIT_main.py* (with a Python 3 interpreter) and look at the results in the *plots* folder (Some exemplary assets are provided). Some packages might have to be installed, most probably *alpha_vantage* and *matplotlib*.
-4. Move the provided examples to the *accounts* and *investments* folders and modify them to your liking. Change the names of the folders in *PYTHON_main.py* to use the real folders (*ACCOUNT_FOLDER* and *INVESTMENT_FOLDER* strings).
+4. Move the provided examples to the *accounts* and *investments* folders (whose content is not tracked by git) and modify them to your liking. Change the names of the target folders in *PYTHON_main.py* to use the real folders (*ACCOUNT_FOLDER* and *INVESTMENT_FOLDER* strings).
 5. As simple as that :moneybag:
 6. The short manual provides more information: [PROFIT manual (PDF from doc folder)](https://github.com/MauererM/profit/raw/master/doc/manual.pdf "PROFIT manual (PDF)")
 
-Note that the contents of the folders *accounts* and *investments*, where your personal data resides, are ignored by git, such that the project can remain in a git repository while being used.
-
 ### Contribution:
 `git clone https://github.com/MauererM/profit.git`
-
-#### To Do:
-- [ ] Observe the behavior of the Google Finance API in the future. Maybe it comes back...
-- [x] Migrated to the Alpha Vantage API, as the Google finance API closed down in August 2018.
-- [x] Added an extrapolation of the investment values, assuming a (configurable) interest rate
-- [x] Displaying the most recent numeric values in some line plots
-- [x] Plot value ratios of foreign currencies in portfolio
-- [x] Some stacked plots don't sort according to the most recent values: Add this
-- [x] One plot for each purpose-group, with individual group members
-- [x] Plot Forex-rates
-- [x] Test on Windows
-- [x] Plot some moving averages
