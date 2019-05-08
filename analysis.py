@@ -172,6 +172,42 @@ def get_asset_outflows_summed(assets):
         return sumval
 
 
+def get_asset_payouts_summed(assets):
+    """Sum the daily payouts of the given assets
+    :param assets: List of asset-objects
+    :return: List of values, corresponding to the length of the analysis-period
+    """
+    if len(assets) > 1:
+        sumval = assets[0].get_analysis_payoutlist()
+        for asset in assets[1:]:
+            val = asset.get_analysis_payoutlist()
+            if len(val) != len(sumval):
+                raise RuntimeError("Assets contain value-lists of differing length.")
+            sumval = [x + y for x, y in zip(sumval, val)]
+        return sumval
+    else:
+        sumval = assets[0].get_analysis_payoutlist()
+        return sumval
+
+
+def get_asset_costs_summed(assets):
+    """Sum the daily costs of the given assets
+    :param assets: List of asset-objects
+    :return: List of values, corresponding to the length of the analysis-period
+    """
+    if len(assets) > 1:
+        sumval = assets[0].get_analysis_costlist()
+        for asset in assets[1:]:
+            val = asset.get_analysis_costlist()
+            if len(val) != len(sumval):
+                raise RuntimeError("Assets contain value-lists of differing length.")
+            sumval = [x + y for x, y in zip(sumval, val)]
+        return sumval
+    else:
+        sumval = assets[0].get_analysis_costlist()
+        return sumval
+
+
 def get_return_asset_holdingperiod(asset, dateformat):
     """Calculates the holding period return of an asset
     It considers _all_ asset-transactions, and not just the analysis-data.

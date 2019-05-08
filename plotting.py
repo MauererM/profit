@@ -498,6 +498,8 @@ def plot_asset_values_indices(assetlist, indexlist, fname, titlestr):
     # The out/inflows are also considered to match the graphs better:
     sumlist_inflows = analysis.get_asset_inflows_summed(assetlist)
     sumlist_outflows = analysis.get_asset_outflows_summed(assetlist)
+    sumlist_payouts = analysis.get_asset_payouts_summed(assetlist)
+    sumlist_costs = analysis.get_asset_costs_summed(assetlist)
     # Sanity check:
     if len(datelist) != len(sumlist) or len(datelist) != len(sumlist_inflows) or len(datelist) != len(sumlist_outflows):
         raise RuntimeError("The summed list(s) and date-list must all correspond in length.")
@@ -511,10 +513,14 @@ def plot_asset_values_indices(assetlist, indexlist, fname, titlestr):
     sumlist_corr = []
     sum_inflow = 0.0
     sum_outflow = 0.0
+    sum_payout = 0.0
+    sum_cost = 0.0
     for idx, val in enumerate(sumlist):
         sum_inflow += sumlist_inflows[idx]
         sum_outflow += sumlist_outflows[idx]
-        sumlist_corr.append(val - sum_inflow + sum_outflow)
+        sum_payout += sumlist_payouts[idx]
+        sum_cost += sumlist_costs[idx]
+        sumlist_corr.append(val - sum_inflow + sum_outflow + sum_payout - sum_cost)
 
     # Obtain stock-market indices:
     indexvals = []  # List of lists
