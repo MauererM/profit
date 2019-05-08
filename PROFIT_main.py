@@ -313,8 +313,7 @@ if __name__ == '__main__':
 
     if len(investments) > 0:
         plotting.plot_asset_values_indices(investments, indexprices, FILENAME_INVESTMENT_VALUES_INDICES,
-                                           "Value: All Investments (Indexes are relative to start of analysis-period, "
-                                           "or first values > 0)")
+                                           "Investment Performance (normalized, payouts not reinvested)")
         # Plot the values of all investments:
         plotting.plot_asset_values_cost_payout_individual(investments, FILENAME_INVESTMENT_VALUES)
         # Plot the returns of all investmets, for different periods:
