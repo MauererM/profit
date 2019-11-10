@@ -106,6 +106,7 @@ def get_stock_data(sym_stock, sym_exchange, startdate, stopdate, dateformat):
     function as simple as possible.
     But: missing data in the returned interval is interpolated, so the returned dates and rates are consecutive and
     corresponding.
+    NOTE: sym_exchange is not actually needed by alphavantage.
     :param sym_stock: String encoding the name of the stock, e.g., "TSLA"
     :param sym_exchange: String encoding the name of the exchange, e.g., "SWX"
     :param startdate: String encoding the day for the first price
@@ -129,7 +130,13 @@ def get_stock_data(sym_stock, sym_exchange, startdate, stopdate, dateformat):
     time.sleep(setup.API_COOLDOWN_TIME_SECOND)
 
     ts_alphavantage = TimeSeries(key=setup.API_KEY_ALPHA_VANTAGE, output_format='pandas')
-    dataframe, test = ts_alphavantage.get_daily(symbol=sym_stock, outputsize='full')
+    try:
+        dataframe, test = ts_alphavantage.get_daily(symbol=sym_stock, outputsize='full')
+    except:
+        print("Full API-call did not work. Attempting compact call")
+        print(f"Waiting {setup.API_COOLDOWN_TIME_SECOND:.1f}s for API cooldown")
+        time.sleep(setup.API_COOLDOWN_TIME_SECOND)
+        dataframe, test = ts_alphavantage.get_daily(symbol=sym_stock, outputsize='compact')
 
     # Check, if we get an empty response. Throw an error, if so. Higher-level code can catch it an potentially adapt
     # the symbols, in case they are outdated.
@@ -186,12 +193,12 @@ if __name__ == '__main__':
     # dates, rates = get_forex_data("EUR", "CHF", "11.04.2018", "12.04.2018", dateformat)
     # print(dateoperations.check_dates_consecutive(dates, dateformat))
 
-    dates, rates = get_forex_data("CHF", "EUR", "05.08.2018", "05.08.2018", dateformat)
+    # dates, rates = get_forex_data("CHF", "EUR", "05.08.2018", "05.08.2018", dateformat)
+    # print(dates)
+    # print(rates)
 
-    print(dates)
-    print(rates)
-
-    dates, prices = get_stock_data("TSLA", "NASDAQ", "19.04.2018", "20.04.2018", dateformat)
+    # dates, prices = get_stock_data("TSLA", "NASDAQ", "08.11.2017", "10.11.2019", dateformat)
+    dates, prices = get_stock_data("CSSMI.SW", "SWX", "01.11.2019", "10.11.2019", dateformat)
 
     print(len(dates))
     print(len(prices))

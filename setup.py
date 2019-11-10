@@ -9,7 +9,7 @@ Copyright (c) 2018 Mario Mauerer
 API_KEY_ALPHA_VANTAGE = 'ENTER_API_KEY'
 
 # Cooldown time in seconds between API calls:
-API_COOLDOWN_TIME_SECOND = 31.0
+API_COOLDOWN_TIME_SECOND = 16.0
 
 # The marketdata-folder stores different files containing historic prices and forex-rates
 MARKETDATA_FOLDER = "marketdata"
