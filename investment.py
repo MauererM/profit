@@ -169,6 +169,13 @@ class Investment:
                     if helper.isclose(trans_balance[idx], (trans_balance[idx - 1] - trans_quantity[idx])) is False:
                         raise RuntimeError("Transactions not in order (balance not correct). "
                                            "Transaction-Nr: " + repr(idx + 1))
+            elif trans_actions[idx] == setup.STRING_INVSTMT_ACTION_SPLIT:
+                if idx == 0:
+                    raise RuntimeError("First investment-transcation cannot be a split.")
+                else:
+                    split_ratio = trans_balance[idx] / trans_balance[idx - 1]
+                    if not helper.isinteger(split_ratio):
+                        raise RuntimeError("Non-integer split detected. Transaction-Nr: " + repr(idx + 1))
             else:
                 if idx > 0 and trans_balance[idx] != trans_balance[idx - 1]:
                     raise RuntimeError("Balance changed without buy/sell action.")
@@ -184,9 +191,9 @@ class Investment:
         # Check every transaction:
         for idx, date in enumerate(trans_dates):
             if trans_actions[idx] == setup.STRING_INVSTMT_ACTION_BUY or trans_actions[idx] \
-                    == setup.STRING_INVSTMT_ACTION_SELL:
+                    == setup.STRING_INVSTMT_ACTION_SELL or trans_actions[idx] == setup.STRING_INVSTMT_ACTION_SPLIT:
                 if trans_payout[idx] > 1e-9:
-                    raise RuntimeError("Buy- or sell-transactions may not encode a payout. "
+                    raise RuntimeError("Buy, sell or split-transactions may not encode a payout. "
                                        "Transaction-Nr: " + repr(idx + 1))
             if trans_actions[idx] == setup.STRING_INVSTMT_ACTION_PAYOUT:
                 if trans_quantity[idx] > 1e-9 or trans_price[idx] > 1e-9:
@@ -314,6 +321,7 @@ class Investment:
         :param date_stop: String of a date that designates the stop-date. Cannot be in the future.
         :param dateformat: String that specifies the format of the date-strings
         """
+        print("\n" + self.symbol + ":")
         # Convert to datetime
         date_stop_dt = stringoperations.str2datetime(date_stop, dateformat)
 

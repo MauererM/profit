@@ -107,7 +107,7 @@ class ForexRates:
 
         # It was not possible to obtain rates-data: Use potentially recorded historic data in the marketdata-folder
         else:
-            print("\nCould not obtain updated forex rates for " + self.currency + " and " + self.basecurrency)
+            print("Could not obtain updated forex rates for " + self.currency + " and " + self.basecurrency)
             # Check, if there is a marketdata-file if yes: import the data:
             if files.file_exists(self.marketdata_filepath) is True:
                 print("Using forex-data in the existing market-data-file: " + self.marketdata_filepath)

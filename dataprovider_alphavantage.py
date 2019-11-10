@@ -84,6 +84,16 @@ def get_forex_data(sym_a, sym_b, startdate, stopdate, dateformat):
     # But this is OK, we also don't raise a warning, the caller is left to deal with this, since he then can take
     # action. This reduces the complexity of this module.
 
+    # Check, if the start/stopdates are identical. Then, only the most recent value is desired. Then, it should
+    # be checked if it's on a weekend or not. If yes, it falls back to the friday before.
+    if startdate == stopdate:
+        if stopdate_dt.weekday() == 5:
+            startdate = dateoperations.add_days(startdate, -1, dateformat)
+            stopdate = dateoperations.add_days(stopdate, -1, dateformat)
+        elif stopdate_dt.weekday() == 6:
+            startdate = dateoperations.add_days(startdate, -2, dateformat)
+            stopdate = dateoperations.add_days(stopdate, -2, dateformat)
+
     # Crop the data to the desired range. It may still contain non-consecutive days.
     # The crop-function will not throw errors if the start/stop-dates are outside the date-list from the data provider.
     forexdates, forexrates = dateoperations.crop_datelist(forexdates_red, forexrates_red, startdate, stopdate,
@@ -141,7 +151,8 @@ def get_stock_data(sym_stock, sym_exchange, startdate, stopdate, dateformat):
     # Check, if we get an empty response. Throw an error, if so. Higher-level code can catch it an potentially adapt
     # the symbols, in case they are outdated.
     if dataframe.empty is True:
-        raise RuntimeError("Received an empty stock-price-dataframe from alpha vantage. Symbol: " + sym_stock)
+        print("Received an empty stock-price-dataframe from alpha vantage. Symbol: " + sym_stock)
+        raise RuntimeError("See above.")  # Make sure the outer try-except gets it.
 
     # Re-formate the data
     pricedates = dataframe.index.values  # This is a numpy datetime64 array
@@ -169,14 +180,28 @@ def get_stock_data(sym_stock, sym_exchange, startdate, stopdate, dateformat):
             pricedates_red.append(pricedates[idx])
             stockprices_red.append(stockprices[idx])
 
+    # Check, if the start/stopdates are identical. Then, only the most recent value is desired. Then, it should
+    # be checked if it's on a weekend or not. If yes, it falls back to the friday before.
+    if startdate == stopdate:
+        if stopdate_dt.weekday() == 5:
+            startdate = dateoperations.add_days(startdate, -1, dateformat)
+            stopdate = dateoperations.add_days(stopdate, -1, dateformat)
+        elif stopdate_dt.weekday() == 6:
+            startdate = dateoperations.add_days(startdate, -2, dateformat)
+            stopdate = dateoperations.add_days(stopdate, -2, dateformat)
+
     # Crop the data to the desired range. It may still contain non-consecutive days.
     # The crop-function will not throw errors if the start/stop-dates are outside the date-list from the data provider.
     pricedates, stockprices = dateoperations.crop_datelist(pricedates_red, stockprices_red, startdate, stopdate,
                                                            dateformat)
     # Check if there is still data left:
     if len(stockprices) < 1:
-        raise RuntimeError("Stock data is not available for desired interval. Maybe change analysis period. " +
-                           sym_stock + ". Exchange: " + sym_exchange)
+        # Provide information and trigger the outer try-catch loop.
+        print(
+            "Stock data is not available for desired interval. Maybe change analysis period, or check if there is "
+            "data of today available by the provider. " +
+            sym_stock + ". Exchange: " + sym_exchange)
+        raise RuntimeError("See above")  # Make sure to trigger the outer try-catch loop properly
 
     # Fill in missing data in the vector
     pricedates_full, stockprices_full = dateoperations.interpolate_data(pricedates, stockprices, dateformat)
@@ -198,7 +223,8 @@ if __name__ == '__main__':
     # print(rates)
 
     # dates, prices = get_stock_data("TSLA", "NASDAQ", "08.11.2017", "10.11.2019", dateformat)
-    dates, prices = get_stock_data("CSSMI.SW", "SWX", "01.11.2019", "10.11.2019", dateformat)
+    dates, prices = get_stock_data("CSCO", "NASDAQ", "08.11.2017", "10.11.2019", dateformat)
+    # dates, prices = get_stock_data("CSSMI.SW", "SWX", "01.11.2019", "10.11.2019", dateformat)
 
     print(len(dates))
     print(len(prices))

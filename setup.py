@@ -9,7 +9,7 @@ Copyright (c) 2018 Mario Mauerer
 API_KEY_ALPHA_VANTAGE = 'ENTER_API_KEY'
 
 # Cooldown time in seconds between API calls:
-API_COOLDOWN_TIME_SECOND = 16.0
+API_COOLDOWN_TIME_SECOND = 15.0
 
 # The marketdata-folder stores different files containing historic prices and forex-rates
 MARKETDATA_FOLDER = "marketdata"
@@ -54,13 +54,14 @@ STRING_INVSTMT_ACTION_SELL = "Sell"
 STRING_INVSTMT_ACTION_COST = "Fee"
 STRING_INVSTMT_ACTION_PAYOUT = "Payout"
 STRING_INVSTMT_ACTION_UPDATE = "Update"
+STRING_INVSTMT_ACTION_SPLIT = "Split"
 
 # Allowed actions in the corresponding account-transactions column:
 ACCOUNT_ALLOWED_ACTIONS = [STRING_ACCOUNT_ACTION_COST, STRING_ACCOUNT_ACTION_INTEREST, STRING_ACCOUNT_ACTION_UPDATE]
 
 # Allowed actions in the corresponding investment-transactions column:
 INVSTMT_ALLOWED_ACTIONS = [STRING_INVSTMT_ACTION_BUY, STRING_INVSTMT_ACTION_SELL, STRING_INVSTMT_ACTION_COST,
-                           STRING_INVSTMT_ACTION_PAYOUT, STRING_INVSTMT_ACTION_UPDATE]
+                           STRING_INVSTMT_ACTION_PAYOUT, STRING_INVSTMT_ACTION_UPDATE, STRING_INVSTMT_ACTION_SPLIT]
 
 # Strings for asset transactions-headers:
 # These are used for accounts and investments:

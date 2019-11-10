@@ -110,8 +110,8 @@ class MarketPrices:
                 print("Available prices (data provider and stored market-data) are only available until the " +
                       dates_full[-1] + ". Latest available data will be extrapolated forwards. Symbol: " +
                       self.symbol + ", exchange: " + self.exchange)
-                print("CAREFUL: Update the market-data file manually with the most recent value, or the holding period"
-                      " returns cannot be calculated. Symbol: " +
+                print("Update the market-data file or transactions-list manually for correct returns calculation" +
+                      " Symbol: " +
                       self.symbol + ", exchange: " + self.exchange)
 
             # Crop the data to the desired period:
@@ -125,7 +125,7 @@ class MarketPrices:
 
         # It was not possible to obtain market-data: Use potentially recorded historic data in the marketdata-folder
         else:
-            print("\nCould not obtain updated market prices for " + self.symbol)
+            print("Could not obtain updated market prices for " + self.symbol)
             # Check, if there is a marketdata-file if yes: import the data:
             if files.file_exists(self.marketdata_filepath) is True:
                 print("Using data in the existing market-data-file: " + self.marketdata_filepath)
@@ -141,8 +141,7 @@ class MarketPrices:
                 if dates_stop < stopdate_dt:
                     print("Available prices (stored market-data) are only available until the " +
                           dates[-1] + ". Latest available data will be extrapolated forwards.")
-                    print("CAREFUL: Update the market-data file manually with the most recent value, "
-                          "or the holding period returns cannot be calculated.")
+                    print("Update the market-data file or transactions-list manually for correct returns calculation.")
 
                 # The returned market data might not be available until today.
                 # Extend the data accordingly into the future.
