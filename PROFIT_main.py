@@ -154,8 +154,11 @@ if __name__ == '__main__':
     # Print the current version of the tool
     print("PROFIT V{:.1f} starting".format(setup.PROFIT_VERSION))
 
+    if setup.SKIP_ONLINE_SECURITIES_RETRIEVAL is True:
+        print("Will not obtain securities data from online sources. Make sure prices are manually updated.")
+
     # Check, if the API key is provided:
-    if "ENTER_API_KEY" in setup.API_KEY_ALPHA_VANTAGE:
+    if "ENTER_API_KEY" in setup.API_KEY_ALPHA_VANTAGE and setup.SKIP_ONLINE_SECURITIES_RETRIEVAL is False:
         raise RuntimeError("Provide Alpha Vantage API Key in setup.py. See: https://www.alphavantage.co")
     print("Your Alpha Vantage API Key is: " + setup.API_KEY_ALPHA_VANTAGE)
 
@@ -265,8 +268,7 @@ if __name__ == '__main__':
     """
     Set the analysis-data in the assets. This obtains market prices, among others, and may take a short while.
     """
-    print("\nPreparing analysis-data for accounts and investments. "
-          "\nThis also obtains market prices and may take a while\n")
+    print("\nPreparing analysis-data for accounts and investments.")
     for asset in assets:
         asset.set_analysis_data(date_analysis_start_str, date_today_str, setup.FORMAT_DATE)
 
