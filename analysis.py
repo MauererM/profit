@@ -7,7 +7,7 @@ Copyright (c) 2018 Mario Mauerer
 import dateoperations
 import stringoperations
 import helper
-
+import setup
 
 def project_values(datelist, valuelist, num_years, interest_percent, dateformat):
     """Projects values into the future given a certian interest rate. Annual compounding is assumed.
@@ -240,7 +240,7 @@ def get_return_asset_holdingperiod(asset, dateformat):
     priceobj = asset.get_marketprice_obj()
 
     # No prices are given:
-    if priceobj is None:
+    if setup.SKIP_ONLINE_SECURITIES_RETRIEVAL is False and priceobj is None:
         print("WARNING: Cannot calculate holding period return of "
               + asset.get_filename() + " due to unavailable and missing price of today. "
                                        "Update the assets marketdata-file with values from today or "
@@ -254,7 +254,7 @@ def get_return_asset_holdingperiod(asset, dateformat):
 
     # If there is an asset-price available, get the latest possible one that is recorded:
     transact_price_necessary = True
-    if priceobj.is_price_avail() is True:
+    if setup.SKIP_ONLINE_SECURITIES_RETRIEVAL is False and priceobj.is_price_avail() is True:
         latest_date, latest_price = priceobj.get_latest_price_date()
         latest_date_dt = stringoperations.str2datetime(latest_date, dateformat)
         # The value can be determined from most recent price!
