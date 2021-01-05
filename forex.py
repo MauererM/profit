@@ -5,7 +5,6 @@ MIT License
 Copyright (c) 2018 Mario Mauerer
 """
 
-import dataprovider_alphavantage as dataprovider
 import dateoperations
 import stringoperations
 import files
@@ -18,7 +17,7 @@ class ForexRates:
     """
 
     def __init__(self, currency_str, basecurrency_str, marketdata_folder_str, marketdata_dateformat_str,
-                 marketdata_delimiter_str, startdate_str, stopdate_str, dateformat_str):
+                 marketdata_delimiter_str, startdate_str, stopdate_str, dateformat_str, dataprovider):
         """ForexRates constructor: Obtains the required data from the dataprovider.
         The exchange rates are obtained such that the currency can be multiplied with the rates to get the value in the
         base currency.
@@ -30,6 +29,7 @@ class ForexRates:
         :param startdate_str: String that encodes the start-date of the forex-data
         :param stopdate_str: String that encodes the stop-date of the forex-data
         :param dateformat_str: String that encodes the format of the dates, e.g., "%d.%m.%Y"
+        :param dataprovider: Object of the data provider class, e.g., dataprovider_yahoofinance
         """
         self.currency = currency_str
         self.basecurrency = basecurrency_str
@@ -40,6 +40,7 @@ class ForexRates:
         self.marketdata_dateformat = marketdata_dateformat_str
         self.marketdata_delimiter = marketdata_delimiter_str
         self.pricedata_avail = False  # Indicates if it was possible to obtain prices of the currency
+        self.provider = dataprovider
 
         # Create the path of the file in the marketdata-folder that (should) hold information of this price-object,
         # or which will be generated.
@@ -57,8 +58,7 @@ class ForexRates:
         # Obtain the forex-data.
         # Two lists are expected, the first holds a lists of date-strings, and the second holds the exchange rate.
         try:
-            dates, rates = dataprovider.get_forex_data(self.currency, self.basecurrency, self.startdate, self.stopdate,
-                                                       self.dateformat)
+            dates, rates = self.provider.get_forex_data(self.currency, self.basecurrency, self.startdate, self.stopdate)
             success = True
         except:
             success = False

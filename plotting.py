@@ -878,7 +878,7 @@ def plot_asset_values_cost_payout_individual(assetlist, fname):
             assetname = asset.get_filename()
             assetname = stringoperations.get_filename(assetname, keep_type=False)
             assettype = asset.get_type()
-            titlestr = "Values: " + assetname + " (" + cfg.BASECURRENCY + ", " + assettype + ")"
+            titlestr = "Values: " + assetname + " (in " + cfg.BASECURRENCY + ", " + assettype + ")"
             plt.title(titlestr)
 
             # Add a comma to separate thousands:

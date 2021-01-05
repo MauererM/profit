@@ -17,7 +17,7 @@ class Investment:
     """Implements an investment. Parses transactions, provides analysis-data, performs currency conversions"""
 
     def __init__(self, id_str, type_str, purpose_str, currency_str, basecurrency_str, symbol_str, exchange_str,
-                 filename_str, transactions_dict, dateformat_str):
+                 filename_str, transactions_dict, dateformat_str, dataprovider):
         """Investment constructor
         Use the function parse_investment_file to obtain the necessary information from an investment file.
         It sets up all internal data structures and analyzes the transactions, and creates some basic data
@@ -31,6 +31,7 @@ class Investment:
         :param filename_str: Filename associated with this account which info was obtained
         :param transactions_dict: Dictionary with the transactions-data.
         :param dateformat_str: String that encodes the format of the dates, e.g. "%d.%m.%Y"
+        :param dataprovider: Object of the data provider class, e.g., dataprovider_yahoofinance
         """
         self.id = id_str
         self.type = type_str
@@ -44,6 +45,7 @@ class Investment:
         self.dateformat = dateformat_str
         self.analysis_data_done = False  # Analysis data is not yet prepared
         self.forex_data_given = False
+        self.provider = dataprovider
         # Data not known yet:
         self.forex_obj = None
         self.analysis_dates = None
@@ -393,7 +395,7 @@ class Investment:
                 self.marketpricesobj = prices.MarketPrices(self.symbol, self.exchange, self.currency,
                                                            setup.MARKETDATA_FOLDER,
                                                            setup.MARKETDATA_FORMAT_DATE, setup.MARKETDATA_DELIMITER,
-                                                           startdate_prices, date_stop, dateformat)
+                                                           startdate_prices, date_stop, dateformat, self.provider)
 
             # Asset prices during the analysis-period are available:
             if setup.SKIP_ONLINE_SECURITIES_RETRIEVAL is False and self.marketpricesobj.is_price_avail() is True:
@@ -427,7 +429,7 @@ class Investment:
                                                    "Detected more than one identical entry. "
                                                    "Investment-file is: " + self.filename)
                             # Determine the values:
-                            # If there is price-data available on the considered day, this is used instead of the stock-
+                            # If there is price-data available (as transaction) on the considered day, this is used instead of the stock-
                             # market price, as the market price might be end-of-day prices etc. and might not be exactly
                             # identical to the price paid during the transaction.
                             if self.analysis_prices[idx] > 1e-9:

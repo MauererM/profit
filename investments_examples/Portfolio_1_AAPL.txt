@@ -1,7 +1,7 @@
 ID;		Maybe_Pears?
 Type;		Security
 Purpose;	Retirement_Open
-Currency;	CHF
+Currency;	USD
 Symbol;		AAPL
 Exchange;	NASDAQ
 Transactions;
@@ -22,4 +22,6 @@ Date(DD.MM.YYYY);	Action;		Quantity;	Price;	Cost;	Payout;		Balance;	Notes;
 20.03.2018;		Payout;		0;		0;	0;	50.75;		70;
 19.04.2018;		Payout;		0;		0;	0;	44.50;		70;
 19.04.2018;		Update;		0;		172.8;	0;	0;		70;
+27.08.2020;     Update;     0;      125.01; 0;  0;      70;
+28.08.2020;     Split;      0;      124.81; 0;  0;  280;
 EOF

@@ -6,13 +6,10 @@ Copyright (c) 2018 Mario Mauerer
 """
 
 # If set, the online retrieval of the securities-data is skipped (as it might take some time and/or not always work)
-SKIP_ONLINE_SECURITIES_RETRIEVAL = True
-
-# The API-Key for Alpha Vantage:
-API_KEY_ALPHA_VANTAGE = 'ENTER_API_KEY'
+SKIP_ONLINE_SECURITIES_RETRIEVAL = False
 
 # Cooldown time in seconds between API calls:
-API_COOLDOWN_TIME_SECOND = 15.0
+API_COOLDOWN_TIME_SECOND = 3.0
 
 # The marketdata-folder stores different files containing historic prices and forex-rates
 MARKETDATA_FOLDER = "marketdata"
@@ -33,12 +30,14 @@ PLOTSIZE = (11.69, 8.27)  # Dimension of the plots, x,y, in inches
 
 # Price-Sanity-Check threshold (in percent)
 # Market-data prices are compared to recorded transactions-prices. If they deviate too much, a warning is printed.
-PRICE_COMPARISON_THRESHOLD = 1.0
+# Note that there can be some error, as the online-obtained data is end-of-day, but transactions are usually not/during the day.
+# This is used also for sanity-checking of the obtained market-data prices.
+# PRICE_COMPARISON_THRESHOLD = 5.0 NOTE: Not being used due to possible/frequent interpolation of data... It would often trigger unneccessarily (see investment.py)
 
 # Delimiter used in the database-files
 DELIMITER = ";"
 
-# Date-format used throughout the project:
+# Date-format used throughout the project (except marketdata; see above).
 FORMAT_DATE = "%d.%m.%Y"
 
 # String that identify asset types:
@@ -101,7 +100,7 @@ STRING_EXCHANGE = "Exchange"
 STRING_TRANSACTIONS = "Transactions"
 
 # Version of PROFIT:
-PROFIT_VERSION = 1.1
+PROFIT_VERSION = 1.2
 
 # Dashes for moving averages:
 DASHES_MA = [4, 2]

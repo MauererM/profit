@@ -17,6 +17,9 @@ import analysis
 import prices
 import setup
 
+# Specify which dataprovider to use:
+from dataprovider_yahoofinance import Dataprovider as dp
+
 """
 These strings specify the folders from which the account and investment files
 are taken.
@@ -33,7 +36,7 @@ BASECURRENCY = "CHF"
 """
 Data is analyzed a certain number of days into the past, from today
 """
-DAYS_ANALYSIS = 1000
+DAYS_ANALYSIS = 364
 
 """
 This switch determines whether the plots are opened directly after creation or not.
@@ -54,12 +57,12 @@ WINLEN_MA = 30
 """
 Number of years to project the values of the investments into the future. The interest rate is given below.
 """
-NUM_YEARS_INVEST_PROJECTION = 40
+NUM_YEARS_INVEST_PROJECTION = 20
 
 """
 Assumed interest rate (annual compounding) for the projection, in percent
 """
-INTEREST_PROJECTION_PERCENT = 3
+INTEREST_PROJECTION_PERCENT = 3.0
 
 """
 The following strings name the paths of the different plots that will be generated.
@@ -130,11 +133,11 @@ data-provider tool.
 # Dow Jones industrial average:
 INDEX_DOW = {"Name": "Dow Jones", "Symbol": "DJI", "Exchange": "INDEXDJX"}
 # NASDAQ:
-INDEX_NASDAQ = {"Name": "NASDAQ", "Symbol": "NASDAQ:^IXIC", "Exchange": "INDEXNASDAQ"}
+INDEX_NASDAQ = {"Name": "NASDAQ", "Symbol": "^IXIC", "Exchange": "INDEXNASDAQ"}
 # DAX:
 INDEX_DAX = {"Name": "DAX", "Symbol": "^GDAXI", "Exchange": "INDEXDAX"}
 # SP500:
-INDEX_SP = {"Name": "S&P500", "Symbol": ".INX", "Exchange": "INDEXSP500"}
+INDEX_SP = {"Name": "S&P500", "Symbol": "^GSPC", "Exchange": "INDEXSP500"}
 # SMI:
 INDEX_SMI = {"Name": "SMI", "Symbol": "^SSMI", "Exchange": "INDEXSMI"}
 
@@ -156,11 +159,9 @@ if __name__ == '__main__':
 
     if setup.SKIP_ONLINE_SECURITIES_RETRIEVAL is True:
         print("Will not obtain securities data from online sources. Make sure prices are manually updated.")
-
-    # Check, if the API key is provided:
-    if "ENTER_API_KEY" in setup.API_KEY_ALPHA_VANTAGE and setup.SKIP_ONLINE_SECURITIES_RETRIEVAL is False:
-        raise RuntimeError("Provide Alpha Vantage API Key in setup.py. See: https://www.alphavantage.co")
-    print("Your Alpha Vantage API Key is: " + setup.API_KEY_ALPHA_VANTAGE)
+    else:
+        print("Initializing data provider")
+        provider = dp(setup.FORMAT_DATE, setup.API_COOLDOWN_TIME_SECOND)
 
     """
     Sanity checks:
@@ -181,7 +182,7 @@ if __name__ == '__main__':
     investments = []
     for file in invstmtfiles:
         filepath = files.create_path(INVESTMENT_FOLDER, file)  # Get path of file, including its folder
-        investments.append(investmentparser.parse_investment_file(filepath, setup.FORMAT_DATE))
+        investments.append(investmentparser.parse_investment_file(filepath, setup.FORMAT_DATE, provider))
     if len(investments) > 0:
         print("Successfully parsed " + str(len(investments)) + " investments.")
 
@@ -254,7 +255,7 @@ if __name__ == '__main__':
             forexdict[forexstring] = forex.ForexRates(forexstring, BASECURRENCY, setup.MARKETDATA_FOLDER,
                                                       setup.MARKETDATA_FORMAT_DATE, setup.MARKETDATA_DELIMITER,
                                                       earliest_forex,
-                                                      date_today_str, setup.FORMAT_DATE)
+                                                      date_today_str, setup.FORMAT_DATE, provider)
 
     # Store an empty object in the basecurrency-key of the forex-dict:
     forexdict[BASECURRENCY] = None
@@ -287,7 +288,7 @@ if __name__ == '__main__':
             # Obtain the prices
             obj = prices.MarketPrices(sym, ex, currency, setup.MARKETDATA_FOLDER, setup.MARKETDATA_FORMAT_DATE,
                                       setup.MARKETDATA_DELIMITER, date_analysis_start_str, date_today_str,
-                                      setup.FORMAT_DATE)
+                                      setup.FORMAT_DATE, provider)
             indexprices.append(obj)
 
     """

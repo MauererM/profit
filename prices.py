@@ -6,7 +6,6 @@ Copyright (c) 2018 Mario Mauerer
 """
 
 import files
-import dataprovider_alphavantage as dataprovider
 import stringoperations
 import dateoperations
 import marketdata
@@ -18,7 +17,7 @@ class MarketPrices:
     """
 
     def __init__(self, symbol_str, exchange_str, currency_str, marketdata_folder_str, marketdata_dateformat_str,
-                 marketdata_delimiter_str, startdate_str, stopdate_str, dateformat_str):
+                 marketdata_delimiter_str, startdate_str, stopdate_str, dateformat_str, dataprovider):
         """Constructor. Sets up internal storage.
         Tries to obtain updated prices from the dataprovider of the corresponding asset.
         Matches potentially updated data with the potentially stored data in the marketdata-folder
@@ -33,6 +32,7 @@ class MarketPrices:
         :param startdate_str: Data (market prices) is obtained/created from this date onwards
         :param stopdate_str: Data (market prices) is obtained/created until this date
         :param dateformat_str: String of the dateformat as used throughout the project
+        :param dataprovider: Object of the data provider class, e.g., dataprovider_yahoofinance
         """
         self.symbol = symbol_str
         self.exchange = exchange_str
@@ -44,6 +44,7 @@ class MarketPrices:
         self.marketdata_dateformat = marketdata_dateformat_str
         self.marketdata_delimiter = marketdata_delimiter_str
         self.pricedata_avail = False  # Indicates if it was possible to obtain prices of the asset.
+        self.provider = dataprovider
 
         # Create the path of the file in the marketdata-folder that (should) hold information of this price-object,
         # or which will be generated.
@@ -63,8 +64,7 @@ class MarketPrices:
             # print("Trying to obtain prices for " + self.symbol + ", traded at " + self.exchange +
             #      " from the data provider.")
 
-            dates, prices = dataprovider.get_stock_data(self.symbol, self.exchange, self.startdate, self.stopdate,
-                                                        self.dateformat)
+            dates, prices = self.provider.get_stock_data(self.symbol, self.exchange, self.startdate, self.stopdate)
             success = True
             print("Obtained market data for " + self.symbol)
         except:
