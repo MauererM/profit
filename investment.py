@@ -29,7 +29,7 @@ class Investment:
         :param symbol_str: String of the investment's symbol, e.g., "AAPL"
         :param exchange_str: String of the exchange, where the investment is traded, e.g., "NASDAQ"
         :param filename_str: Filename associated with this account which info was obtained
-        :param transactions_dict: Dictionary with the transactions-data.
+        :param transactions_dict: Dictionary with the transactions-data, as lists for the individual keys
         :param dateformat_str: String that encodes the format of the dates, e.g. "%d.%m.%Y"
         :param dataprovider: Object of the data provider class, e.g., dataprovider_yahoofinance
         """
@@ -61,8 +61,9 @@ class Investment:
         # Check, if the transaction-dates are in order. Allow identical successive days
         if dateoperations.check_date_order(self.transactions[setup.DICT_KEY_DATES], dateformat=setup.FORMAT_DATE,
                                            allow_ident_days=True) is False:
-            raise RuntimeError("Transaction-dates are not in temporal order (Note: Identical successive dates are allowed). "
-                               "Filename: " + self.filename)
+            raise RuntimeError(
+                "Transaction-dates are not in temporal order (Note: Identical successive dates are allowed). "
+                "Filename: " + self.filename)
 
         # Check, if the transactions-actions-column only contains allowed strings:
         if stringoperations.check_allowed_strings(self.transactions[setup.DICT_KEY_ACTIONS],
@@ -81,6 +82,13 @@ class Investment:
                                        self.transactions[setup.DICT_KEY_COST],
                                        self.transactions[setup.DICT_KEY_PAYOUT],
                                        self.transactions[setup.DICT_KEY_BALANCES])
+
+        # Check for stock splits and adjust the balances, prices accordingly
+        prices_mod, balances_mod = self.adjust_splits(self.transactions[setup.DICT_KEY_ACTIONS],
+                                                      self.transactions[setup.DICT_KEY_PRICE],
+                                                      self.transactions[setup.DICT_KEY_BALANCES])
+        self.transactions[setup.DICT_KEY_PRICE] = prices_mod
+        self.transactions[setup.DICT_KEY_BALANCES] = balances_mod
 
         # Process the transactions, extend the dates/data etc.
         # Create a list of consecutive calendar days that corresponds to the date-range of the recorded transactions:
@@ -101,7 +109,7 @@ class Investment:
                                                   self.transactions[setup.DICT_KEY_PAYOUT],
                                                   self.datelist, self.dateformat, sum_ident_days=True)
         # This list holds the prices that are recorded with the transactions:
-        # Careful: Prices may not be summed up! The last price of a given day is taken.
+        # Careful: Prices may not be summed up! The last price of a given day is taken (if there are multiple transactions per day(date)
         self.pricelist = self.populate_full_list(self.transactions[setup.DICT_KEY_DATES],
                                                  self.transactions[setup.DICT_KEY_PRICE],
                                                  self.datelist, self.dateformat, sum_ident_days=False)
@@ -124,13 +132,49 @@ class Investment:
                                                     setup.STRING_INVSTMT_ACTION_SELL,
                                                     self.datelist, self.dateformat)
 
+    def adjust_splits(self, trans_actions, trans_price, trans_balance):
+        """
+         A split affects the price and balance
+        This is needed as online data provider usually provide historical data that reflects the newest value after
+        all splits. Thus, for the obtained data to match, the recorded data must be adjusted accordingly.
+        The balances and prices are directly affected if a split is detected.
+        Note that the dates must be in temporal order. This is checked above in the constructor, so we're good.
+        :param trans_actions: List of strings of actions, e.g, "sell" or "buy" (transactions)
+        :param trans_price: List of values corresponding to the price of the investment (one unit) (transactions
+        :param trans_balance: List of values, corresponding to the balance of the nr. of investments/stocks
+        :return: Two lists: Prices and balances, as modified for the splits.
+        """
+        price_mod = [0] * len(trans_actions)
+        bal_mod = [0] * len(trans_actions)
+        split_factor = int(1)  # tracks the running split factor (if multiple splits). Only integer splits allowed.
+        # Iterate in reverse, i.e., start with the newest transaction:
+        for idx in range(len(trans_actions) - 1, -1, -1):
+            # Check for a split. Note that in the split-transaction, the newest price and balance are already modified/given.
+            if trans_actions[idx] == setup.STRING_INVSTMT_ACTION_SPLIT:
+                if idx == 0:
+                    raise RuntimeError(
+                        "Seems like the first transaction is a split. This should have been caught earlier! Something is really wrong!")
+
+                r = trans_balance[idx] / trans_balance[idx - 1]
+                if not helper.isinteger(r):
+                    raise RuntimeError("Non-integer split detected!")
+                else:
+                    split_factor = split_factor * int(r)
+                # In the split transaction, price and balance are already updated:
+                price_mod[idx] = trans_price[idx]
+                bal_mod[idx] = trans_balance[idx]
+            else:  # No split detected: adjust the price and balances:
+                price_mod[idx] = trans_price[idx]/float(split_factor)
+                bal_mod[idx] = trans_balance[idx]*float(split_factor)
+        return price_mod, bal_mod
+
     def transactions_sanity_check(self, trans_dates, trans_actions, trans_quantity, trans_price, trans_cost,
                                   trans_payout, trans_balance):
         """Checks, if the recorded balances of the transactions are in order and match with the "sell" and "buy" entries
         :param trans_dates: List of strings of transaction-dates
         :param trans_actions: List of strings of actions, e.g, "sell" or "buy" (transactions)
         :param trans_quantity: List of values corresponding to the sold/bought (etc.) investments (transactions)
-        :param trans_price: List of values corresponding to the price of the investment (one unit) (transactions
+        :param trans_price: List of values corresponding to the price of the investment (one unit) (transactions)
         :param trans_cost: List of costs as recorded in the transactions
         :param trans_payout: List of payouts as recorded in the transactions
         :param trans_balance: List of values, corresponding to the balance of the nr. of investments/stocks
@@ -148,7 +192,6 @@ class Investment:
 
         # Check every transaction:
         for idx, date in enumerate(trans_dates):
-
             # Negative investment-balances do not make sense:
             if trans_balance[idx] < 0.0:
                 raise RuntimeError("Detected a negative balance. This does not make sense. "
@@ -174,10 +217,16 @@ class Investment:
             elif trans_actions[idx] == setup.STRING_INVSTMT_ACTION_SPLIT:
                 if idx == 0:
                     raise RuntimeError("First investment-transcation cannot be a split.")
-                else:
-                    split_ratio = trans_balance[idx] / trans_balance[idx - 1]
-                    if not helper.isinteger(split_ratio):
-                        raise RuntimeError("Non-integer split detected. Transaction-Nr: " + repr(idx + 1))
+
+                split_ratio = trans_balance[idx] / trans_balance[idx - 1]
+                if not helper.isinteger(split_ratio):
+                    raise RuntimeError("Non-integer split detected. Transaction-Nr: " + repr(idx + 1))
+
+                if split_ratio > 150:
+                    raise RuntimeError("Split ratio > 150 detected. Sensible?!")
+
+                if trans_price[idx] < 1e-9:
+                    raise RuntimeError("The new price must be given for a split-transaction!")
             else:
                 if idx > 0 and trans_balance[idx] != trans_balance[idx - 1]:
                     raise RuntimeError("Balance changed without buy/sell action.")
