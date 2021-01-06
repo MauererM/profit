@@ -86,7 +86,8 @@ class Investment:
         # Check for stock splits and adjust the balances, prices accordingly
         prices_mod, balances_mod = self.adjust_splits(self.transactions[setup.DICT_KEY_ACTIONS],
                                                       self.transactions[setup.DICT_KEY_PRICE],
-                                                      self.transactions[setup.DICT_KEY_BALANCES])
+                                                      self.transactions[setup.DICT_KEY_BALANCES],
+                                                      self.transactions[setup.DICT_KEY_QUANTITY])
         self.transactions[setup.DICT_KEY_PRICE] = prices_mod
         self.transactions[setup.DICT_KEY_BALANCES] = balances_mod
 
@@ -132,7 +133,7 @@ class Investment:
                                                     setup.STRING_INVSTMT_ACTION_SELL,
                                                     self.datelist, self.dateformat)
 
-    def adjust_splits(self, trans_actions, trans_price, trans_balance):
+    def adjust_splits(self, trans_actions, trans_price, trans_balance, trans_quantity):
         """
          A split affects the price and balance
         This is needed as online data provider usually provide historical data that reflects the newest value after
@@ -142,6 +143,7 @@ class Investment:
         :param trans_actions: List of strings of actions, e.g, "sell" or "buy" (transactions)
         :param trans_price: List of values corresponding to the price of the investment (one unit) (transactions
         :param trans_balance: List of values, corresponding to the balance of the nr. of investments/stocks
+        :param trans_quantity: List of values corresponding to the sold/bought (etc.) investments (transactions)
         :return: Two lists: Prices and balances, as modified for the splits.
         """
         price_mod = [0] * len(trans_actions)
@@ -154,8 +156,11 @@ class Investment:
                 if idx == 0:
                     raise RuntimeError(
                         "Seems like the first transaction is a split. This should have been caught earlier! Something is really wrong!")
-
-                r = trans_balance[idx] / trans_balance[idx - 1]
+                print("Split detected. Stock: " + self.symbol + ". Double-check data provided by dataprovider, if all is in order.")
+                if trans_balance[idx-1] > 1e-9:
+                    r = trans_balance[idx] / trans_balance[idx - 1]
+                else:
+                    r = trans_quantity[idx] # If balance is 0 (e.g., all stock sold), the split ratio has to be given in the quantity column!
                 if not helper.isinteger(r):
                     raise RuntimeError("Non-integer split detected!")
                 else:
@@ -217,8 +222,10 @@ class Investment:
             elif trans_actions[idx] == setup.STRING_INVSTMT_ACTION_SPLIT:
                 if idx == 0:
                     raise RuntimeError("First investment-transcation cannot be a split.")
-
-                split_ratio = trans_balance[idx] / trans_balance[idx - 1]
+                if trans_balance[idx -1] > 1e-9:
+                    split_ratio = trans_balance[idx] / trans_balance[idx - 1]
+                else:
+                    split_ratio = trans_quantity[idx] # If balance is 0 (e.g., all stock sold), the split ratio has to be given in the quantity column!
                 if not helper.isinteger(split_ratio):
                     raise RuntimeError("Non-integer split detected. Transaction-Nr: " + repr(idx + 1))
 

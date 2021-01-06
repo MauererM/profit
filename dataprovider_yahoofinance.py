@@ -124,7 +124,7 @@ class Dataprovider:
         df = pd.read_csv(strlines, sep=",")
         # Re-formate the data
         forexdates = df['Date']
-        forexrates = df['Adj Close']  # This is a float64 numpy array
+        forexrates = df['Close']  # This is a float64 numpy array
 
         # Convert to strings and python-internal structures:
         forexdates = [pd.to_datetime(str(x)) for x in forexdates]
@@ -233,7 +233,7 @@ class Dataprovider:
         df = pd.read_csv(strlines, sep=",")
         # Re-formate the data
         pricedates = df['Date']
-        stockprices = df['Adj Close']  # This is a float64 numpy array
+        stockprices = df['Close']  # This is a float64 numpy array
         # Convert to strings and python-internal structures:
         pricedates = [pd.to_datetime(str(x)) for x in pricedates]
         pricedates = [x.strftime(self.dateformat) for x in pricedates]  # List of strings
