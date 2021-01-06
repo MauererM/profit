@@ -84,12 +84,13 @@ class Investment:
                                        self.transactions[setup.DICT_KEY_BALANCES])
 
         # Check for stock splits and adjust the balances, prices accordingly
-        prices_mod, balances_mod = self.adjust_splits(self.transactions[setup.DICT_KEY_ACTIONS],
-                                                      self.transactions[setup.DICT_KEY_PRICE],
-                                                      self.transactions[setup.DICT_KEY_BALANCES],
-                                                      self.transactions[setup.DICT_KEY_QUANTITY])
+        prices_mod, balances_mod, quantities_mod = self.adjust_splits(self.transactions[setup.DICT_KEY_ACTIONS],
+                                                                      self.transactions[setup.DICT_KEY_PRICE],
+                                                                      self.transactions[setup.DICT_KEY_BALANCES],
+                                                                      self.transactions[setup.DICT_KEY_QUANTITY])
         self.transactions[setup.DICT_KEY_PRICE] = prices_mod
         self.transactions[setup.DICT_KEY_BALANCES] = balances_mod
+        self.transactions[setup.DICT_KEY_QUANTITY] = quantities_mod
 
         # Process the transactions, extend the dates/data etc.
         # Create a list of consecutive calendar days that corresponds to the date-range of the recorded transactions:
@@ -144,10 +145,11 @@ class Investment:
         :param trans_price: List of values corresponding to the price of the investment (one unit) (transactions
         :param trans_balance: List of values, corresponding to the balance of the nr. of investments/stocks
         :param trans_quantity: List of values corresponding to the sold/bought (etc.) investments (transactions)
-        :return: Two lists: Prices and balances, as modified for the splits.
+        :return: Three lists: Prices, balances and quantities, as modified for the splits.
         """
         price_mod = [0] * len(trans_actions)
         bal_mod = [0] * len(trans_actions)
+        quant_mod = [0] * len(trans_actions)
         split_factor = int(1)  # tracks the running split factor (if multiple splits). Only integer splits allowed.
         # Iterate in reverse, i.e., start with the newest transaction:
         for idx in range(len(trans_actions) - 1, -1, -1):
@@ -156,11 +158,13 @@ class Investment:
                 if idx == 0:
                     raise RuntimeError(
                         "Seems like the first transaction is a split. This should have been caught earlier! Something is really wrong!")
-                print("Split detected. Stock: " + self.symbol + ". Double-check data provided by dataprovider, if all is in order.")
-                if trans_balance[idx-1] > 1e-9:
+                print(
+                    "Split detected. Stock: " + self.symbol + ". Double-check data provided by dataprovider, if all is in order.")
+                if trans_balance[idx - 1] > 1e-9:
                     r = trans_balance[idx] / trans_balance[idx - 1]
                 else:
-                    r = trans_quantity[idx] # If balance is 0 (e.g., all stock sold), the split ratio has to be given in the quantity column!
+                    r = trans_quantity[
+                        idx]  # If balance is 0 (e.g., all stock sold), the split ratio has to be given in the quantity column!
                 if not helper.isinteger(r):
                     raise RuntimeError("Non-integer split detected!")
                 else:
@@ -168,10 +172,12 @@ class Investment:
                 # In the split transaction, price and balance are already updated:
                 price_mod[idx] = trans_price[idx]
                 bal_mod[idx] = trans_balance[idx]
-            else:  # No split detected: adjust the price and balances:
-                price_mod[idx] = trans_price[idx]/float(split_factor)
-                bal_mod[idx] = trans_balance[idx]*float(split_factor)
-        return price_mod, bal_mod
+                quant_mod[idx] = trans_quantity[idx]
+            else:  # No split detected: adjust the price, quantities (e.g., sell, buy) and balances:
+                price_mod[idx] = trans_price[idx] / float(split_factor)
+                bal_mod[idx] = trans_balance[idx] * float(split_factor)
+                quant_mod[idx] = trans_quantity[idx] * int(split_factor)
+        return price_mod, bal_mod, quant_mod
 
     def transactions_sanity_check(self, trans_dates, trans_actions, trans_quantity, trans_price, trans_cost,
                                   trans_payout, trans_balance):
@@ -222,10 +228,11 @@ class Investment:
             elif trans_actions[idx] == setup.STRING_INVSTMT_ACTION_SPLIT:
                 if idx == 0:
                     raise RuntimeError("First investment-transcation cannot be a split.")
-                if trans_balance[idx -1] > 1e-9:
+                if trans_balance[idx - 1] > 1e-9:
                     split_ratio = trans_balance[idx] / trans_balance[idx - 1]
                 else:
-                    split_ratio = trans_quantity[idx] # If balance is 0 (e.g., all stock sold), the split ratio has to be given in the quantity column!
+                    split_ratio = trans_quantity[
+                        idx]  # If balance is 0 (e.g., all stock sold), the split ratio has to be given in the quantity column!
                 if not helper.isinteger(split_ratio):
                     raise RuntimeError("Non-integer split detected. Transaction-Nr: " + repr(idx + 1))
 
