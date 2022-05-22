@@ -37,7 +37,7 @@ class Dataprovider:
         urllib.request.install_opener(self.opener)
         try:
             self.__obtain_cookie_crumb()  # Obtain a cookie and crumb for the ongoing session.
-            print("Success. Cookie for yahoo finance obtained.")
+            #print("Cookie for yahoo finance obtained")
         except:
             raise RuntimeError("Initialization of yahoo/cookie somehow failed")
 
@@ -65,7 +65,8 @@ class Dataprovider:
             self.cookie = c.value
 
         if self.crumb == None or self.cookie == None:
-            raise RuntimeError("Could not obtain cookie or crumb from yahoo")
+            #raise RuntimeError("Could not obtain cookie or crumb from yahoo")
+            print("Not sure if cookie from Yahoo finance was obtained correctly...")
 
     def get_forex_data(self, sym_a, sym_b, startdate, stopdate):
         """Provides foreign-exchange rates for two currencies
