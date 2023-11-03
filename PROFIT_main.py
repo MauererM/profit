@@ -18,8 +18,10 @@ import prices
 import setup
 
 # Specify which dataprovider to use:
-from dataprovider_yahoofinance import Dataprovider as dp
-
+if setup.SKIP_ONLINE_SECURITIES_RETRIEVAL is False:
+    from dataprovider_yahoofinance import Dataprovider as dp
+else:
+    from dataprovider_empty import Dataprovider as dp
 """
 These strings specify the folders from which the account and investment files
 are taken.
@@ -159,6 +161,7 @@ if __name__ == '__main__':
 
     if setup.SKIP_ONLINE_SECURITIES_RETRIEVAL is True:
         print("Will not obtain securities data from online sources. Make sure prices are manually updated.")
+        provider = dp(setup.FORMAT_DATE, setup.API_COOLDOWN_TIME_SECOND)
     else:
         print("Initializing data provider")
         provider = dp(setup.FORMAT_DATE, setup.API_COOLDOWN_TIME_SECOND)

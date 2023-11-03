@@ -6,7 +6,7 @@ Copyright (c) 2018 Mario Mauerer
 """
 
 # If set, the online retrieval of the securities-data is skipped (as it might take some time and/or not always work)
-SKIP_ONLINE_SECURITIES_RETRIEVAL = False
+SKIP_ONLINE_SECURITIES_RETRIEVAL = True
 
 # Cooldown time in seconds between API calls:
 API_COOLDOWN_TIME_SECOND = 3.0
