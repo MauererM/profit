@@ -81,6 +81,8 @@ FILENAME_STACKPLOT_ACCOUNT_VALUES = "Account_Values_Stacked"
 FILENAME_TOTAL_INVESTMENT_RETURNS = "Investments_Total_Returns"
 # Returns of individual investments, multiple plots per sheet:
 FILENAME_INVESTMENT_RETURNS = "Investments_Returns"
+# Absolute returns of individual investments, multiple plots per sheet:
+FILENAME_INVESTMENT_RETURNS_ABSOLUTE = "Investments_Returns_Absolute"
 # Values of individual investments, multiple plots per sheet:
 FILENAME_INVESTMENT_VALUES = "Investments_Values"
 # Values of individual accounts, multiple plots per sheet:
@@ -298,9 +300,9 @@ if __name__ == '__main__':
     Create the plots:
     """
     if OPEN_PLOTS is True:
-        print("\nPlotting. Plots will be opened after creation.")
+        print("\nAnalyzing and plotting... Plots will be opened after creation.")
     else:
-        print("\nPlotting. Plots will not be opened after creation.")
+        print("\nAnalyzing and plotting... Plots will not be opened after creation.")
 
     if PURGE_OLD_PLOTS is True:
         print("Deleting existing plots.")
@@ -324,6 +326,8 @@ if __name__ == '__main__':
         plotting.plot_asset_values_cost_payout_individual(investments, FILENAME_INVESTMENT_VALUES)
         # Plot the returns of all investmets, for different periods:
         plotting.plot_asset_returns_individual(investments, FILENAME_INVESTMENT_RETURNS)
+        # Plot the daily absolute returns of all investmets:
+        plotting.plot_asset_returns_individual_absolute(investments, FILENAME_INVESTMENT_RETURNS_ABSOLUTE)
         # Plot all investments:
         plotting.plot_asset_values_stacked(investments, FILENAME_STACKPLOT_INVESTMENT_VALUES, "Value: All Investments")
         # Plot the returns of all investments accumulated, for the desired period:

@@ -326,11 +326,11 @@ def plot_assets_grouped(assetlist, fname, titlestr, plottype):
     alpha = 0.75  # Plot transparency
 
     # Plot:
-    if plottype is "stacked":
+    if plottype == "stacked":
         plotting_aux.configure_stackedplot()
         plotting_aux.create_stackedplot(xlist, vals_groups, labels_groups, colorlist, titlestr, xlabel, ylabel, alpha,
                                         fname)
-    elif plottype is "line":
+    elif plottype == "line":
         plotting_aux.configure_lineplot()
         fig = plt.figure()
         ax = fig.add_subplot(111)  # Only one plot
@@ -1045,6 +1045,97 @@ def plot_asset_returns_individual(assetlist, fname):
         if cfg.OPEN_PLOTS is True:
             plotting_aux.open_plot(fname_ext)
 
+def plot_asset_returns_individual_absolute(assetlist, fname):
+    """Plots different absolute returns of each asset in an individual plot.
+    The plots are created on a 2x3 grid
+    :param assetlist: List of asset-objects
+    :param fname: String of desired plot filename
+    """
+    fname = plotting_aux.modify_plot_path(setup.PLOTS_FOLDER, fname)
+    # Sanity Check:
+    if len(assetlist) == 0:
+        print("No assets given for plot: " + fname)
+        return
+
+    # Only plot assets with some value during the analysis period:
+    assetlist_plot = []
+    for asset in assetlist:
+        if any(x > 1e-9 for x in asset.get_analysis_valuelist()):
+            assetlist_plot.append(asset)
+
+    if len(assetlist_plot) == 0:
+        print("No assets of value given at the end of the analysis-period. Not plotting. File: " + fname)
+        return
+
+    dateformat = assetlist_plot[0].get_dateformat()
+    if len(assetlist_plot) > 1:
+        for asset in assetlist_plot[1:]:
+            if asset.get_dateformat() != dateformat:
+                raise RuntimeError("The dateformats of the assets must be identical.")
+
+    # Get a list of asset-lists, whereas each top-level list contains 6 plots, for a single plot-sheet.
+    assetlists_sheet = analysis.partition_list(assetlist_plot, 6)
+    num_sheets = len(assetlists_sheet)
+    print("Plotting the asset-values with {:d} figure-sheet(s). Filename: ".format(num_sheets) + fname)
+
+    xlabel = "Date"
+    ylabel = "Return (Absolute; Currency)"
+
+    for sheet_num, assets in enumerate(assetlists_sheet):
+
+        plotting_aux.configure_gridplot()
+        fig = plt.figure()
+        fig.subplots_adjust(hspace=0.4, wspace=0.4)
+
+        for idx, asset in enumerate(assets):
+            plotidx = idx + 1
+            ax = fig.add_subplot(2, 3, plotidx)
+
+            try:
+                dates, returns = analysis.get_returns_asset_daily_absolute_holdingperiod(asset, dateformat)
+                if helper.list_all_zero(returns) is False:
+                    x = [stringoperations.str2datetime(i, dateformat) for i in dates]
+                    ax.plot(x, returns, alpha=1.0, zorder=3, clip_on=False, color=setup.PLOTS_COLORS[0], marker='o',
+                            label="Absolute Returns")
+            except:
+                # Skip the plotting; no date of today available.
+                   plt.text(0.05, 0.5, "Missing price-data of today (or other error)", horizontalalignment='left',
+                         verticalalignment='center',
+                         transform=ax.transAxes, fontsize=7, bbox=dict(facecolor='w', edgecolor='k', boxstyle='round'))
+
+            # Format the y-axis labels
+            ax.yaxis.set_major_formatter(FormatStrFormatter('%.1f'))
+
+            ax.set_xlabel(xlabel)
+            ax.set_ylabel(ylabel)
+            assetname = asset.get_filename()
+            assetname = stringoperations.get_filename(assetname, keep_type=False)
+            titlestr = "Return: " + assetname
+            plt.title(titlestr)
+
+            # Only use autofmt_xdate, if there are actually 6 plots on the sheet. Otherwise, the axis-labels of the
+            # upper subplot-row disappear (this is a feature of autofmt_xdate...
+            # This has to be done for each subplot
+            if len(assets) < 6:
+                # Only rotate the labels and right-align them; same as autofmt_xdate
+                plt.setp(plt.xticks()[1], rotation=30, ha='right')
+
+        # Only use autofmt_xdate, if there are actually 6 plots on the sheet. Otherwise, the axis-labels of the upper
+        # subplot-row disappear (this is a feature of autofmt_xdate...
+        if len(assets) == 6:
+            # Nicer date-plotting:
+            fig.autofmt_xdate()
+            ax.fmt_xdata = matplotlib.dates.DateFormatter('%d.%m.%Y')
+        elif len(assets) > 6:
+            raise RuntimeError("More than 6 plots on the subplot-sheet are not possible.")
+
+        fname_ext = stringoperations.filename_append_number(fname, "_", sheet_num + 1)
+
+        # PDF Export:
+        plt.savefig(fname_ext)
+
+        if cfg.OPEN_PLOTS is True:
+            plotting_aux.open_plot(fname_ext)
 
 def plot_asset_values_stacked(assetlist, fname, title):
     """This function plots the values of the given assets with a stacked plot.
