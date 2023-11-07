@@ -7,6 +7,7 @@ Copyright (c) 2018 Mario Mauerer
 
 import math
 
+
 def isclose(a, b, rel_tol=1e-9, abs_tol=0.0):
     """For comparing float-numbers: Returns true, if the two numbers are within the specified absolute and/or
     relative tolerances.
@@ -18,6 +19,7 @@ def isclose(a, b, rel_tol=1e-9, abs_tol=0.0):
     """
     return abs(a - b) <= max(rel_tol * max(abs(a), abs(b)), abs_tol)
 
+
 def isinteger(a, rel_tol=1e-9, abs_tol=0.0):
     """
     Checks if a (float) number is an integer or not.
@@ -28,7 +30,7 @@ def isinteger(a, rel_tol=1e-9, abs_tol=0.0):
     """
     lower = math.floor(a)
     upper = math.ceil(a)
-    return isclose(lower, a, rel_tol, abs_tol) or isclose(upper,a, rel_tol, abs_tol)
+    return isclose(lower, a, rel_tol, abs_tol) or isclose(upper, a, rel_tol, abs_tol)
 
 
 def within_tol(a, b, tol):

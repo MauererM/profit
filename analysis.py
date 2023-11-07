@@ -9,6 +9,7 @@ import stringoperations
 import helper
 import setup
 
+
 def project_values(datelist, valuelist, num_years, interest_percent, dateformat):
     """Projects values into the future given a certian interest rate. Annual compounding is assumed.
     Exponential growth will be displayed.
@@ -431,7 +432,8 @@ def calc_returns_period(datelist, valuelist, costlist, payoutlist, inflowlist, o
     :param outflowlist: List of outflows of the investment (e.g., "Sell" transactions),
     corresponding to the days in datelist
     :param period: Number of days for which the return is calculated. Must be integer. If len(datelist) > period,
-    the return is calculated for each block within the full date list.
+    the return is calculated for each block within the full date list. This is used by the plotting-functions, which
+    plot different returns for different time periods.
     :param dateformat: String that specifies the format of the date-strings
     :return: Tuple of two lists: (date, return). The returns of the periods in the datelist. They correspond to the
     returned dates, whereas the last date of the analysis-interval is given. The return is in percent.
@@ -523,6 +525,102 @@ def calc_returns_period(datelist, valuelist, costlist, payoutlist, inflowlist, o
     return ret_dates, ret
 
 
+def get_returns_asset_daily_absolute_analysisperiod(asset, dateformat):
+    """Calculates the absolute returns of a given asset, for the full holding period (incl. analysis period!)
+    The data is intended to be provided with a granularity of days.
+    :param asset: Asset-object
+    :param dateformat: String that specifies the format of the date-strings
+    :return: Tuple of two lists: (date, return). The returns of the periods in the datelist. They correspond to the
+    returned dates, whereas the last date of the analysis-interval is given. The return is in the asset's currency
+    """
+
+    # The value of the asset of today must be known, otherwise, errors are thrown, as the holding period return is
+    # otherwise not very meaningful.
+    today_dt = dateoperations.get_date_today(dateformat, datetime_obj=True)
+
+    # Try to get the most recent value of the asset.
+    priceobj = asset.get_marketprice_obj()
+
+    # If there is an asset-price available, get the latest possible one that is recorded:
+    today_price_avail = False
+    if setup.SKIP_ONLINE_SECURITIES_RETRIEVAL is False and priceobj.is_price_avail() is True:
+        latest_date, latest_price = priceobj.get_latest_price_date()
+        latest_date_dt = stringoperations.str2datetime(latest_date, dateformat)
+        # The value can be determined from most recent price!
+        if latest_date_dt >= today_dt:  # We have a price, even for today; this is good.
+            today_price_avail = True
+
+    if today_price_avail is False:  # transactions-data needed to get price of today
+        datelist_check = asset.get_trans_datelist()
+        pricelist_check = asset.get_trans_pricelist()
+        latest_date_trans = stringoperations.str2datetime(datelist_check[-1], dateformat)
+        # Only allow if the transactions contain data from today:
+        if latest_date_trans >= today_dt and pricelist_check[-1] > 1e-9:
+            today_price_avail = True
+
+    if today_price_avail is False:
+        # Do not repeat this warning here, it's already outputted in the relative holding period calculation function.
+        # print("WARNING: Cannot calculate holding period return of "
+        #      + asset.get_filename() + " due to unavailable and missing price of today. "
+        #                               "Update the assets marketdata-file with values from today or "
+        #                               "add a price-defining update-transaction of today.")
+        # Return a seemingly impossible (negative!) value:
+        # return -1e10
+        # raise RuntimeError("Require price of today. Abort plotting")
+        pass  # Allow plotting anyways
+
+    # Create new copies - just to be sure (the get-functions should already return copies)
+    # Get the analysis period data:
+    datelist = asset.get_analysis_datelist()
+    costlist = asset.get_analysis_costlist()
+    payoutlist = asset.get_analysis_payoutlist()
+    valuelist = asset.get_analysis_valuelist()
+    inflowlist = asset.get_analysis_inflowlist()
+    outflowlist = asset.get_analysis_outflowlist()
+
+    returns = calc_returns_daily_absolute(datelist, valuelist, costlist, payoutlist, inflowlist, outflowlist,
+                                          dateformat)
+    return datelist, returns
+
+
+def calc_returns_daily_absolute(datelist, valuelist, costlist, payoutlist, inflowlist, outflowlist, dateformat):
+    """Calculates the absolute returns of an asset in the given period (analysis period).
+    This function returns the gains (or losses) of the asset _since the start of the analysis period_.
+    The data is intended to be provided with a granularity of days.
+    Costs, payouts, inflows and outflows are to be given for the corresponding days (as given by datelist)
+    The values are always given for the end of the day.
+    :param datelist: List of strings of dates (days).
+    :param valuelist: List of asset-values, corresponding to the days in datelist
+    :param costlist: List of costs, corresponding to the days in datelist
+    :param payoutlist: List of payouts, corresponding to the days in datelist
+    :param inflowlist: List of inflows into the investment (e.g., "Buy" transactions),
+    corresponding to the days in datelist
+    :param outflowlist: List of outflows of the investment (e.g., "Sell" transactions),
+    corresponding to the days in datelist
+    :param dateformat: String that specifies the format of the date-strings
+    :return: A single list that for each date in datelist contains the absolute returns of the asset at/up to each date.
+    """
+    # Sanity-checks:
+    if dateoperations.check_dates_consecutive(datelist, dateformat) is False:
+        raise RuntimeError("datelist must contain consecutive days.")
+    # Check the length of all lists - they must be identical:
+    totlist = [datelist, valuelist, costlist, payoutlist, inflowlist, outflowlist]
+    n = len(datelist)
+    if all(len(x) == n for x in totlist) is False:
+        raise RuntimeError("The lists must all be of equal lenghts.")
+
+    ret = []
+    for idx, date in enumerate(datelist):
+        cost = sum(costlist[0:idx + 1])
+        payout = sum(payoutlist[0:idx + 1])
+        inflow = sum(inflowlist[0:idx + 1])
+        outflow = sum(outflowlist[0:idx + 1])
+        value_current = valuelist[idx]
+        abs_gain = value_current - inflow + payout - cost + outflow
+        ret.append(abs_gain)
+    return ret
+
+
 def calc_return(val1, val2, outflow, inflow, payout, cost):
     """Calculates the return of an investment (in percent)
     :param val1: Value at beginning of period
@@ -557,12 +655,15 @@ def partition_list(inlist, blocksize):
 if __name__ == '__main__':
     dateformat = "%d.%m.%Y"
     datelist = ["01.01.2000", "02.01.2000", "03.01.2000", "04.01.2000", "05.01.2000", "06.01.2000"]
-    valuelist = [1, 100, 105, 105, 55, 50]
+    valuelist = [1, 100, 105, 105, 55, -80]
     costlist = [0, 10, 0, 0, 0, 0]
     payoutlist = [0, 10, 0, 0, 0, 0]
     inflowlist = [0, 99, 0, 0, 0, 0]
-    outflowlist = [0, 5, 0, 0, 50, 5]
+    outflowlist = [0, 5, 0, 0, 160, 5]
     timestep = 4
+
+    # print(calc_return_absolute(valuelist[0], valuelist[-1], sum(outflowlist), sum(inflowlist), sum(payoutlist), sum(costlist)))
+    # print(calc_returns_daily_absolute(datelist, valuelist, costlist, payoutlist, inflowlist, outflowlist, dateformat))
 
     # xfilt, yfilt = calc_median_filt(datelist, valuelist, 3)
     # print(xfilt)
