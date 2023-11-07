@@ -38,7 +38,7 @@ BASECURRENCY = "CHF"
 """
 Data is analyzed a certain number of days into the past, from today
 """
-DAYS_ANALYSIS = 365
+DAYS_ANALYSIS = 2510
 
 """
 This switch determines whether the plots are opened directly after creation or not.

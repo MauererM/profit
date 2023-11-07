@@ -734,7 +734,7 @@ def plot_asset_total_absolute_returns_accumulated(dates, returns, fname):
     ax.set_xlabel("Dates")
     ax.set_ylabel("Absolute Returns (" + cfg.BASECURRENCY + ")")
     plt.title(
-        "Summed absolute returns of all investments in analysis period (which have data of today)")
+        "Summed absolute returns of all investments in analysis period")
 
     # Nicer date-plotting:
     fig.autofmt_xdate()
