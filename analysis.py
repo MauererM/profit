@@ -583,10 +583,6 @@ def get_returns_asset_daily_absolute_analysisperiod(asset, dateformat):
     except:
         raise RuntimeError("Valuelist is empty/contains only zeroes")
 
-    # Fill the entire value list with zeroes (if analysis-period > holding period), to avoid false values in the returns
-    #for i in range(idx):
-    #    valuelist[i] = val
-
     returns = calc_returns_daily_absolute(datelist, valuelist, costlist, payoutlist, inflowlist, outflowlist,
                                           dateformat)
     return datelist, returns
