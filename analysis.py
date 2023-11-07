@@ -566,8 +566,8 @@ def get_returns_asset_daily_absolute_analysisperiod(asset, dateformat):
         #                               "add a price-defining update-transaction of today.")
         # Return a seemingly impossible (negative!) value:
         # return -1e10
-        #raise RuntimeError("Require price of today. Abort plotting")
-        pass # Allow plotting anyways
+        # raise RuntimeError("Require price of today. Abort plotting")
+        pass  # Allow plotting anyways
 
     # Create new copies - just to be sure (the get-functions should already return copies)
     # Get the analysis period data:
@@ -577,11 +577,6 @@ def get_returns_asset_daily_absolute_analysisperiod(asset, dateformat):
     valuelist = asset.get_analysis_valuelist()
     inflowlist = asset.get_analysis_inflowlist()
     outflowlist = asset.get_analysis_outflowlist()
-
-    try:
-        idx, val = next((i, v) for i, v in enumerate(valuelist) if v != 0.0)
-    except:
-        raise RuntimeError("Valuelist is empty/contains only zeroes")
 
     returns = calc_returns_daily_absolute(datelist, valuelist, costlist, payoutlist, inflowlist, outflowlist,
                                           dateformat)
