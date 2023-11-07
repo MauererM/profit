@@ -48,7 +48,7 @@ def within_tol(a, b, tol):
 
 def list_all_zero(vallist):
     """Checks if all elements of a list are smaller than 1e-9"""
-    return all([x < 1e-9 for x in vallist])
+    return all([-1e-9 < x < 1e-9 for x in vallist])
 
 
 def accumulate_list(inlist):

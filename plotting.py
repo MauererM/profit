@@ -326,11 +326,11 @@ def plot_assets_grouped(assetlist, fname, titlestr, plottype):
     alpha = 0.75  # Plot transparency
 
     # Plot:
-    if plottype is "stacked":
+    if plottype == "stacked":
         plotting_aux.configure_stackedplot()
         plotting_aux.create_stackedplot(xlist, vals_groups, labels_groups, colorlist, titlestr, xlabel, ylabel, alpha,
                                         fname)
-    elif plottype is "line":
+    elif plottype == "line":
         plotting_aux.configure_lineplot()
         fig = plt.figure()
         ax = fig.add_subplot(111)  # Only one plot
