@@ -618,13 +618,6 @@ def calc_returns_daily_absolute(datelist, valuelist, costlist, payoutlist, inflo
     if all(len(x) == n for x in totlist) is False:
         raise RuntimeError("The lists must all be of equal lenghts.")
 
-    #for idx, val in enumerate(inflowlist):
-     #   if val == valuelist[0]:
-            #inflowlist[idx] = 0.0  # Remove the first inflow (=buy) to avoid double-counting
-     #       break
-
-    value_initial = valuelist[0] # The value of the asset at the beginning of the analysis
-
     ret = []
     for idx, date in enumerate(datelist):
         cost = sum(costlist[0:idx + 1])
@@ -632,7 +625,8 @@ def calc_returns_daily_absolute(datelist, valuelist, costlist, payoutlist, inflo
         inflow = sum(inflowlist[0:idx + 1])
         outflow = sum(outflowlist[0:idx + 1])
         value_current = valuelist[idx]
-        ret.append(calc_return_absolute(value_initial, value_current, outflow, inflow, payout, cost))
+        abs_gain = value_current - inflow + payout - cost + outflow
+        ret.append(abs_gain)
     return ret
 
 
@@ -651,19 +645,6 @@ def calc_return(val1, val2, outflow, inflow, payout, cost):
         return 0.0
     else:
         return (val2 + outflow + payout - cost - inflow - val1) / val1 * 100.0
-
-
-def calc_return_absolute(value_initial, value_current, outflow, inflow, payout, cost):
-    """Calculates the absolute return of an investment
-        :param val1: Value at beginning of period
-        :param val2: Value at end of period
-        :param outflow: Outflows (e.g., "Sell"-transactions) during period
-        :param inflow: Inflows (e.g., "Buy"-transactions) during period
-        :param payout: Payouts of the asset
-        :param cost: Costs...
-        :return: Return of the asset, in its currency
-        """
-    return value_current - value_initial - inflow + outflow + payout - cost
 
 
 def partition_list(inlist, blocksize):

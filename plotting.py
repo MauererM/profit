@@ -1173,7 +1173,7 @@ def plot_asset_returns_individual_absolute(assetlist, fname):
             ax.set_ylabel(ylabel)
             assetname = asset.get_filename()
             assetname = stringoperations.get_filename(assetname, keep_type=False)
-            titlestr = "Return: " + assetname
+            titlestr = "Abs. Return/Gain: " + assetname
             plt.title(titlestr)
 
             # Only use autofmt_xdate, if there are actually 6 plots on the sheet. Otherwise, the axis-labels of the
