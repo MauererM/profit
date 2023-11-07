@@ -38,7 +38,7 @@ BASECURRENCY = "CHF"
 """
 Data is analyzed a certain number of days into the past, from today
 """
-DAYS_ANALYSIS = 720
+DAYS_ANALYSIS = 365
 
 """
 This switch determines whether the plots are opened directly after creation or not.
@@ -83,6 +83,8 @@ FILENAME_TOTAL_INVESTMENT_RETURNS = "Investments_Total_Returns"
 FILENAME_INVESTMENT_RETURNS = "Investments_Returns"
 # Absolute returns of individual investments, multiple plots per sheet:
 FILENAME_INVESTMENT_RETURNS_ABSOLUTE = "Investments_Returns_Absolute"
+# Absolute returns of all investments, summed up:
+FILENAME_INVESTMENT_RETURNS_ABSOLUTE_TOTAL = "Investments_Returns_Absolute_Summed"
 # Values of individual investments, multiple plots per sheet:
 FILENAME_INVESTMENT_VALUES = "Investments_Values"
 # Values of individual accounts, multiple plots per sheet:
@@ -327,7 +329,10 @@ if __name__ == '__main__':
         # Plot the returns of all investmets, for different periods:
         plotting.plot_asset_returns_individual(investments, FILENAME_INVESTMENT_RETURNS)
         # Plot the daily absolute returns of all investmets:
-        plotting.plot_asset_returns_individual_absolute(investments, FILENAME_INVESTMENT_RETURNS_ABSOLUTE)
+        d, ret_total = plotting.plot_asset_returns_individual_absolute(investments,
+                                                                       FILENAME_INVESTMENT_RETURNS_ABSOLUTE)
+        # Plot the accumulated/summed daily absolute returns of all investmets:
+        plotting.plot_asset_total_absolute_returns_accumulated(d, ret_total, FILENAME_INVESTMENT_RETURNS_ABSOLUTE_TOTAL)
         # Plot all investments:
         plotting.plot_asset_values_stacked(investments, FILENAME_STACKPLOT_INVESTMENT_VALUES, "Value: All Investments")
         # Plot the returns of all investments accumulated, for the desired period:

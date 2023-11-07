@@ -535,9 +535,10 @@ def plot_asset_values_indices(assetlist, indexlist, fname, titlestr):
             indexname.append(stockidx.get_currency())  # The name of the index is stored as currency
 
     # Rescale the summed values such that the first entry is "100":
-    startidx = [i for i, x in enumerate(sumlist_corr) if x > 1e-9][0]
-    fact = sumlist_corr[startidx]/100.0
-    sumlist_corr = [x/fact for x in sumlist_corr]
+    startidx = [i for i, x in enumerate(sumlist_corr) if x > 1e-9 or x < -1e-9][0]
+    fact = sumlist_corr[startidx] / 100.0
+    if fact != 0.0:
+        sumlist_corr = [x / fact for x in sumlist_corr]
 
     # The index-values have to be rescaled to the asset-values (at the beginning of the analysis-period)
     # Find the first (summed) asset-value > 0:
@@ -553,7 +554,8 @@ def plot_asset_values_indices(assetlist, indexlist, fname, titlestr):
 
     dateformat = assetlist[0].get_dateformat()
     x = [stringoperations.str2datetime(x, dateformat) for x in datelist]
-    ax.plot(x, sumlist_corr, alpha=1.0, zorder=3, clip_on=False, color=setup.PLOTS_COLORS[0], marker='', label="Asset Value",
+    ax.plot(x, sumlist_corr, alpha=1.0, zorder=3, clip_on=False, color=setup.PLOTS_COLORS[0], marker='',
+            label="Asset Value",
             linewidth=1.6)
     # Label the last value:
     last_val = f"{sumlist_corr[-1]:.2f}"
@@ -588,7 +590,7 @@ def plot_asset_values_indices(assetlist, indexlist, fname, titlestr):
         pylab.matplotlib.ticker.FuncFormatter(lambda x, p: format(int(x), ',')))
 
     ax.set_xlabel("Dates")
-    ax.set_ylabel("Values (" + cfg.BASECURRENCY + ")")
+    ax.set_ylabel("Normalized Value")
     plt.title(titlestr)
 
     # Nicer date-plotting:
@@ -682,6 +684,57 @@ def plot_asset_projections(assetlist, interest, num_years, fname, titlestr):
     ax.set_ylabel("Values (" + cfg.BASECURRENCY + ")")
     ax.set_ylim(ymin=0)  # Looks better
     plt.title(titlestr)
+
+    # Nicer date-plotting:
+    fig.autofmt_xdate()
+    ax.fmt_xdata = matplotlib.dates.DateFormatter('%d.%m.%Y')
+
+    # PDF Export:
+    plt.savefig(fname)
+
+    if cfg.OPEN_PLOTS is True:
+        plotting_aux.open_plot(fname)
+
+
+def plot_asset_total_absolute_returns_accumulated(dates, returns, fname):
+    """Plots the accumulated absolute
+    :param dates: List of dates
+    :param returns: List of day-wise, summed returns of all investments
+    """
+    # Get the full path of the file:
+    fname = plotting_aux.modify_plot_path(setup.PLOTS_FOLDER, fname)
+    # Sanity Check:
+    if len(returns) == 0:
+        print("No assets given for plot: " + fname)
+        return
+
+    if len(dates) != len(returns):
+        raise RuntimeError("The summed list and date-list must correspond in length.")
+
+    if helper.list_all_zero(returns) is True:
+        print("All summed asset values are zero. Not plotting. File: " + fname)
+        return
+
+    # Plot:
+    plotting_aux.configure_lineplot()
+    fig = plt.figure()
+    ax = fig.add_subplot(111)  # Only one plot
+    dateformat = setup.MARKETDATA_FORMAT_DATE
+    x = [stringoperations.str2datetime(x, dateformat) for x in dates]
+
+    ax.plot(x, returns, alpha=1.0, zorder=3, clip_on=False, color=setup.PLOTS_COLORS[0], marker='', linewidth=1.6)
+    # Label the last value:
+    last_val = f"{returns[-1]:.2f}"
+    ax.text(x[-1], returns[-1], last_val)
+
+    # Add a comma to separate thousands:
+    ax.get_yaxis().set_major_formatter(
+        pylab.matplotlib.ticker.FuncFormatter(lambda x, p: format(int(x), ',')))
+
+    ax.set_xlabel("Dates")
+    ax.set_ylabel("Absolute Returns (" + cfg.BASECURRENCY + ")")
+    plt.title(
+        "Summed absolute returns of all investments (which succeeded in plotting their respective absolute returns)")
 
     # Nicer date-plotting:
     fig.autofmt_xdate()
@@ -1045,6 +1098,7 @@ def plot_asset_returns_individual(assetlist, fname):
         if cfg.OPEN_PLOTS is True:
             plotting_aux.open_plot(fname_ext)
 
+
 def plot_asset_returns_individual_absolute(assetlist, fname):
     """Plots different absolute returns of each asset in an individual plot.
     The plots are created on a 2x3 grid
@@ -1081,6 +1135,9 @@ def plot_asset_returns_individual_absolute(assetlist, fname):
     xlabel = "Date"
     ylabel = "Return (Absolute; Currency)"
 
+    dates = assetlist_plot[0].get_analysis_datelist()
+    returns_total = [0.0 for _ in range(len(dates))]
+
     for sheet_num, assets in enumerate(assetlists_sheet):
 
         plotting_aux.configure_gridplot()
@@ -1090,16 +1147,22 @@ def plot_asset_returns_individual_absolute(assetlist, fname):
         for idx, asset in enumerate(assets):
             plotidx = idx + 1
             ax = fig.add_subplot(2, 3, plotidx)
-
             try:
-                dates, returns = analysis.get_returns_asset_daily_absolute_holdingperiod(asset, dateformat)
+                dates, returns = analysis.get_returns_asset_daily_absolute_analysisperiod(asset, dateformat)
+                returns_total = [a + b for a, b in zip(returns, returns_total)]
                 if helper.list_all_zero(returns) is False:
                     x = [stringoperations.str2datetime(i, dateformat) for i in dates]
                     ax.plot(x, returns, alpha=1.0, zorder=3, clip_on=False, color=setup.PLOTS_COLORS[0], marker='o',
                             label="Absolute Returns")
+                else:
+                    # Skip the plotting; no date of today available.
+                    plt.text(0.05, 0.5, "Something went wrong", horizontalalignment='left',
+                             verticalalignment='center',
+                             transform=ax.transAxes, fontsize=7,
+                             bbox=dict(facecolor='w', edgecolor='k', boxstyle='round'))
             except:
                 # Skip the plotting; no date of today available.
-                   plt.text(0.05, 0.5, "Missing price-data of today (or other error)", horizontalalignment='left',
+                plt.text(0.05, 0.5, "Missing price-data of today (or other error)", horizontalalignment='left',
                          verticalalignment='center',
                          transform=ax.transAxes, fontsize=7, bbox=dict(facecolor='w', edgecolor='k', boxstyle='round'))
 
@@ -1136,6 +1199,9 @@ def plot_asset_returns_individual_absolute(assetlist, fname):
 
         if cfg.OPEN_PLOTS is True:
             plotting_aux.open_plot(fname_ext)
+
+    return dates, returns_total
+
 
 def plot_asset_values_stacked(assetlist, fname, title):
     """This function plots the values of the given assets with a stacked plot.
