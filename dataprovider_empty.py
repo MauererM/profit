@@ -17,7 +17,7 @@ class DataproviderEmpty:
         self.dateformat = dateformat
 
     def initialize(self):
-        return True # The empty provider (used last by dataprovider_main) should succeed here
+        return True # The empty provider (used last by dataprovider_main) must succeed here
 
     def get_name(self):
         return self.name

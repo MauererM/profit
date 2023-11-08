@@ -8,7 +8,6 @@ Copyright (c) 2020-2023 Mario Mauerer
 import stringoperations
 import dateoperations
 import time
-import pandas as pd
 
 
 class DataproviderMain:
@@ -63,7 +62,7 @@ class DataproviderMain:
 
         res = self.active_provider.retrieve_stock_data(p1, p2, sym_stock, sym_exchange)
         if res is not None:
-            pricedates, stockprices = res
+            pricedates, stockprices = res  # List of strings and floats
         else:
             print("Failed to obtain data for stock symbol: " + sym_stock)
             return None
@@ -93,7 +92,7 @@ class DataproviderMain:
 
         res = self.active_provider.retrieve_forex_data(sym_a, sym_b, p1, p2)
         if res is not None:
-            forexdates, forexrates = res
+            forexdates, forexrates = res  # List of strings and floats
         else:
             print("Failed to obtain exchange rates for: " + sym_a + " and " + sym_b)
             return None
@@ -130,7 +129,7 @@ class DataproviderMain:
         """
         Post-processes the data provided by the dataprovider.
         This is identical for both stocks and forex-data (as they are the same: Time-series values).
-        :param dates: List of strings of dates as provided by the data provider. Likely a pandas-object. # Todo: What is it actually?
+        :param dates: List of strings of dates as provided by the data provider. List of strings.
         :param values: (Corresponding) list of values provided by the data provider. Likely floats.
         :param startdate: String of (desired) startdate
         :param stopdate: String of (desired) stopdate
@@ -139,10 +138,6 @@ class DataproviderMain:
         corresponding values. Some data might be interpolated/extrapolated, as the data provider does not
         always return data for consecutive days (public holidays etc...)
         """
-        # Convert to strings and python-internal structures:
-        dates = [pd.to_datetime(str(x)) for x in dates]
-        dates = [x.strftime(self.dateformat) for x in dates]  # List of strings following our date format
-        values = [float(x) for x in values]  # List of floats
 
         # Sanity check:
         if len(dates) != len(values):

@@ -40,9 +40,9 @@ class DataproviderYahoo:
 
         # Get some stock data to see if it works.
         startdate = stringoperations.datetime2str(stringoperations.str2datetime("01.02.2020", self.dateformat),
-                                                   self.dateformat)
-        stopdate = stringoperations.datetime2str(stringoperations.str2datetime("01.09.2020", self.dateformat),
                                                   self.dateformat)
+        stopdate = stringoperations.datetime2str(stringoperations.str2datetime("01.09.2020", self.dateformat),
+                                                 self.dateformat)
         symbol = "BAC"
         return self.__check_functionality(startdate, stopdate, symbol)
 
@@ -86,7 +86,13 @@ class DataproviderYahoo:
         # Re-formate the data
         forexdates = df['Date']
         forexrates = df['Close']  # This is a float64 numpy array
-        return forexdates, forexrates # Returns strings and floats
+
+        # Convert to strings and python-internal structures:
+        forexdates = [pd.to_datetime(str(x)) for x in forexdates]
+        forexdates = [x.strftime(self.dateformat) for x in forexdates]  # List of strings following our date format
+        forexrates = [float(x) for x in forexrates]  # List of floats
+
+        return forexdates, forexrates  # Returns strings and floats
 
     def retrieve_stock_data(self, p1, p2, symbol, symbol_exchange):
         """Pulls historic stock data from the Yahoo website.
@@ -105,8 +111,7 @@ class DataproviderYahoo:
         param['period2'] = str(p2)
         param['interval'] = '1d'
         param['events'] = 'history'
-        param[
-            'includeAdjustedClose'] = 'true'  # Todo: Check this: Rather non-adjusted data better for my system? How am I handling splits?
+        param['includeAdjustedClose'] = 'true'  # Todo: Check this: Rather non-adjusted data better for my system? How am I handling splits?
         param['crumb'] = self.crumb
         params = urllib.parse.urlencode(param)
         url = 'http://query1.finance.yahoo.com/v7/finance/download/{}?{}'.format(symbol, params)
@@ -126,7 +131,13 @@ class DataproviderYahoo:
         df = pd.read_csv(strlines, sep=",")
         pricedates = df['Date']
         stockprices = df['Close']  # This is a float64 numpy array. # Todo (see above): Rather use "Adj Close"?
-        return pricedates, stockprices # These are strings (dates) and floats that are returned
+
+        # Convert to strings and python-internal structures:
+        pricedates = [pd.to_datetime(str(x)) for x in pricedates]
+        pricedates = [x.strftime(self.dateformat) for x in pricedates]  # List of strings following our date format
+        stockprices = [float(x) for x in stockprices]  # List of floats
+
+        return pricedates, stockprices  # These are strings (dates) and floats that are returned
 
     def __obtain_cookie_crumb(self):
         self.cooker.cookiejar.clear()
@@ -177,9 +188,7 @@ class DataproviderYahoo:
         except:
             return False
 
-        if len(d) < MIN_DURATION: # Something likely went wrong/way too little data provided
+        if len(d) < MIN_DURATION:  # Something likely went wrong/way too little data provided
             return False
         else:
             return True
-
-
