@@ -60,13 +60,13 @@ class MarketPrices:
                                self.exchange)
 
         # Obtain the market prices:
+        success = False
         try:
-            # print("Trying to obtain prices for " + self.symbol + ", traded at " + self.exchange +
-            #      " from the data provider.")
-
-            dates, prices = self.provider.get_stock_data(self.symbol, self.exchange, self.startdate, self.stopdate)
-            success = True
-            print("Obtained market data for " + self.symbol)
+            ret = self.provider.get_stock_data(self.symbol, self.exchange, self.startdate, self.stopdate)
+            if ret is not None:
+                dates, prices = ret
+                success = True
+                print("Obtained market data for " + self.symbol)
         except:
             success = False
 

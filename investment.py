@@ -452,16 +452,16 @@ class Investment:
             startdate_prices = self.analysis_dates[startidx]
             startdate_prices_dt = stringoperations.str2datetime(startdate_prices, dateformat)
 
-            if setup.SKIP_ONLINE_SECURITIES_RETRIEVAL is False:
-                # Create a market-prices object; it will obtain the desired data, if possible. It uses the marketdata-folder
-                # to store and update the obtained prices, for future use / offline use.
-                self.marketpricesobj = prices.MarketPrices(self.symbol, self.exchange, self.currency,
-                                                           setup.MARKETDATA_FOLDER,
-                                                           setup.MARKETDATA_FORMAT_DATE, setup.MARKETDATA_DELIMITER,
-                                                           startdate_prices, date_stop, dateformat, self.provider)
+
+            # Create a market-prices object; it will obtain the desired data, if possible. It uses the marketdata-folder
+            # to store and update the obtained prices, for future use / offline use.
+            self.marketpricesobj = prices.MarketPrices(self.symbol, self.exchange, self.currency,
+                                                       setup.MARKETDATA_FOLDER,
+                                                       setup.MARKETDATA_FORMAT_DATE, setup.MARKETDATA_DELIMITER,
+                                                       startdate_prices, date_stop, dateformat, self.provider)
 
             # Asset prices during the analysis-period are available:
-            if setup.SKIP_ONLINE_SECURITIES_RETRIEVAL is False and self.marketpricesobj.is_price_avail() is True:
+            if self.marketpricesobj.is_price_avail() is True:
                 marketdates = self.marketpricesobj.get_price_dates()
                 marketprices = self.marketpricesobj.get_price_values()
                 # Sanity-checks, just to be sure:

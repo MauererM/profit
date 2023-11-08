@@ -241,7 +241,7 @@ def get_return_asset_holdingperiod(asset, dateformat):
     priceobj = asset.get_marketprice_obj()
 
     # No prices are given:
-    if setup.SKIP_ONLINE_SECURITIES_RETRIEVAL is False and priceobj is None:
+    if priceobj is None:
         print("WARNING: Cannot calculate holding period return of "
               + asset.get_filename() + " due to unavailable and missing price of today. "
                                        "Update the assets marketdata-file with values from today or "
@@ -255,7 +255,7 @@ def get_return_asset_holdingperiod(asset, dateformat):
 
     # If there is an asset-price available, get the latest possible one that is recorded:
     transact_price_necessary = True
-    if setup.SKIP_ONLINE_SECURITIES_RETRIEVAL is False and priceobj.is_price_avail() is True:
+    if priceobj.is_price_avail() is True:
         latest_date, latest_price = priceobj.get_latest_price_date()
         latest_date_dt = stringoperations.str2datetime(latest_date, dateformat)
         # The value can be determined from most recent price!
@@ -543,7 +543,7 @@ def get_returns_asset_daily_absolute_analysisperiod(asset, dateformat):
 
     # If there is an asset-price available, get the latest possible one that is recorded:
     today_price_avail = False
-    if setup.SKIP_ONLINE_SECURITIES_RETRIEVAL is False and priceobj.is_price_avail() is True:
+    if priceobj.is_price_avail() is True:
         latest_date, latest_price = priceobj.get_latest_price_date()
         latest_date_dt = stringoperations.str2datetime(latest_date, dateformat)
         # The value can be determined from most recent price!

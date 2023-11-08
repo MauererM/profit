@@ -5,20 +5,25 @@ PROFIT - Python-Based Return on Investment and Financial Investigation Tool
 MIT License
 Copyright (c) 2023 Mario Mauerer
 """
-class Dataprovider:
+class DataproviderEmpty:
 
-    def __init__(self, dateformat, cooldown):
+    def __init__(self, dateformat):
         """
         Constructor:
         :param dateformat: String that encodes the format of the dates, e.g. "%d.%m.%Y"
         :param cooldown: Time in seconds between API calls
         """
-
+        self.name = "Empty/Fallback"
         self.dateformat = dateformat
-        self.cooldown = cooldown
 
-    def get_forex_data(self, sym_a, sym_b, startdate, stopdate):
-        raise RuntimeError("Online dataprovider not available")
+    def initialize(self):
+        return True # The empty provider (used last by dataprovider_main) should succeed here
 
-    def get_stock_data(self, sym_stock, sym_exchange, startdate, stopdate):
-        raise RuntimeError("Online dataprovider not available")
+    def get_name(self):
+        return self.name
+
+    def retrieve_forex_data(self, sym_a, sym_b, p1, p2):
+        raise RuntimeError("Online dataprovider not available") # This will trigger the calling functions to fall back to other methods
+
+    def retrieve_stock_data(self, p1, p2, symbol, symbol_exchange):
+        raise RuntimeError("Online dataprovider not available") # This will trigger the calling functions to fall back to other methods

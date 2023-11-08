@@ -16,12 +16,8 @@ import plotting
 import analysis
 import prices
 import setup
+from dataprovider_main import DataproviderMain
 
-# Specify which dataprovider to use:
-if setup.SKIP_ONLINE_SECURITIES_RETRIEVAL is False:
-    from dataprovider_yahoofinance import Dataprovider as dp
-else:
-    from dataprovider_empty import Dataprovider as dp
 """
 These strings specify the folders from which the account and investment files
 are taken.
@@ -163,12 +159,8 @@ if __name__ == '__main__':
     # Print the current version of the tool
     print("PROFIT V{:.1f} starting".format(setup.PROFIT_VERSION))
 
-    if setup.SKIP_ONLINE_SECURITIES_RETRIEVAL is True:
-        print("Will not obtain securities data from online sources. Make sure prices are manually updated.")
-        provider = dp(setup.FORMAT_DATE, setup.API_COOLDOWN_TIME_SECOND)
-    else:
-        print("Initializing data provider")
-        provider = dp(setup.FORMAT_DATE, setup.API_COOLDOWN_TIME_SECOND)
+    # Initialize the data provider. If none can be initialized, an empty fallback provider will be selected.
+    provider = DataproviderMain(setup.FORMAT_DATE)
 
     """
     Sanity checks:

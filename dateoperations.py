@@ -168,7 +168,7 @@ def interpolate_data(datelist_incompl, vallist_incompl, dateformat):
     datelist_full = create_datelist(start, stop, dateformat)
 
     vallist_compl = []
-    for date in datelist_full:
+    for date in datelist_full: # Todo: Improve/speed this code up
         # Check, if the current date is in the incomplete list, and how many times it is there:
         indexes = [i for i, x in enumerate(datelist_incompl) if x == date]
         # Current date is not in the incomplete list: Extrapolation is required

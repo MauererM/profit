@@ -5,12 +5,6 @@ MIT License
 Copyright (c) 2018 Mario Mauerer
 """
 
-# If set, the online retrieval of the securities-data is skipped (as it might take some time and/or not always work)
-SKIP_ONLINE_SECURITIES_RETRIEVAL = False
-
-# Cooldown time in seconds between API calls:
-API_COOLDOWN_TIME_SECOND = 3.0
-
 # The marketdata-folder stores different files containing historic prices and forex-rates
 MARKETDATA_FOLDER = "marketdata"
 # The plots-folder:

@@ -57,9 +57,13 @@ class ForexRates:
 
         # Obtain the forex-data.
         # Two lists are expected, the first holds a lists of date-strings, and the second holds the exchange rate.
+        success = False
         try:
-            dates, rates = self.provider.get_forex_data(self.currency, self.basecurrency, self.startdate, self.stopdate)
-            success = True
+            ret = self.provider.get_forex_data(self.currency, self.basecurrency, self.startdate, self.stopdate)
+            if ret is not None:
+                dates, rates = ret
+                success = True
+                print("Obtained exchange rate for " + self.basecurrency + " to " + self.currency)
         except:
             success = False
 
