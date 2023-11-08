@@ -1152,7 +1152,7 @@ def plot_asset_returns_individual_absolute(assetlist, fname):
                 returns_total = [a + b for a, b in zip(returns, returns_total)]
                 if helper.list_all_zero(returns) is False:
                     x = [stringoperations.str2datetime(i, dateformat) for i in dates]
-                    ax.plot(x, returns, alpha=1.0, zorder=3, clip_on=False, color=setup.PLOTS_COLORS[0], marker='o',
+                    ax.plot(x, returns, alpha=1.0, zorder=3, clip_on=False, color=setup.PLOTS_COLORS[0], marker='',
                             label="Absolute Returns")
                 else:
                     # Skip the plotting; no date of today available.
