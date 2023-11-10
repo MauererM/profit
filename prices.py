@@ -91,6 +91,14 @@ class MarketPrices:
             #    dates_full, prices_full = dateoperations.extend_data_future(dates_full, prices_full, self.stopdate,
             #                                                                self.dateformat, zero_padding=False)
 
+            # If only 3 days are missing until "today", then extrapolate forward (avoid having to manually enter data)
+            lastdate_dt = stringoperations.str2datetime(dates_full[-1], self.dateformat)
+            duration = stopdate_dt - lastdate_dt
+            duration = duration.days
+            if duration <= 3:
+                dates_full, prices_full = dateoperations.extend_data_future(dates_full, prices_full, self.stopdate,
+                                                                            self.dateformat, zero_padding=False)
+
             # Store the latest available price and date, for the holding-period return analysis
             # (It needs to be un-extrapolated)
             self.latestrealprice = prices_full[-1]
