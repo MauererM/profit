@@ -141,7 +141,7 @@ class MarketPrices:
 
         # It was not possible to obtain market-data: Use potentially recorded historic data in the marketdata-folder
         else:
-            print("Could not obtain updated market prices for " + self.symbol)
+            #print("Could not obtain updated market prices for " + self.symbol) Redundant.
             # Check, if there is a marketdata-file if yes: import the data:
             if files.file_exists(self.marketdata_filepath) is True:
                 print("Using data in the existing market-data-file: " + self.marketdata_filepath)
