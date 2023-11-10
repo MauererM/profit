@@ -316,7 +316,8 @@ class Investment:
                     value_list.append(sum(sum_amounts))
                 else:
                     # Do not sum, take the last value of the current day
-                    value_list.append(trans_amounts[indexes[-1]])
+                    v = trans_amounts[indexes[-1]]
+                    value_list.append(v)
         # Homogenize to floats:
         value_list = [float(x) for x in value_list]
         return value_list
@@ -375,6 +376,22 @@ class Investment:
                 trans_value.append(trans_value[-1])
 
         return trans_value
+
+    def __get_format_transactions_values(self, startdate, stopdate, dateformat):
+        """ From the manually recorded transactions-data, get the prices of the asset and
+            pre-format it.
+        """
+        # Obtain the values from the transactions:
+        trans_values = self.get_values(self.transactions[setup.DICT_KEY_ACTIONS],
+                                       self.transactions[setup.DICT_KEY_PRICE],
+                                       self.transactions[setup.DICT_KEY_BALANCES],
+                                       setup.STRING_INVSTMT_ACTION_BUY,
+                                       setup.STRING_INVSTMT_ACTION_SELL,
+                                       setup.STRING_INVSTMT_ACTION_UPDATE)
+        # Interpolate the values, such that the value-list corresponds to the datelist:
+        _, vals = dateoperations.interpolate_data(self.transactions[setup.DICT_KEY_DATES],
+                                                  trans_values, dateformat)
+        return vals
 
     def set_analysis_data(self, date_start, date_stop, dateformat):
         """Re-formats the balances, cost, payouts and prices for further analysis
@@ -450,8 +467,6 @@ class Investment:
                 startidx = indexes[0]
             # Use this start-value to get the asset-prices:
             startdate_prices = self.analysis_dates[startidx]
-            startdate_prices_dt = stringoperations.str2datetime(startdate_prices, dateformat)
-
 
             # Create a market-prices object; it will obtain the desired data, if possible. It uses the marketdata-folder
             # to store and update the obtained prices, for future use / offline use.
@@ -468,83 +483,38 @@ class Investment:
                 if dateoperations.check_dates_consecutive(marketdates, dateformat) is False:
                     raise RuntimeError("The obtained market-price-dates are not consecutive. Investment: "
                                        + self.filename)
-                if stringoperations.str2datetime(marketdates[0],
-                                                 dateformat) != startdate_prices_dt or \
-                        stringoperations.str2datetime(marketdates[-1], dateformat) != date_stop_dt:
-                    raise RuntimeError("The returned market-price-dates do not match with the analysis-date-range. "
-                                       "Investment: " + self.filename)
 
-                # Obtain the values of the investment:
+                # The provided market-data can be incomplete. It is consecutive, but might not span the entire
+                # analysis-range. We must merge it with the transactions-data and potentially extrapolate forwards and
+                # backwards to get a combined, proper list of prices.
+                transactions_prices = self.transactions[setup.DICT_KEY_PRICE]
+                transactions_dates = self.transactions[setup.DICT_KEY_DATES]
+                # Fuse the lists. Note that transactions_prices will be preferred, should market-data also be available
+                # for a given date. Also: ZOH-extrapolation is used (going with ZOH into the past makes no diff, though)
+                prices_merged = dateoperations.fuse_two_value_lists(self.analysis_dates, transactions_dates,
+                                                                    transactions_prices, marketdates, marketprices,
+                                                                    self.dateformat, zero_padding_past=True,
+                                                                    zero_padding_future=False)
+                # Calculate the values of the investment:
                 self.analysis_values = []
                 for idx, date in enumerate(self.analysis_dates):
                     # Only consider dates, where there is a balance > 0
                     if self.analysis_balances[idx] > 1e-9:
-                        # Check, if the current date is in the stockdates-range, it should be, sanity checks are done
-                        # above.
-                        indexes = [i for i, x in enumerate(marketdates) if x == date]
-                        # This should really not happen anymore now:
-                        if not indexes:
-                            raise RuntimeError("Did not find required stockprice-date. "
-                                               "This should not happen. Investment-file is: " + self.filename)
-                        else:
-                            if len(indexes) > 1:
-                                raise RuntimeError("The stockprice-dates are not consecutive. "
-                                                   "Detected more than one identical entry. "
-                                                   "Investment-file is: " + self.filename)
-                            # Determine the values:
-                            # If there is price-data available (as transaction) on the considered day, this is used instead of the stock-
-                            # market price, as the market price might be end-of-day prices etc. and might not be exactly
-                            # identical to the price paid during the transaction.
-                            if self.analysis_prices[idx] > 1e-9:
-                                self.analysis_values.append(self.analysis_balances[idx] * self.analysis_prices[idx])
-                            else:
-                                self.analysis_values.append(self.analysis_balances[idx] * marketprices[indexes[0]])
+                        v = self.analysis_balances[idx] * prices_merged[idx]
+                        self.analysis_values.append(v)
                     # Balance is zero: no value:
                     else:
                         self.analysis_values.append(0.0)
 
-                # If market data has been obtained:
-                # Perform a sanity-check: the obtained prices should match the recorded prices of the
-                # transactions.
-                # BUT: It's possible that the obtained data has been extrapolated and is thus not matching ==> issue
-                # only a warning.
-                """
-                NOTE: This is not being done, as it's sort of redundant/annoying. The recorded transactions-price is
-                usually not the end-of-day price, and hence this warning pops up often. Also, sometimes the market-
-                price is extrapolated backwards, which is also OK. Use the marketdata-file to provide up-to-date data.
-                for idx, date in enumerate(marketdates):
-                    indexes = [i for i, x in enumerate(self.analysis_dates) if x == date]
-                    trans_price = self.analysis_prices[indexes[0]]
-                    market_price = marketprices[idx]
-                    if trans_price > 1e-9 and \
-                            helper.within_tol(trans_price, market_price,
-                                              (setup.PRICE_COMPARISON_THRESHOLD / 100.0)) is False:
-                        print("WARNING: The obtained market-price deviates significantly from the recorded "
-                              "transaction-price. File: " + self.filename
-                              + ". Transaction-date: " + date + ". Expected price: " +
-                              repr(market_price) + ". Recorded price: " +
-                              repr(trans_price) + ". This might be OK (backwards-extrapolation of missing data). "
-                                                  "Potentially double-check.")
-                """
-
-            # No asset prices are available whatsoever.
+            # No online/marke prices are available:
             else:
                 # Market prices could not be obtained, or other errors occurred.
                 # Fallback: obtain prices from transactions-data
                 # print("WARNING: Could not obtain any prices for " + self.symbol + " traded at " + self.exchange +
                 #      ". Investment-File: " + self.filename)
                 print("Deriving prices from transactions-data.")
-                # Obtain the values from the transactions:
-                trans_values = self.get_values(self.transactions[setup.DICT_KEY_ACTIONS],
-                                               self.transactions[setup.DICT_KEY_PRICE],
-                                               self.transactions[setup.DICT_KEY_BALANCES],
-                                               setup.STRING_INVSTMT_ACTION_BUY,
-                                               setup.STRING_INVSTMT_ACTION_SELL,
-                                               setup.STRING_INVSTMT_ACTION_UPDATE)
-                # Interpolate the values, such that the value-list corresponds to the datelist:
-                _, trans_values_interp = dateoperations.interpolate_data(self.transactions[setup.DICT_KEY_DATES],
-                                                                         trans_values, dateformat)
-                # Crop the values to the desired analysis-range:
+                trans_values_interp = self.__get_format_transactions_values(date_start, date_stop, dateformat)
+                # Crop the values to the desired analysis-range; in this case, we can not merge data with market-prices:
                 _, self.analysis_values = dateoperations.format_datelist(self.datelist,
                                                                          trans_values_interp,
                                                                          date_start, date_stop,
@@ -557,18 +527,8 @@ class Investment:
             # print("Investment in file " + self.filename + " cannot obtain prices.")
             print(
                 "Investment is not listed as security. Deriving prices from transactions-data. File: " + self.filename)
-
-            # Obtain the values
-            trans_values = self.get_values(self.transactions[setup.DICT_KEY_ACTIONS],
-                                           self.transactions[setup.DICT_KEY_PRICE],
-                                           self.transactions[setup.DICT_KEY_BALANCES],
-                                           setup.STRING_INVSTMT_ACTION_BUY,
-                                           setup.STRING_INVSTMT_ACTION_SELL,
-                                           setup.STRING_INVSTMT_ACTION_UPDATE)
-            # Interpolate the values, such that the value-list corresponds to the datelist:
-            _, trans_values_interp = dateoperations.interpolate_data(self.transactions[setup.DICT_KEY_DATES],
-                                                                     trans_values, self.dateformat)
-            # Crop the values to the desired analysis-range:
+            trans_values_interp = self.__get_format_transactions_values(date_start, date_stop, dateformat)
+            # Crop the values to the desired analysis-range; in this case, we can not merge data with market-prices:
             _, self.analysis_values = dateoperations.format_datelist(self.datelist,
                                                                      trans_values_interp,
                                                                      date_start, date_stop,

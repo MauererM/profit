@@ -34,7 +34,7 @@ BASECURRENCY = "CHF"
 """
 Data is analyzed a certain number of days into the past, from today
 """
-DAYS_ANALYSIS = 2510
+DAYS_ANALYSIS = 3500
 
 """
 This switch determines whether the plots are opened directly after creation or not.
@@ -288,6 +288,7 @@ if __name__ == '__main__':
             obj = prices.MarketPrices(sym, ex, currency, setup.MARKETDATA_FOLDER, setup.MARKETDATA_FORMAT_DATE,
                                       setup.MARKETDATA_DELIMITER, date_analysis_start_str, date_today_str,
                                       setup.FORMAT_DATE, provider)
+            obj.extrapolate_market_data_to_full_range() # If not all data obtained: Extrapolate.
             indexprices.append(obj)
 
     """

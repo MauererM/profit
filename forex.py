@@ -79,7 +79,9 @@ class ForexRates:
                                                                                 dates, rates)
 
             # The returned forex data might not be available until today (e.g., if this is run on a weekend).
-            # Extend the data accordingly into the future.
+            # Extend the data accordingly into the future. Note: In Forex, this is (probably) OK to do (in investments,
+            # it is NOT OK to do this, as there, the manually entered transactions-data may not be overwritten. But in
+            # Forex, there is no manually entered transactions-data that could take precedent.
             lastdate_dt = stringoperations.str2datetime(dates_full[-1], self.dateformat)
             if stopdate_dt > lastdate_dt:
                 dates_full, rates_full = dateoperations.extend_data_future(dates_full, rates_full, self.stopdate,

@@ -168,7 +168,7 @@ def interpolate_data(datelist_incompl, vallist_incompl, dateformat):
     datelist_full = create_datelist(start, stop, dateformat)
 
     vallist_compl = []
-    for date in datelist_full: # Todo: Improve/speed this code up
+    for date in datelist_full:  # Todo: Improve/speed this code up
         # Check, if the current date is in the incomplete list, and how many times it is there:
         indexes = [i for i, x in enumerate(datelist_incompl) if x == date]
         # Current date is not in the incomplete list: Extrapolation is required
@@ -347,6 +347,53 @@ def check_dates_consecutive(datelist, dateformat):
             if datelist[i + 1] != nextday:
                 return False
     return True
+
+
+def fuse_two_value_lists(datelist_full, dates_1_partial, vals_1_partial_groundtruth, dates_2_partial, vals_2_partial,
+                         dateformat, zero_padding_past, zero_padding_future):
+    """Fuses two lists of values together, e.g., combines transactions-prices with market-prices.
+    Applies extrapolation, too, to cover the full date-list.
+    Note that zero-values are discarded!
+    :param datelist_full: The full list of dates that the merged list will cover.
+    :param dates_1_partial: Dates of first partial list
+    :param vals_1_partial_groundtruth: Values of first partial list. If both lists have values at the same date,
+    this value is taken.
+    :param dates_2_partial: Dates of second partial list
+    :param vals_2_partial: Values of second partial list
+    :return: A single list with interpolated and extrapolated values that corresponds to datelist_full
+    """
+    output = []
+    date_output = []
+    for idx, date in enumerate(datelist_full): # Todo speed this code up
+        indexes_1 = [i for i, x in enumerate(dates_1_partial) if x == date]
+        if len(indexes_1) > 1:
+            # raise RuntimeError("There seem to be multiple dates. This seems wrong...") This is actually OK: Multiple
+            # transactions can be recorded for the same day. Use the most recent value.
+            pass
+        elif len(indexes_1) >= 1: # Match found: Use it, but find the non-zero value (mult. actions on the same day...)
+            val_max = 0.0 # Simply use the largest value
+            for i, idx in enumerate(indexes_1):
+                if vals_1_partial_groundtruth[idx] > val_max:
+                    val_max = vals_1_partial_groundtruth[idx]
+            if val_max > 1e-6: # The transactions-data also contains zero-values for price. Ignore those.
+                output.append(val_max)
+                date_output.append(date)
+        else:  # No match found: Check the other list:
+            indexes_2 = [i for i, x in enumerate(dates_2_partial) if x == date]
+            if len(indexes_2) > 1:
+                raise RuntimeError("There seem to be multiple dates. "
+                                   "This seems wrong (this is the online market list)...")
+            elif len(indexes_2) == 1 and vals_2_partial[indexes_2[0]] > 1e-6:
+                output.append(vals_2_partial[indexes_2[0]])
+                date_output.append(date)
+            else:  # Also no match found ==> Needs to be extrapolated below.
+                pass
+    # Interpolate the given range to ensure there are no holes:
+    date_out, out = interpolate_data(date_output, output, dateformat)
+    # Now, date_output and output need to be extrapolated (or cropped) to cover the range of datelist_full.
+    _, values_final = format_datelist(date_out, out, datelist_full[0], datelist_full[-1], dateformat,
+                                      zero_padding_past=zero_padding_past, zero_padding_future=zero_padding_future)
+    return values_final
 
 
 """
