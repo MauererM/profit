@@ -375,8 +375,9 @@ def fuse_two_value_lists(datelist_full, dates_1_partial, vals_1_partial_groundtr
             for i, idx in enumerate(indexes_1):
                 if vals_1_partial_groundtruth[idx] > val_max:
                     val_max = vals_1_partial_groundtruth[idx]
-            output.append(val_max)
-            date_output.append(date)
+            if val_max > 1e-6: # The transactions-data also contains zero-values for price. Ignore those.
+                output.append(val_max)
+                date_output.append(date)
         else:  # No match found: Check the other list:
             indexes_2 = [i for i, x in enumerate(dates_2_partial) if x == date]
             if len(indexes_2) > 1:

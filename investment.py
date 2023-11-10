@@ -505,7 +505,6 @@ class Investment:
                     # Balance is zero: no value:
                     else:
                         self.analysis_values.append(0.0)
-                    test = prices_merged[idx]
 
             # No online/marke prices are available:
             else:
