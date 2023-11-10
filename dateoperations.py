@@ -367,14 +367,21 @@ def fuse_two_value_lists(datelist_full, dates_1_partial, vals_1_partial_groundtr
     for idx, date in enumerate(datelist_full): # Todo speed this code up
         indexes_1 = [i for i, x in enumerate(dates_1_partial) if x == date]
         if len(indexes_1) > 1:
-            raise RuntimeError("There seem to be multiple dates. This seems wrong...")
-        elif len(indexes_1) == 1 and vals_1_partial_groundtruth[indexes_1[0]] > 1e-6:  # Match found: Use it
-            output.append(vals_1_partial_groundtruth[indexes_1[0]])
+            # raise RuntimeError("There seem to be multiple dates. This seems wrong...") This is actually OK: Multiple
+            # transactions can be recorded for the same day. Use the most recent value.
+            pass
+        elif len(indexes_1) >= 1: # Match found: Use it, but find the non-zero value (mult. actions on the same day...)
+            val_max = 0.0 # Simply use the largest value
+            for i, idx in enumerate(indexes_1):
+                if vals_1_partial_groundtruth[idx] > val_max:
+                    val_max = vals_1_partial_groundtruth[idx]
+            output.append(val_max)
             date_output.append(date)
         else:  # No match found: Check the other list:
             indexes_2 = [i for i, x in enumerate(dates_2_partial) if x == date]
             if len(indexes_2) > 1:
-                raise RuntimeError("There seem to be multiple dates. This seems wrong...")
+                raise RuntimeError("There seem to be multiple dates. "
+                                   "This seems wrong (this is the online market list)...")
             elif len(indexes_2) == 1 and vals_2_partial[indexes_2[0]] > 1e-6:
                 output.append(vals_2_partial[indexes_2[0]])
                 date_output.append(date)
