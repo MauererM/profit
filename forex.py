@@ -109,6 +109,9 @@ class ForexRates:
                                                                          zero_padding_past=False,
                                                                          zero_padding_future=False)
 
+            # Create a dictionary of available dates; this speeds up further searches within the available data:
+            self.__create_date_dictionary(self.rate_dates)
+
             self.pricedata_avail = True
 
         # It was not possible to obtain rates-data: Use potentially recorded historic data in the marketdata-folder
@@ -148,6 +151,9 @@ class ForexRates:
                                                                              zero_padding_past=False,
                                                                              zero_padding_future=False)
 
+                # Create a dictionary of available dates; this speeds up further searches within the available data:
+                self.__create_date_dictionary(self.rate_dates)
+
                 self.pricedata_avail = True
 
             # Really no price-data available:
@@ -158,6 +164,20 @@ class ForexRates:
                                    self.currency + " and " + self.basecurrency +
                                    ". Provide the data in a marketdata-file. Desired filename: " +
                                    self.marketdata_filepath)
+
+    def __create_date_dictionary(self, dates):
+        """
+        Create a dictionary of the available dates for faster future lookup/matching of partial data to the available
+        data. The key is the date, and the value is the index.
+        :param dates: List of strings.
+        """
+        index_map = {}
+        for idx, date in enumerate(dates):
+            if date not in index_map:
+                index_map[date] = idx  # For each date (which is the key), store the index
+            else:
+                raise RuntimeError("Received duplicated date to create date-dictionary")
+        self.rate_dates_dict = index_map
 
     def get_marketdata_filename(self):
         """Returns the filename of the corresponding file in the marketdata-folder
@@ -179,18 +199,11 @@ class ForexRates:
         if len(datelist) != len(vallist):
             raise RuntimeError("The specified date- and value-lists must match in length.")
 
-        # Convert the values:
-        conv_val = []
-        for idx, date in enumerate(datelist):
-            # Check, if the current date is in the forexdates-range.
-            indexes = [i for i, x in enumerate(self.rate_dates) if x == date]
-            if not indexes:
-                raise RuntimeError("Did not find required forex-date. Currency: " + self.currency +
-                                   ". Desired date: " + date)
-            else:
-                if len(indexes) > 1:
-                    raise RuntimeError("The forex-dates are not consecutive. Detected more than one identical entry.")
-                conv_val.append(vallist[idx] * self.rates[indexes[0]])
+        # Convert the values: # Todo: Finalize verification; Is this actually working as intended?
+        matches = [self.rate_dates_dict[key] for key in datelist if key in self.rate_dates_dict]
+        if len(matches) != len(set(matches)) or len(matches) != len(vallist): # This should really not happen here
+            raise RuntimeError("The forex-dates are not consecutive, have duplicates, or miss data.")
+        conv_val = [vallist[i] * self.rates[idx] for i, idx in enumerate(matches)]
 
         return conv_val
 

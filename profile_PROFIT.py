@@ -48,28 +48,25 @@ if __name__ == "__main__":
 
 # Results:
 """
-Baseline: 94.8s, 95.2s, 97.2s
+Baseline: 94.8s, 95.2s, 97.2s, 95.6s ==> 95.7s avg
 
-Top slow functions: 
+Top slow functions (excluding matplotlib for now): 
     forex.py:168 (perform_conversion)
     forex.py:186 (listcomp)
     investment.py:396 (set_analysis_data)
-    account.py:150 (set_analysis_data)
-    stringoperations.py:92 (str2datetime)
-    dateoperations.py:56 (format_datelist)
-    dateoperations.p:227 (extend_data_future)
-    plotting.py:844 (plot_asset_values_cost_payout_individual)
-    dateoperations.py:343 and 244 (listcomp)
-    analysis.py:418 (calc_returns_period)
 """
 
 """ 
 Ideas to improve: 
 - Implement its own analysis class to only calculate the reference date-list once, and store it somehow in a dict
 - Get rid of the cascaded for-loops
+- Check the todos in the code
 """
 
 
 """ 
-First improvements: TBD
+After introducing a dictionary for the dates in forex.py and changing its perform_conversion: 49.8s
+New violators: stringoperations.py:93 (str2datetime), dateoperations.py:56 (format_datelist)
+There's another "todo" that can benefit from the dict-system of forex.py. TBD. 
+Also todo: Further verify forex.py. 
 """
