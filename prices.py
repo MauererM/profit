@@ -199,11 +199,12 @@ class MarketPrices:
     def extrapolate_market_data_to_full_range(self):
         """ Some callers need the full/extrapolated data (e.g., for stock market indices). Create it here.
         """
-        dates, vals = dateoperations.format_datelist(self.market_dates, self.market_prices, self.startdate,
-                                                     self.stopdate, self.dateformat, zero_padding_past=False,
-                                                     zero_padding_future=False)
-        self.market_dates = dates
-        self.market_prices = vals
+        if self.pricedata_avail is True:
+            dates, vals = dateoperations.format_datelist(self.market_dates, self.market_prices, self.startdate,
+                                                         self.stopdate, self.dateformat, zero_padding_past=False,
+                                                         zero_padding_future=False)
+            self.market_dates = dates
+            self.market_prices = vals
 
     def get_marketdata_filename(self):
         """Returns the filename of the corresponding file in the marketdata-folder
