@@ -95,5 +95,5 @@ Now, the Yahoo Finance data provider is also enabled (API cooldown set to 0.2s).
 Baseline: 65s, 68.0s 
 After optimizing (dict-lookup) marketdata.py: 42.2, 41.4s
 After optimizing the list-fusing: 36.7s
-
+After optimizing populate_full_list in investment.py: 37.9, 36.9
 """

@@ -107,15 +107,15 @@ class Investment:
         # contain the transactions.
         self.costlist = self.populate_full_list(self.transactions[setup.DICT_KEY_DATES],
                                                 self.transactions[setup.DICT_KEY_COST],
-                                                self.datelist, self.dateformat, sum_ident_days=True)
+                                                self.datelist, sum_ident_days=True)
         self.payoutlist = self.populate_full_list(self.transactions[setup.DICT_KEY_DATES],
                                                   self.transactions[setup.DICT_KEY_PAYOUT],
-                                                  self.datelist, self.dateformat, sum_ident_days=True)
+                                                  self.datelist, sum_ident_days=True)
         # This list holds the prices that are recorded with the transactions:
         # Careful: Prices may not be summed up! The last price of a given day is taken (if there are multiple transactions per day(date)
         self.pricelist = self.populate_full_list(self.transactions[setup.DICT_KEY_DATES],
                                                  self.transactions[setup.DICT_KEY_PRICE],
-                                                 self.datelist, self.dateformat, sum_ident_days=False)
+                                                 self.datelist, sum_ident_days=False)
 
         # This list contains inflows into the investment (e.g., "Buy"-values). The values are in the currency of
         # the investment.
@@ -271,8 +271,7 @@ class Investment:
                                        "Transaction-Nr: " + repr(idx + 1))
         return True
 
-    def populate_full_list(self, trans_dates, trans_amounts, datelist, dateformat,
-                           sum_ident_days=False):  # Todo remove dateformat
+    def populate_full_list(self, trans_dates, trans_amounts, datelist, sum_ident_days=False):
         """Populates a list of len(datelist) with amounts of certain transactions, that correspond to the dates in
         datelist and trans_dates.
         All values (trans_amounts) on a given day can be summed up and added to the list.
@@ -299,27 +298,23 @@ class Investment:
         if dateoperations.check_dates_consecutive(datelist, self.analyzer) is False:
             raise RuntimeError("Specified datelist is not containing of consecutive days.")
 
-        # Convert to datetime objects:
-        datelist_dt = [self.analyzer.str2datetime(x) for x in datelist]
-        trans_dates_dt = [self.analyzer.str2datetime(x) for x in trans_dates]
+        value_list = [0] * len(datelist)
 
-        value_list = []  # Todo: Speed this up.
-        # Iterate through all dates and check if there are any matches with the trigger string
-        for date in datelist_dt:
-            # Get all indexes of the current date, if it occurs in the transaction-dates-list:
-            indexes = [i for i, x in enumerate(trans_dates_dt) if x == date]
-            # If no index: current date is not a transaction
-            if not indexes:
-                value_list.append(0.0)  # No transaction happened
-            else:  # Indexes points to all transactions on the current day.
-                if sum_ident_days is True:
-                    # Sum all amounts of the current day:
-                    sum_amounts = [trans_amounts[i] for i in indexes]
-                    value_list.append(sum(sum_amounts))
-                else:
-                    # Do not sum, take the last value of the current day
-                    v = trans_amounts[indexes[-1]]
-                    value_list.append(v)
+        # Create a dictionary of the full datelist for faster indexing
+        datelist_dict = {date: idx for idx, date in enumerate(datelist)}
+
+        trans_dates_unique = list(dict.fromkeys(trans_dates)) # Maintain the order
+
+        for trans_date in trans_dates_unique:
+            idx_global = datelist_dict[trans_date]
+            indexes = [i for i , date in enumerate(trans_dates) if date == trans_date]
+            if sum_ident_days is True:
+                # Sum all amounts of the current day:
+                sum_amounts = [trans_amounts[i] for i in indexes]
+                value_list[idx_global] = sum(sum_amounts)
+            else:
+                value_list[idx_global] = trans_amounts[indexes[-1]]
+
         # Homogenize to floats:
         value_list = [float(x) for x in value_list]
         return value_list
@@ -351,7 +346,7 @@ class Investment:
             trans_flow_dates.append(datelist[0])
             trans_flow_values.append(0.0)
         # Extend the lists to the full range
-        values = self.populate_full_list(trans_flow_dates, trans_flow_values, datelist, dateformat, sum_ident_days=True)
+        values = self.populate_full_list(trans_flow_dates, trans_flow_values, datelist, sum_ident_days=True)
         return values
 
     def get_values(self, trans_actions, trans_price, trans_balance, str_action_buy, str_action_sell,
