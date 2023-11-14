@@ -7,7 +7,7 @@ Copyright (c) 2018 Mario Mauerer
 import dateoperations
 import stringoperations
 import helper
-
+# Todo check if there are no unused imports
 
 class AnalysisRange:
     """Stores data related to the analysis-data-range, which is often used across various functions
@@ -18,12 +18,20 @@ class AnalysisRange:
         self.datetime_converter = datetime_converter  # Note: This instance is referenced, not copied
         self.startdate_dt = self.datetime_converter.str2datetimecached(startdate, dateformat)
         self.stopdate_dt = self.datetime_converter.str2datetimecached(stopdate, dateformat)
+        self.analysis_datelist = dateoperations.create_datelist(startdate, stopdate, self.dateformat)
+        self.analysis_datelist_dt = [self.str2datetime(x) for x in self.analysis_datelist]
 
     def str2datetime(self, str):
         return self.datetime_converter.str2datetimecached(str, self.dateformat)
 
     def datetime2str(self, dt):
         return self.datetime_converter.datetime2strcached(dt, self.dateformat)
+
+    def get_analysis_datelist(self):
+        return self.analysis_datelist
+
+    def get_analysis_datelist_dt(self):
+        return self.analysis_datelist_dt
 
 
 def project_values(datelist, valuelist, num_years, interest_percent, dateformat):
@@ -125,7 +133,7 @@ def calc_moving_avg(xlist, ylist, winlen):
         yfilt = []
         # Middle index:
         mididx = int(round(n / 2.0))
-        for i, y in enumerate(ylist, n):
+        for i, y in enumerate(ylist, start=n):
             if i == len(ylist) + 1:
                 break
             win = ylist[i - n:i]

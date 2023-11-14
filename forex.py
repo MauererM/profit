@@ -201,7 +201,7 @@ class ForexRates:
         if len(datelist) != len(vallist):
             raise RuntimeError("The specified date- and value-lists must match in length.")
 
-        # Convert the values: # Todo: Finalize verification; Is this actually working as intended?
+        # Convert the values:
         matches = [self.rate_dates_dict[key] for key in datelist if key in self.rate_dates_dict]
         if len(matches) != len(set(matches)) or len(matches) != len(vallist):  # This should really not happen here
             raise RuntimeError("The forex-dates are not consecutive, have duplicates, or miss data.")

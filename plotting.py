@@ -888,14 +888,14 @@ def plot_asset_values_cost_payout_individual(assetlist, fname, analyzer):
             ax = fig.add_subplot(2, 3, plotidx)
 
             # Obtain the returns in 7-day periods:
-            dates = asset.get_analysis_datelist()
+            dates = analyzer.get_analysis_datelist()
             values = asset.get_analysis_valuelist()
             costs = asset.get_analysis_costlist()
             payouts = asset.get_analysis_payoutlist()
             costs_accu = helper.accumulate_list(costs)
             payouts_accu = helper.accumulate_list(payouts)
             # Datetime for matplotlib:
-            x = [analyzer.str2datetime(i) for i in dates]
+            x = analyzer.get_analysis_datelist_dt()
             # Don't plot too many markers:
             if len(dates) < 40.0:
                 marker_div = 1
@@ -1243,9 +1243,8 @@ def plot_asset_values_stacked(assetlist, fname, title, analyzer):
         return
 
     # The dates should be identical for all accounts, due to the way the data is generated:
-    xlist = assets_plt[0].get_analysis_datelist()
     # Matplotlib takes a datetime-list:
-    xlist = [analyzer.str2datetime(x) for x in xlist]
+    xlist = analyzer.get_analysis_datelist_dt()
     # Generate a list of the lists of values
     ylists = []
     legendlist = []
