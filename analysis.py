@@ -550,7 +550,7 @@ def calc_returns_period(datelist, valuelist, costlist, payoutlist, inflowlist, o
 
 
 def get_returns_asset_daily_absolute_analysisperiod(asset, dateformat, analyzer):
-    """Calculates the absolute returns of a given asset, for the full holding period (incl. analysis period!)
+    """Calculates the absolute returns of a given asset, for the analysis period
     The data is intended to be provided with a granularity of days.
     :param asset: Asset-object
     :param dateformat: String that specifies the format of the date-strings
@@ -569,7 +569,7 @@ def get_returns_asset_daily_absolute_analysisperiod(asset, dateformat, analyzer)
     today_price_avail = False
     if priceobj.is_price_avail() is True:
         latest_date, latest_price = priceobj.get_latest_price_date()
-        latest_date_dt = stringoperations.str2datetime(latest_date, dateformat)
+        latest_date_dt = analyzer.str2datetime(latest_date)
         # The value can be determined from most recent price!
         if latest_date_dt >= today_dt:  # We have a price, even for today; this is good.
             today_price_avail = True
@@ -577,7 +577,7 @@ def get_returns_asset_daily_absolute_analysisperiod(asset, dateformat, analyzer)
     if today_price_avail is False:  # transactions-data needed to get price of today
         datelist_check = asset.get_trans_datelist()
         pricelist_check = asset.get_trans_pricelist()
-        latest_date_trans = stringoperations.str2datetime(datelist_check[-1], dateformat)
+        latest_date_trans = analyzer.str2datetime(datelist_check[-1])
         # Only allow if the transactions contain data from today:
         if latest_date_trans >= today_dt and pricelist_check[-1] > 1e-9:
             today_price_avail = True
@@ -625,7 +625,7 @@ def calc_returns_daily_absolute(datelist, valuelist, costlist, payoutlist, inflo
     :return: A single list that for each date in datelist contains the absolute returns of the asset at/up to each date.
     """
     # Sanity-checks:
-    if analyzer.check_dates_consecutive(datelist) is False:
+    if dateoperations.check_dates_consecutive(datelist, analyzer) is False:
         raise RuntimeError("datelist must contain consecutive days.")
     # Check the length of all lists - they must be identical:
     totlist = [datelist, valuelist, costlist, payoutlist, inflowlist, outflowlist]

@@ -697,7 +697,7 @@ def plot_asset_projections(assetlist, interest, num_years, fname, titlestr, anal
 
 
 def plot_asset_total_absolute_returns_accumulated(dates, returns, fname, analyzer):
-    """Plots the accumulated absolute
+    """Plots the accumulated absolute returns
     :param dates: List of dates
     :param returns: List of day-wise, summed returns of all investments
     """
