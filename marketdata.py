@@ -70,36 +70,31 @@ def update_check_marketdata_in_file(filepath, dateformat_marketdata, dateformat,
             mketdates_cur = mketdates_cur[0:-1]
             mketprices_cur = mketprices_cur[0:-1]
 
+        # Create a dictionary of the newdates to enable faster lookup. Note: Should newdates contain duplicates,
+        # it will only store the most recent/latest value in the dict.
+        newdates_dict = {}
+        for i, date in enumerate(newdates):
+            newdates_dict[date] = i
+
         # Iterate over all lines of the marketdata-file and
         # check if stored values match with newdates,newvals (if possible)
         # If not, a list of non-matching strings is output afterwards.
         discrepancy_entries = []
         for idx, date_cur in enumerate(mketdates_cur):
-            # Check, if the currently selected date is available in the newdates, too:
-            indexes = [i for i, x in enumerate(newdates) if x == date_cur]
-            # If it is available, check if it matches reasonably well with the stored value:
-            if len(indexes) > 1:
-                raise RuntimeError("The supplied list of new dates contains multiple identical dates. "
-                                   "This is not allowed.")
-            # The currently selected date is available in the new list (once, which is good): Check, if it matches:
-            elif len(indexes) == 1:
+            # Check, if the currently selected date is available in newdates. Check if they match.
+            if date_cur in newdates_dict:
+                idx_new = newdates_dict[date_cur]
                 price_cur = mketprices_cur[idx]
-                price_new = newvals[indexes[0]]
+                price_new = newvals[idx_new]
                 # The values should match within 0.5% at least.
                 if helper.within_tol(price_cur, price_new, 0.5 / 100.0) is False:
                     # It is assumed that the marketdata-file is always correct:
-                    newvals[indexes[0]] = price_cur
+                    newvals[idx_new] = price_cur
                     # Record a string for later output:
                     discrepancy_str = repr(date_cur) + ";\t" + repr(price_cur) + ";\t" + repr(
                         price_new)
                     discrepancy_entries.append(discrepancy_str)
-                    """
-                    Don't create an output yet
-                    print("WARNING: The obtained market-price does not match with the recorded value. Path: " +
-                          filepath + ". Recorded Value=" + repr(price_cur) +
-                          ". New Value=" + repr(price_new) + ". Date: " + date_cur + ". Using recorded data from file. "
-                                                                                     "Double-check data/source.")
-                    """
+
         # Output the mismatching entries of the market data file:
         if len(discrepancy_entries) > 0:
             print("WARNING: Some obtained market data does not match the recorded values. Potentially double-check.")
@@ -113,18 +108,18 @@ def update_check_marketdata_in_file(filepath, dateformat_marketdata, dateformat,
         # These copies will be updated:
         mketdates_update_dt = [analyzer.str2datetime(x) for x in mketdates_cur]
         mketprices_update = list(mketprices_cur)
+
+        mketdates_cur_dict = {}
+        for i, date in enumerate(mketdates_cur):
+            mketdates_cur_dict[date] = i
+
         for idx, newdate in enumerate(newdates):
-            # Check, if the current new date exists somewhere in the market-data:
-            indexes = [i for i, x in enumerate(mketdates_cur) if x == newdate]
-            if len(indexes) > 1:
-                raise RuntimeError("The supplied list of new dates contains multiple identical dates. "
-                                   "This is not allowed.")
-            # The current new date is not in the market-data-list: it can be inserted there!
-            elif len(indexes) == 0:
+            if newdate not in mketdates_cur_dict:
+                # The current new date is not in the market-data-list: it can be inserted there!
                 newdate_dt = analyzer.str2datetime(newdate)
                 # Find the index, where it has to go:
                 inserted = False
-                for idxup, date_update in enumerate(mketdates_update_dt):
+                for idxup, date_update in enumerate(mketdates_update_dt): # Todo Is there a way to make this faster?
                     # Insert it according to the date:
                     if newdate_dt < date_update:
                         mketdates_update_dt.insert(idxup, newdate_dt)
