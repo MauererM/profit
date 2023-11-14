@@ -24,7 +24,7 @@ class DataproviderMain:
         from dataprovider_yahoofinance import DataproviderYahoo
         from dataprovider_empty import DataproviderEmpty
         # The list of available/feasible data providers. The last provider here should be DataproviderEmpty
-        self.providers = [DataproviderEmpty]
+        self.providers = [DataproviderYahoo, DataproviderEmpty]
 
         self.active_provider = None
 

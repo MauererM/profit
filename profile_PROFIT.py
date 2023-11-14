@@ -86,6 +86,13 @@ plotting-aux.py:102(create_stackedplot)
 
 """
 Final conclusion: It's hard now to optimize further, most time is needed by the plotting-functions. 
-Final performance: 16.3, 15.7, 15.7 ==> 15.9
+Final performance: 16.3, 15.7, 15.7 ==> 15.9 (After a bugfix: 19.3s)
 ==> Speedup of factor 6 achieved. 
+"""
+
+"""
+Now, the Yahoo Finance data provider is also enabled (API cooldown set to 0.2s). Market data is also available. 
+Baseline: 65s, 68.0s 
+After optimizing (dict-lookup) marketdata.py: 42.2, 41.4s
+After optimizing the list-fusing: 
 """
