@@ -12,7 +12,7 @@ import helper
 
 
 def update_check_marketdata_in_file(filepath, dateformat_marketdata, dateformat, marketdata_delimiter,
-                                    newdates, newvals):
+                                    newdates, newvals, analyzer):
     """Imports data into a potentially available marketdata-file and if possible, cross-checks it with the dates in
     newdates, newvals.
     If the marketdata-file does not exist, it is created and populated with newdates, newvals. These values are
@@ -39,8 +39,8 @@ def update_check_marketdata_in_file(filepath, dateformat_marketdata, dateformat,
                            + filepath)
 
     # Convert the newdates to datetime-objects and back, to be sure they are of the correct format:
-    newdates_dt = [stringoperations.str2datetime(x, dateformat) for x in newdates]
-    newdates = [stringoperations.datetime2str(x, dateformat) for x in newdates_dt]
+    newdates_dt = [analyzer.str2datetime(x) for x in newdates]
+    newdates = [analyzer.datetime2str(x) for x in newdates_dt]
 
     # Files does not yet exist: Create it and add the available data to it:
     if files.file_exists(filepath) is False:
@@ -111,7 +111,7 @@ def update_check_marketdata_in_file(filepath, dateformat_marketdata, dateformat,
         # The obtained new values now match the existing values (if there are double entries), which is good.
         # In the following: the new values are sorted into the existing market-data, and the file is updated
         # These copies will be updated:
-        mketdates_update_dt = [stringoperations.str2datetime(x, dateformat) for x in mketdates_cur]
+        mketdates_update_dt = [analyzer.str2datetime(x) for x in mketdates_cur]
         mketprices_update = list(mketprices_cur)
         for idx, newdate in enumerate(newdates):
             # Check, if the current new date exists somewhere in the market-data:
@@ -121,7 +121,7 @@ def update_check_marketdata_in_file(filepath, dateformat_marketdata, dateformat,
                                    "This is not allowed.")
             # The current new date is not in the market-data-list: it can be inserted there!
             elif len(indexes) == 0:
-                newdate_dt = stringoperations.str2datetime(newdate, dateformat)
+                newdate_dt = analyzer.str2datetime(newdate)
                 # Find the index, where it has to go:
                 inserted = False
                 for idxup, date_update in enumerate(mketdates_update_dt):

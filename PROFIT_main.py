@@ -159,8 +159,23 @@ if __name__ == '__main__':
     # Print the current version of the tool
     print("PROFIT V{:.1f} starting".format(setup.PROFIT_VERSION))
 
+    # Initialize classes:
+    datetimeconverter = stringoperations.DateTimeConversion()
+
+    """
+    Define Analysis-Range:
+    The analysis range always spans DAYS_ANALYSIS backwards from today.
+    """
+    date_today = dateoperations.get_date_today(setup.FORMAT_DATE, datetime_obj=True)
+    date_today_str = dateoperations.get_date_today(setup.FORMAT_DATE, datetime_obj=False)
+    date_analysis_start = date_today - datetime.timedelta(days=DAYS_ANALYSIS)
+    date_analysis_start_str = stringoperations.datetime2str(date_analysis_start, setup.FORMAT_DATE)
+    print("\nData will be analyzed from the " + date_analysis_start_str + " to the " + date_today_str)
+    # Create the analysis-instance that tracks some analysis-range-related data:
+    analyzer = analysis.AnalysisRange(date_analysis_start_str, date_today_str, setup.FORMAT_DATE, datetimeconverter)
+
     # Initialize the data provider. If none can be initialized, an empty fallback provider will be selected.
-    provider = DataproviderMain(setup.FORMAT_DATE)
+    provider = DataproviderMain(setup.FORMAT_DATE, analyzer)
 
     """
     Sanity checks:
@@ -181,7 +196,7 @@ if __name__ == '__main__':
     investments = []
     for file in invstmtfiles:
         filepath = files.create_path(INVESTMENT_FOLDER, file)  # Get path of file, including its folder
-        investments.append(investmentparser.parse_investment_file(filepath, setup.FORMAT_DATE, provider))
+        investments.append(investmentparser.parse_investment_file(filepath, setup.FORMAT_DATE, provider, analyzer))
     if len(investments) > 0:
         print("Successfully parsed " + str(len(investments)) + " investments.")
 
@@ -197,7 +212,7 @@ if __name__ == '__main__':
     accounts = []
     for file in accountfiles:
         filepath = files.create_path(ACCOUNT_FOLDER, file)  # Get path of file, including its folder
-        accounts.append(accountparser.parse_account_file(filepath, setup.FORMAT_DATE))
+        accounts.append(accountparser.parse_account_file(filepath, setup.FORMAT_DATE, analyzer))
     if len(accounts) > 0:
         print("Successfully parsed " + str(len(accounts)) + " accounts.")
 
@@ -206,16 +221,6 @@ if __name__ == '__main__':
     if len(assets) < 1:
         print("\nNo accounts or investments found. Terminating.")
         exit()
-
-    """
-    Define Analysis-Range:
-    The analysis range always spans DAYS_ANALYSIS backwards from today.
-    """
-    date_today = dateoperations.get_date_today(setup.FORMAT_DATE, datetime_obj=True)
-    date_today_str = dateoperations.get_date_today(setup.FORMAT_DATE, datetime_obj=False)
-    date_analysis_start = date_today - datetime.timedelta(days=DAYS_ANALYSIS)
-    date_analysis_start_str = stringoperations.datetime2str(date_analysis_start, setup.FORMAT_DATE)
-    print("\nData will be analyzed from the " + date_analysis_start_str + " to the " + date_today_str)
 
     """
     Collect the currencies of all assets, and the corresponding exchange-rates
@@ -254,7 +259,7 @@ if __name__ == '__main__':
             forexdict[forexstring] = forex.ForexRates(forexstring, BASECURRENCY, setup.MARKETDATA_FOLDER,
                                                       setup.MARKETDATA_FORMAT_DATE, setup.MARKETDATA_DELIMITER,
                                                       earliest_forex,
-                                                      date_today_str, setup.FORMAT_DATE, provider)
+                                                      date_today_str, setup.FORMAT_DATE, provider, analyzer)
 
     # Store an empty object in the basecurrency-key of the forex-dict:
     forexdict[BASECURRENCY] = None
@@ -287,8 +292,8 @@ if __name__ == '__main__':
             # Obtain the prices
             obj = prices.MarketPrices(sym, ex, currency, setup.MARKETDATA_FOLDER, setup.MARKETDATA_FORMAT_DATE,
                                       setup.MARKETDATA_DELIMITER, date_analysis_start_str, date_today_str,
-                                      setup.FORMAT_DATE, provider)
-            obj.extrapolate_market_data_to_full_range() # If not all data obtained: Extrapolate.
+                                      setup.FORMAT_DATE, provider, analyzer)
+            obj.extrapolate_market_data_to_full_range()  # If not all data obtained: Extrapolate.
             indexprices.append(obj)
 
     """
@@ -320,22 +325,23 @@ if __name__ == '__main__':
         # Plot the values of all investments:
         plotting.plot_asset_values_cost_payout_individual(investments, FILENAME_INVESTMENT_VALUES)
         # Plot the returns of all investmets, for different periods:
-        plotting.plot_asset_returns_individual(investments, FILENAME_INVESTMENT_RETURNS)
+        plotting.plot_asset_returns_individual(investments, FILENAME_INVESTMENT_RETURNS, analyzer)
         # Plot the daily absolute returns of all investmets:
         d, ret_total = plotting.plot_asset_returns_individual_absolute(investments,
-                                                                       FILENAME_INVESTMENT_RETURNS_ABSOLUTE)
+                                                                       FILENAME_INVESTMENT_RETURNS_ABSOLUTE, analyzer)
         # Plot the accumulated/summed daily absolute returns of all investmets:
         plotting.plot_asset_total_absolute_returns_accumulated(d, ret_total, FILENAME_INVESTMENT_RETURNS_ABSOLUTE_TOTAL)
         # Plot all investments:
         plotting.plot_asset_values_stacked(investments, FILENAME_STACKPLOT_INVESTMENT_VALUES, "Value: All Investments")
         # Plot the returns of all investments accumulated, for the desired period:
-        plotting.plot_assets_returns_total(investments, FILENAME_TOTAL_INVESTMENT_RETURNS, "Returns of Investments")
+        plotting.plot_assets_returns_total(investments, FILENAME_TOTAL_INVESTMENT_RETURNS, "Returns of Investments",
+                                           analyzer)
         # Project the value of the investments into the future:
         plotting.plot_asset_projections(investments, INTEREST_PROJECTION_PERCENT, NUM_YEARS_INVEST_PROJECTION,
                                         FILENAME_INVESTMENT_PROJECTIONS,
                                         "Future Value of All Investments, Compounded Annual Interest")
         # Calculate the return of all investments, for the considered analysis-period:
-        tot_return = analysis.get_returns_assets_accumulated_analysisperiod(investments, setup.FORMAT_DATE)
+        tot_return = analysis.get_returns_assets_accumulated_analysisperiod(investments, analyzer)
         print("\nThe return of the investments of the considered analysis-period (past {:d} days) is: {:.2f} %".format(
             DAYS_ANALYSIS, tot_return))
 

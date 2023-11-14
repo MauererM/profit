@@ -17,7 +17,7 @@ class ForexRates:
     """
 
     def __init__(self, currency_str, basecurrency_str, marketdata_folder_str, marketdata_dateformat_str,
-                 marketdata_delimiter_str, startdate_str, stopdate_str, dateformat_str, dataprovider):
+                 marketdata_delimiter_str, startdate_str, stopdate_str, dateformat_str, dataprovider, analyzer):
         """ForexRates constructor: Obtains the required data from the dataprovider.
         The exchange rates are obtained such that the currency can be multiplied with the rates to get the value in the
         base currency.
@@ -41,6 +41,7 @@ class ForexRates:
         self.marketdata_delimiter = marketdata_delimiter_str
         self.pricedata_avail = False  # Indicates if it was possible to obtain prices of the currency
         self.provider = dataprovider
+        self.analyzer = analyzer
 
         # Create the path of the file in the marketdata-folder that (should) hold information of this price-object,
         # or which will be generated.
@@ -76,13 +77,13 @@ class ForexRates:
                                                                                 self.marketdata_dateformat,
                                                                                 self.dateformat,
                                                                                 self.marketdata_delimiter,
-                                                                                dates, rates)
+                                                                                dates, rates, self.analyzer)
 
             # The returned forex data might not be available until today (e.g., if this is run on a weekend).
             # Extend the data accordingly into the future. Note: In Forex, this is (probably) OK to do (in investments,
             # it is NOT OK to do this, as there, the manually entered transactions-data may not be overwritten. But in
             # Forex, there is no manually entered transactions-data that could take precedent.
-            lastdate_dt = stringoperations.str2datetime(dates_full[-1], self.dateformat)
+            lastdate_dt = self.analyzer.str2datetime(dates_full[-1])
             if stopdate_dt > lastdate_dt:
                 dates_full, rates_full = dateoperations.extend_data_future(dates_full, rates_full, self.stopdate,
                                                                            self.dateformat, zero_padding=False)
@@ -93,8 +94,8 @@ class ForexRates:
 
             # The available market-data (from the dataprovider and the database) might not reach back to the
             # desired startdate! Check it:
-            dates_full_start = stringoperations.str2datetime(dates_full[0], self.dateformat)
-            dates_full_stop = stringoperations.str2datetime(dates_full[-1], self.dateformat)
+            dates_full_start = self.analyzer.str2datetime(dates_full[0])
+            dates_full_stop = self.analyzer.str2datetime(dates_full[-1])
             if dates_full_start > startdate_dt:
                 print("Available rates (data provider and stored market-data) are only available from the " +
                       dates_full[0] + " onwards. Earliest available data will be extrapolated backwards.")
@@ -105,7 +106,7 @@ class ForexRates:
             # Crop the data to the desired period:
             self.rate_dates, self.rates = dateoperations.format_datelist(dates_full, rates_full,
                                                                          self.startdate, self.stopdate,
-                                                                         self.dateformat,
+                                                                         self.dateformat, self.analyzer,
                                                                          zero_padding_past=False,
                                                                          zero_padding_future=False)
 
@@ -124,8 +125,8 @@ class ForexRates:
                                                                       self.marketdata_dateformat,
                                                                       self.dateformat, self.marketdata_delimiter)
 
-                dates_start = stringoperations.str2datetime(dates[0], self.dateformat)
-                dates_stop = stringoperations.str2datetime(dates[-1], self.dateformat)
+                dates_start = self.analyzer.str2datetime(dates[0])
+                dates_stop = self.analyzer.str2datetime(dates[-1])
                 if dates_start > startdate_dt:
                     print("Available rates (stored market-data) are only available from the " +
                           dates[0] + " onwards. Earliest available data will be extrapolated backwards.")
@@ -147,7 +148,7 @@ class ForexRates:
                 # Crop the data to the desired period:
                 self.rate_dates, self.rates = dateoperations.format_datelist(dates, rates,
                                                                              self.startdate, self.stopdate,
-                                                                             self.dateformat,
+                                                                             self.dateformat, self.analyzer,
                                                                              zero_padding_past=False,
                                                                              zero_padding_future=False)
 

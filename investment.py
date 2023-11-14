@@ -17,7 +17,7 @@ class Investment:
     """Implements an investment. Parses transactions, provides analysis-data, performs currency conversions"""
 
     def __init__(self, id_str, type_str, purpose_str, currency_str, basecurrency_str, symbol_str, exchange_str,
-                 filename_str, transactions_dict, dateformat_str, dataprovider):
+                 filename_str, transactions_dict, dateformat_str, dataprovider, analyzer):
         """Investment constructor
         Use the function parse_investment_file to obtain the necessary information from an investment file.
         It sets up all internal data structures and analyzes the transactions, and creates some basic data
@@ -46,6 +46,7 @@ class Investment:
         self.analysis_data_done = False  # Analysis data is not yet prepared
         self.forex_data_given = False
         self.provider = dataprovider
+        self.analyzer = analyzer
         # Data not known yet:
         self.forex_obj = None
         self.analysis_dates = None
@@ -294,14 +295,14 @@ class Investment:
             raise RuntimeError("Specified transaction-date list is not in order.")
 
         # Check, if the datelist is consecutive:
-        if dateoperations.check_dates_consecutive(datelist, dateformat) is False:
+        if dateoperations.check_dates_consecutive(datelist, self.analyzer) is False:
             raise RuntimeError("Specified datelist is not containing of consecutive days.")
 
         # Convert to datetime objects:
-        datelist_dt = [stringoperations.str2datetime(x, dateformat) for x in datelist]
-        trans_dates_dt = [stringoperations.str2datetime(x, dateformat) for x in trans_dates]
+        datelist_dt = [self.analyzer.str2datetime(x) for x in datelist]
+        trans_dates_dt = [self.analyzer.str2datetime(x) for x in trans_dates]
 
-        value_list = []
+        value_list = []  # Todo: Speed this up.
         # Iterate through all dates and check if there are any matches with the trigger string
         for date in datelist_dt:
             # Get all indexes of the current date, if it occurs in the transaction-dates-list:
@@ -404,8 +405,6 @@ class Investment:
         :param dateformat: String that specifies the format of the date-strings
         """
         print("\n" + self.symbol + ":")
-        # Convert to datetime
-        date_stop_dt = stringoperations.str2datetime(date_stop, dateformat)
 
         # Extrapolate or crop the data:
         # The balance is extrapolated with zeroes into the past, and with the last known values into the future,
@@ -413,40 +412,40 @@ class Investment:
         self.analysis_dates, self.analysis_balances = dateoperations.format_datelist(self.datelist,
                                                                                      self.balancelist,
                                                                                      date_start, date_stop,
-                                                                                     dateformat,
+                                                                                     self.dateformat, self.analyzer,
                                                                                      zero_padding_past=True,
                                                                                      zero_padding_future=False)
         # The cost and payout-lists need zero-padding in both directions
         _, self.analysis_costs = dateoperations.format_datelist(self.datelist,
                                                                 self.costlist,
                                                                 date_start, date_stop,
-                                                                dateformat,
+                                                                self.dateformat, self.analyzer,
                                                                 zero_padding_past=True,
                                                                 zero_padding_future=True)
 
         _, self.analysis_payouts = dateoperations.format_datelist(self.datelist,
                                                                   self.payoutlist,
                                                                   date_start, date_stop,
-                                                                  dateformat,
+                                                                  self.dateformat, self.analyzer,
                                                                   zero_padding_past=True,
                                                                   zero_padding_future=True)
         # The inflows and outflows also need zero-padding in both directions:
         _, self.analysis_inflows = dateoperations.format_datelist(self.datelist,
                                                                   self.inflowlist,
                                                                   date_start, date_stop,
-                                                                  dateformat,
+                                                                  self.dateformat, self.analyzer,
                                                                   zero_padding_past=True,
                                                                   zero_padding_future=True)
         _, self.analysis_outflows = dateoperations.format_datelist(self.datelist,
                                                                    self.outflowlist,
                                                                    date_start, date_stop,
-                                                                   dateformat,
+                                                                   self.dateformat, self.analyzer,
                                                                    zero_padding_past=True,
                                                                    zero_padding_future=True)
         _, self.analysis_prices = dateoperations.format_datelist(self.datelist,
                                                                  self.pricelist,
                                                                  date_start, date_stop,
-                                                                 dateformat,
+                                                                 self.dateformat, self.analyzer,
                                                                  zero_padding_past=True,
                                                                  zero_padding_future=True)
 
@@ -473,14 +472,15 @@ class Investment:
             self.marketpricesobj = prices.MarketPrices(self.symbol, self.exchange, self.currency,
                                                        setup.MARKETDATA_FOLDER,
                                                        setup.MARKETDATA_FORMAT_DATE, setup.MARKETDATA_DELIMITER,
-                                                       startdate_prices, date_stop, dateformat, self.provider)
+                                                       startdate_prices, date_stop, dateformat, self.provider,
+                                                       self.analyzer)
 
             # Asset prices during the analysis-period are available:
             if self.marketpricesobj.is_price_avail() is True:
                 marketdates = self.marketpricesobj.get_price_dates()
                 marketprices = self.marketpricesobj.get_price_values()
                 # Sanity-checks, just to be sure:
-                if dateoperations.check_dates_consecutive(marketdates, dateformat) is False:
+                if dateoperations.check_dates_consecutive(marketdates, self.analyzer) is False:
                     raise RuntimeError("The obtained market-price-dates are not consecutive. Investment: "
                                        + self.filename)
 
@@ -493,7 +493,8 @@ class Investment:
                 # for a given date. Also: ZOH-extrapolation is used (going with ZOH into the past makes no diff, though)
                 prices_merged = dateoperations.fuse_two_value_lists(self.analysis_dates, transactions_dates,
                                                                     transactions_prices, marketdates, marketprices,
-                                                                    self.dateformat, zero_padding_past=True,
+                                                                    self.dateformat, self.analyzer,
+                                                                    zero_padding_past=True,
                                                                     zero_padding_future=False)
                 # Calculate the values of the investment:
                 self.analysis_values = []
@@ -518,7 +519,7 @@ class Investment:
                 _, self.analysis_values = dateoperations.format_datelist(self.datelist,
                                                                          trans_values_interp,
                                                                          date_start, date_stop,
-                                                                         dateformat,
+                                                                         self.dateformat, self.analyzer,
                                                                          zero_padding_past=True,
                                                                          zero_padding_future=False)
 
@@ -532,7 +533,7 @@ class Investment:
             _, self.analysis_values = dateoperations.format_datelist(self.datelist,
                                                                      trans_values_interp,
                                                                      date_start, date_stop,
-                                                                     self.dateformat,
+                                                                     self.dateformat, self.analyzer,
                                                                      zero_padding_past=True,
                                                                      zero_padding_future=False)
         # Sanity check:

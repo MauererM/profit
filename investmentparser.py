@@ -11,7 +11,7 @@ import setup
 import PROFIT_main as cfg
 
 
-def parse_investment_file(filepath, dateformat, dataprovider):
+def parse_investment_file(filepath, dateformat, dataprovider, analyzer):
     """This function parses an investment-file.
     Any relevant information in the file may not contain whitespaces! They are all eliminated while parsing.
     The last line of the file must contain the string "EOF"
@@ -20,6 +20,7 @@ def parse_investment_file(filepath, dateformat, dataprovider):
     :param filepath: String of the path of the file that is being parsed
     :param dateformat: String that encodes the format of the dates, e.g. "%d.%m.%Y"
     :param dataprovider: Object of the data provider class, e.g., dataprovider_yahoofinance
+    :param analyzer: The analyzer-instance (cf. analysis.py)
     :return: Investment-object
     """
 
@@ -219,7 +220,7 @@ def parse_investment_file(filepath, dateformat, dataprovider):
 
     # Store the dates as strings, not as datetime objects.
     # This makes parsing between different date/time implementations later on potentially easier
-    date = [stringoperations.datetime2str(x, dateformat) for x in date]
+    date = [analyzer.datetime2str(x) for x in date]
 
     # Store the results in a dictionary:
     transactions = {setup.DICT_KEY_DATES: date, setup.DICT_KEY_ACTIONS: action, setup.DICT_KEY_QUANTITY: quantity,
@@ -228,6 +229,6 @@ def parse_investment_file(filepath, dateformat, dataprovider):
 
     # Create and populate the account-object:
     invstmt = investment.Investment(invstmt_id, invstmt_type, invstmt_purpose, invstmt_currency, cfg.BASECURRENCY,
-                                    invstmt_sym, invstmt_exchange, filepath, transactions, dateformat, dataprovider
-                                    )
+                                    invstmt_sym, invstmt_exchange, filepath, transactions, dateformat, dataprovider,
+                                    analyzer)
     return invstmt

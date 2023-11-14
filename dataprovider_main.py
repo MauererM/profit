@@ -12,12 +12,13 @@ import time
 
 class DataproviderMain:
 
-    def __init__(self, dateformat):
+    def __init__(self, dateformat, analyzer):
         """
         Constructor: Also obtains a cookie/crumb from yahoo finance to enable subsequent downloads. 
         :param dateformat: String that encodes the format of the dates, e.g. "%d.%m.%Y"
         """
         self.dateformat = dateformat
+        self.analyzer = analyzer
 
         # Import the available data providers:
         from dataprovider_yahoofinance import DataproviderYahoo
@@ -163,7 +164,8 @@ class DataproviderMain:
 
         # Crop the data to the desired range. It may still contain non-consecutive days.
         # The crop-function will not throw errors if the start/stop-dates are outside the date-list from the data provider.
-        dates, values = dateoperations.crop_datelist(dates_red, values_red, startdate, stopdate, self.dateformat)
+        dates, values = dateoperations.crop_datelist(dates_red, values_red, startdate, stopdate, self.dateformat,
+                                                     self.analyzer)
 
         # Check if there is still data left:
         if len(values) < 1:

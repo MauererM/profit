@@ -7,7 +7,23 @@ Copyright (c) 2018 Mario Mauerer
 import dateoperations
 import stringoperations
 import helper
-import setup
+
+
+class AnalysisRange:
+    """Stores data related to the analysis-data-range, which is often used across various functions
+    """
+
+    def __init__(self, startdate, stopdate, dateformat, datetime_converter):
+        self.dateformat = dateformat
+        self.datetime_converter = datetime_converter  # Note: This instance is referenced, not copied
+        self.startdate_dt = self.datetime_converter.str2datetimecached(startdate, dateformat)
+        self.stopdate_dt = self.datetime_converter.str2datetimecached(stopdate, dateformat)
+
+    def str2datetime(self, str):
+        return self.datetime_converter.str2datetimecached(str, self.dateformat)
+
+    def datetime2str(self, dt):
+        return self.datetime_converter.datetime2strcached(dt, self.dateformat)
 
 
 def project_values(datelist, valuelist, num_years, interest_percent, dateformat):
@@ -305,7 +321,7 @@ def get_return_asset_holdingperiod(asset, dateformat):
     return calc_return(val1, val2, outflow, inflow, payout, cost)
 
 
-def get_returns_asset_analysisperiod(asset, dateformat):
+def get_returns_asset_analysisperiod(asset, analyzer):
     """Calculates the total return for the given asset over its full analysis period
     :param asset: Asset-object
     :param dateformat: String that encodes the format of the dates, e.g. "%d.%m.%Y"
@@ -322,13 +338,13 @@ def get_returns_asset_analysisperiod(asset, dateformat):
     period = len(datelist)
     # Get the return - Only a single value should be returned, as our analysis-period spans the whole range
     dates, returns = calc_returns_period(datelist, valuelist, costlist, payoutlist, inflowlist, outflowlist, period,
-                                         dateformat)
+                                         analyzer)
     if len(dates) != 1:
         raise RuntimeError("Something went wrong, only one rate of return should have been given.")
     return returns[0]
 
 
-def get_returns_assets_accumulated_analysisperiod(assets, dateformat):
+def get_returns_assets_accumulated_analysisperiod(assets, analyzer):
     """Calculates the total return for the given multiple assets over the full analysis-period.
     The values of the assets are summed up (daily) and the return is calculated for the accumulated values.
     The analysis-data-range of each asset must be identical (in date and size)
@@ -339,13 +355,13 @@ def get_returns_assets_accumulated_analysisperiod(assets, dateformat):
     datelist = list(assets[0].get_analysis_datelist())
     # The return is calculated over the full analysis-period:
     period = len(datelist)
-    dates, returns = get_returns_assets_accumulated(assets, period, dateformat)
+    dates, returns = get_returns_assets_accumulated(assets, period, analyzer)
     if len(dates) != 1:
         raise RuntimeError("Something went wrong, only one rate of return should have been given.")
     return returns[0]
 
 
-def get_returns_asset(asset, period, dateformat):
+def get_returns_asset(asset, period, analyzer):
     """Calculates the returns of a given asset, in the given periods.
     It's the holding period return of the specified periods, see: https://en.wikipedia.org/wiki/Holding_period_return)
     The data is intended to be provided with a granularity of days.
@@ -364,11 +380,11 @@ def get_returns_asset(asset, period, dateformat):
     outflowlist = list(asset.get_analysis_outflowlist())
 
     dates, returns = calc_returns_period(datelist, valuelist, costlist, payoutlist, inflowlist, outflowlist,
-                                         period, dateformat)
+                                         period, analyzer)
     return dates, returns
 
 
-def get_returns_assets_accumulated(assets, period, dateformat):
+def get_returns_assets_accumulated(assets, period, analyzer):
     """Calculates the returns of all given assets (the asset values are summed daily), in the given periods.
     It's the holding period return of the specified periods, see: https://en.wikipedia.org/wiki/Holding_period_return)
     The data is intended to be provided with a granularity of days.
@@ -411,11 +427,11 @@ def get_returns_assets_accumulated(assets, period, dateformat):
                 tot_outflowlist[idx] += outflows[idx]
 
     dates, returns = calc_returns_period(datelist, tot_valuelist, tot_costlist, tot_payoutlist, tot_inflowlist,
-                                         tot_outflowlist, period, dateformat)
+                                         tot_outflowlist, period, analyzer)
     return dates, returns
 
 
-def calc_returns_period(datelist, valuelist, costlist, payoutlist, inflowlist, outflowlist, period, dateformat):
+def calc_returns_period(datelist, valuelist, costlist, payoutlist, inflowlist, outflowlist, period, analyzer):
     """Calculates the returns of an asset over a set of time periods.
     It's the holding period return of the specified periods, see: https://en.wikipedia.org/wiki/Holding_period_return
     The data is intended to be provided with a granularity of days.
@@ -439,7 +455,7 @@ def calc_returns_period(datelist, valuelist, costlist, payoutlist, inflowlist, o
     returned dates, whereas the last date of the analysis-interval is given. The return is in percent.
     """
     # Sanity-checks:
-    if dateoperations.check_dates_consecutive(datelist, dateformat) is False:
+    if dateoperations.check_dates_consecutive(datelist, analyzer) is False:
         raise RuntimeError("datelist must contain consecutive days.")
     # Check the length of all lists - they must be identical:
     totlist = [datelist, valuelist, costlist, payoutlist, inflowlist, outflowlist]
@@ -525,7 +541,7 @@ def calc_returns_period(datelist, valuelist, costlist, payoutlist, inflowlist, o
     return ret_dates, ret
 
 
-def get_returns_asset_daily_absolute_analysisperiod(asset, dateformat):
+def get_returns_asset_daily_absolute_analysisperiod(asset, dateformat, analyzer):
     """Calculates the absolute returns of a given asset, for the full holding period (incl. analysis period!)
     The data is intended to be provided with a granularity of days.
     :param asset: Asset-object
@@ -579,11 +595,11 @@ def get_returns_asset_daily_absolute_analysisperiod(asset, dateformat):
     outflowlist = asset.get_analysis_outflowlist()
 
     returns = calc_returns_daily_absolute(datelist, valuelist, costlist, payoutlist, inflowlist, outflowlist,
-                                          dateformat)
+                                          analyzer)
     return datelist, returns
 
 
-def calc_returns_daily_absolute(datelist, valuelist, costlist, payoutlist, inflowlist, outflowlist, dateformat):
+def calc_returns_daily_absolute(datelist, valuelist, costlist, payoutlist, inflowlist, outflowlist, analyzer):
     """Calculates the absolute returns of an asset in the given period (analysis period).
     This function returns the gains (or losses) of the asset _since the start of the analysis period_.
     The data is intended to be provided with a granularity of days.
@@ -601,7 +617,7 @@ def calc_returns_daily_absolute(datelist, valuelist, costlist, payoutlist, inflo
     :return: A single list that for each date in datelist contains the absolute returns of the asset at/up to each date.
     """
     # Sanity-checks:
-    if dateoperations.check_dates_consecutive(datelist, dateformat) is False:
+    if analyzer.check_dates_consecutive(datelist) is False:
         raise RuntimeError("datelist must contain consecutive days.")
     # Check the length of all lists - they must be identical:
     totlist = [datelist, valuelist, costlist, payoutlist, inflowlist, outflowlist]

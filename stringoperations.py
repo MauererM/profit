@@ -89,6 +89,34 @@ def read_crop_string_delimited(string, delim):
     else:
         return string, string
 
+class DateTimeConversion:
+    """A small class that provides caching for the frequently used datetime-conversion functions
+    """
+
+    def __init__(self):
+        self.datetime2str_cache = {}
+        self.str2datetime_cache = {}
+
+    def str2datetimecached(self, string, fmt):
+        """Converts a string to a datetime object
+        :param string: Date-string
+        :param fmt: String of the format of the date encoded in the string
+        :return: datetime object
+        """
+        if string not in self.str2datetime_cache:
+            self.str2datetime_cache[string] = dt.datetime.strptime(string, fmt)
+        return self.str2datetime_cache[string]
+
+    def datetime2strcached(self, datetimeobj, fmt):
+        """Converts a datetime object to a string
+        :param datetimeobj: datetime-object to be converted
+        :param fmt: String encoding the desired format of the output string
+        :return: datetime object
+        """
+        if datetimeobj not in self.datetime2str_cache:
+            self.datetime2str_cache[datetimeobj] = datetimeobj.strftime(fmt)
+        return self.datetime2str_cache[datetimeobj]
+
 
 def str2datetime(string, fmt):
     """Converts a string to a datetime object
@@ -98,7 +126,6 @@ def str2datetime(string, fmt):
     """
     return dt.datetime.strptime(string, fmt)
 
-
 def datetime2str(datetimeobj, fmt):
     """Converts a datetime object to a string
     :param datetimeobj: datetime-object to be converted
@@ -106,7 +133,6 @@ def datetime2str(datetimeobj, fmt):
     :return: datetime object
     """
     return datetimeobj.strftime(fmt)
-
 
 def datestr_convert_date_fmt(string, fmt_a, fmt_b):
     """Converts a date-string from one date-format to another

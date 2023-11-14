@@ -70,3 +70,13 @@ New violators: stringoperations.py:93 (str2datetime), dateoperations.py:56 (form
 There's another "todo" that can benefit from the dict-system of forex.py. TBD. 
 Also todo: Further verify forex.py. 
 """
+
+"""
+After caching the str2datetime and datetime2str and using the cached system via a global analyzer-class: 33.5s
+New violators: 
+stringoperations.py:121 (str2datetime) (still used, especially in plotting)
+dateoperations.py:56 (format_datelist)
+dateoperations.py:229 (extend_data_future)
+investmetn.py:set_analysis_data
+dateoperations.py:listcomp (246)
+"""

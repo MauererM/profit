@@ -11,7 +11,7 @@ import setup
 import PROFIT_main as cfg
 
 
-def parse_account_file(filepath, dateformat):
+def parse_account_file(filepath, dateformat, analyzer):
     """Parses an account-file.
     Calls the constructor of the account-class at the end.
     Any relevant information in the file may not contain whitespaces! They are all eliminated while parsing.
@@ -133,7 +133,7 @@ def parse_account_file(filepath, dateformat):
         # Parse the date. Parse it into a datetime-object. This allows some error detection here.
         trans_date, line_val = stringops.read_crop_string_delimited(stripline, setup.DELIMITER)
         try:
-            datetime_obj = stringops.str2datetime(trans_date, dateformat)
+            datetime_obj = analyzer.str2datetime(trans_date)
         except ValueError:
             raise RuntimeError("Date in transaction falsely specified. File: "
                                + filepath + ". Transaction-Nr. " + repr(i + 1))
@@ -173,5 +173,5 @@ def parse_account_file(filepath, dateformat):
 
     # Create and populate the account-object:
     accnt = account.Account(accnt_id, accnt_type, accnt_purpose, accnt_currency, cfg.BASECURRENCY, filepath,
-                            transactions, dateformat)
+                            transactions, dateformat, analyzer)
     return accnt

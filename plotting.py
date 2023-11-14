@@ -747,7 +747,7 @@ def plot_asset_total_absolute_returns_accumulated(dates, returns, fname):
         plotting_aux.open_plot(fname)
 
 
-def plot_assets_returns_total(assetlist, fname, titlestr):
+def plot_assets_returns_total(assetlist, fname, titlestr, analyzer):
     """Plots the returns of all assets combined, for different periods (7, 30, 100 and 365 days)
     :param assetlist: List of asset-objects
     :param fname: String of the desired filename of the plot
@@ -773,7 +773,7 @@ def plot_assets_returns_total(assetlist, fname, titlestr):
     ax = fig.add_subplot(111)  # Only one plot
 
     plotted = False
-    dates, returns = analysis.get_returns_assets_accumulated(assetlist, 2, setup.FORMAT_DATE)
+    dates, returns = analysis.get_returns_assets_accumulated(assetlist, 2, analyzer)
     # Only plot if there is something to plot:
     if helper.list_all_zero(returns) is False:
         x = [stringoperations.str2datetime(x, dateformat) for x in dates]
@@ -781,7 +781,7 @@ def plot_assets_returns_total(assetlist, fname, titlestr):
                 label="2-day return")
         plotted = True
 
-    dates, returns = analysis.get_returns_assets_accumulated(assetlist, 7, setup.FORMAT_DATE)
+    dates, returns = analysis.get_returns_assets_accumulated(assetlist, 7, analyzer)
     # Only plot if there is something to plot:
     if helper.list_all_zero(returns) is False:
         x = [stringoperations.str2datetime(x, dateformat) for x in dates]
@@ -790,7 +790,7 @@ def plot_assets_returns_total(assetlist, fname, titlestr):
                 markersize=5)
         plotted = True
 
-    dates, returns = analysis.get_returns_assets_accumulated(assetlist, 30, setup.FORMAT_DATE)
+    dates, returns = analysis.get_returns_assets_accumulated(assetlist, 30, analyzer)
     # Only plot if there is something to plot:
     if helper.list_all_zero(returns) is False:
         x = [stringoperations.str2datetime(x, dateformat) for x in dates]
@@ -799,7 +799,7 @@ def plot_assets_returns_total(assetlist, fname, titlestr):
                 markersize=4)
         plotted = True
 
-    dates, returns = analysis.get_returns_assets_accumulated(assetlist, 100, setup.FORMAT_DATE)
+    dates, returns = analysis.get_returns_assets_accumulated(assetlist, 100, analyzer)
     # Only plot if there is something to plot:
     if helper.list_all_zero(returns) is False:
         x = [stringoperations.str2datetime(x, dateformat) for x in dates]
@@ -807,7 +807,7 @@ def plot_assets_returns_total(assetlist, fname, titlestr):
                 label="100-day return")
         plotted = True
 
-    dates, returns = analysis.get_returns_assets_accumulated(assetlist, 365, setup.FORMAT_DATE)
+    dates, returns = analysis.get_returns_assets_accumulated(assetlist, 365, analyzer)
     # Only plot if there is something to plot:
     if helper.list_all_zero(returns) is False:
         x = [stringoperations.str2datetime(x, dateformat) for x in dates]
@@ -967,7 +967,7 @@ def plot_asset_values_cost_payout_individual(assetlist, fname):
             plotting_aux.open_plot(fname_ext)
 
 
-def plot_asset_returns_individual(assetlist, fname):
+def plot_asset_returns_individual(assetlist, fname, analyzer):
     """Plots different returns of each asset in an individual plot.
     The plots are created on a 2x3 grid
     :param assetlist: List of asset-objects
@@ -1016,7 +1016,7 @@ def plot_asset_returns_individual(assetlist, fname):
 
             plotted = False
             # Obtain the returns in 7-day periods:
-            dates, returns = analysis.get_returns_asset(asset, 7, dateformat)
+            dates, returns = analysis.get_returns_asset(asset, 7, analyzer)
             if helper.list_all_zero(returns) is False:
                 x = [stringoperations.str2datetime(i, dateformat) for i in dates]
                 ax.plot(x, returns, alpha=1.0, zorder=3, clip_on=False, color=setup.PLOTS_COLORS[0], marker='o',
@@ -1024,7 +1024,7 @@ def plot_asset_returns_individual(assetlist, fname):
                 plotted = True
 
             # Obtain the returns in 30-day periods:
-            dates, returns = analysis.get_returns_asset(asset, 30, dateformat)
+            dates, returns = analysis.get_returns_asset(asset, 30, analyzer)
             if helper.list_all_zero(returns) is False:
                 x = [stringoperations.str2datetime(i, dateformat) for i in dates]
                 ax.plot(x, returns, alpha=1.0, zorder=3, clip_on=False, color=setup.PLOTS_COLORS[1], marker='d',
@@ -1032,7 +1032,7 @@ def plot_asset_returns_individual(assetlist, fname):
                 plotted = True
 
             # Obtain the returns in 365-day periods:
-            dates, returns = analysis.get_returns_asset(asset, 365, dateformat)
+            dates, returns = analysis.get_returns_asset(asset, 365, analyzer)
             if helper.list_all_zero(returns) is False:
                 x = [stringoperations.str2datetime(i, dateformat) for i in dates]
                 ax.plot(x, returns, alpha=1.0, zorder=3, clip_on=False, color=setup.PLOTS_COLORS[2], marker='x',
@@ -1040,7 +1040,7 @@ def plot_asset_returns_individual(assetlist, fname):
                 plotted = True
 
             # Obtain the asset's return of the whole analysis-period:
-            ret_a = analysis.get_returns_asset_analysisperiod(asset, dateformat)
+            ret_a = analysis.get_returns_asset_analysisperiod(asset, analyzer)
             # Obtain the asset's holding period return:
             ret_h = analysis.get_return_asset_holdingperiod(asset, dateformat)
             # String for displaying in the plot:
@@ -1099,7 +1099,7 @@ def plot_asset_returns_individual(assetlist, fname):
             plotting_aux.open_plot(fname_ext)
 
 
-def plot_asset_returns_individual_absolute(assetlist, fname):
+def plot_asset_returns_individual_absolute(assetlist, fname, analyzer):
     """Plots different absolute returns of each asset in an individual plot.
     The plots are created on a 2x3 grid
     :param assetlist: List of asset-objects
@@ -1148,7 +1148,7 @@ def plot_asset_returns_individual_absolute(assetlist, fname):
             plotidx = idx + 1
             ax = fig.add_subplot(2, 3, plotidx)
             try:
-                dates, returns = analysis.get_returns_asset_daily_absolute_analysisperiod(asset, dateformat)
+                dates, returns = analysis.get_returns_asset_daily_absolute_analysisperiod(asset, dateformat, analyzer)
                 returns_total = [a + b for a, b in zip(returns, returns_total)]
                 if helper.list_all_zero(returns) is False:
                     x = [stringoperations.str2datetime(i, dateformat) for i in dates]
