@@ -315,31 +315,33 @@ if __name__ == '__main__':
 
     if len(accounts) > 0:
         # Plot all accounts:
-        plotting.plot_asset_values_stacked(accounts, FILENAME_STACKPLOT_ACCOUNT_VALUES, "Value: All Accounts")
+        plotting.plot_asset_values_stacked(accounts, FILENAME_STACKPLOT_ACCOUNT_VALUES, "Value: All Accounts", analyzer)
         # Values of all accounts:
-        plotting.plot_asset_values_cost_payout_individual(accounts, FILENAME_ACCOUNT_VALUES)
+        plotting.plot_asset_values_cost_payout_individual(accounts, FILENAME_ACCOUNT_VALUES, analyzer)
 
     if len(investments) > 0:
         plotting.plot_asset_values_indices(investments, indexprices, FILENAME_INVESTMENT_VALUES_INDICES,
-                                           "Investment Performance (normalized, payouts not reinvested)")
+                                           "Investment Performance (normalized, payouts not reinvested)", analyzer)
         # Plot the values of all investments:
-        plotting.plot_asset_values_cost_payout_individual(investments, FILENAME_INVESTMENT_VALUES)
+        plotting.plot_asset_values_cost_payout_individual(investments, FILENAME_INVESTMENT_VALUES, analyzer)
         # Plot the returns of all investmets, for different periods:
         plotting.plot_asset_returns_individual(investments, FILENAME_INVESTMENT_RETURNS, analyzer)
         # Plot the daily absolute returns of all investmets:
         d, ret_total = plotting.plot_asset_returns_individual_absolute(investments,
                                                                        FILENAME_INVESTMENT_RETURNS_ABSOLUTE, analyzer)
         # Plot the accumulated/summed daily absolute returns of all investmets:
-        plotting.plot_asset_total_absolute_returns_accumulated(d, ret_total, FILENAME_INVESTMENT_RETURNS_ABSOLUTE_TOTAL)
+        plotting.plot_asset_total_absolute_returns_accumulated(d, ret_total, FILENAME_INVESTMENT_RETURNS_ABSOLUTE_TOTAL,
+                                                               analyzer)
         # Plot all investments:
-        plotting.plot_asset_values_stacked(investments, FILENAME_STACKPLOT_INVESTMENT_VALUES, "Value: All Investments")
+        plotting.plot_asset_values_stacked(investments, FILENAME_STACKPLOT_INVESTMENT_VALUES, "Value: All Investments",
+                                           analyzer)
         # Plot the returns of all investments accumulated, for the desired period:
         plotting.plot_assets_returns_total(investments, FILENAME_TOTAL_INVESTMENT_RETURNS, "Returns of Investments",
                                            analyzer)
         # Project the value of the investments into the future:
         plotting.plot_asset_projections(investments, INTEREST_PROJECTION_PERCENT, NUM_YEARS_INVEST_PROJECTION,
                                         FILENAME_INVESTMENT_PROJECTIONS,
-                                        "Future Value of All Investments, Compounded Annual Interest")
+                                        "Future Value of All Investments, Compounded Annual Interest", analyzer)
         # Calculate the return of all investments, for the considered analysis-period:
         tot_return = analysis.get_returns_assets_accumulated_analysisperiod(investments, analyzer)
         print("\nThe return of the investments of the considered analysis-period (past {:d} days) is: {:.2f} %".format(
@@ -347,29 +349,31 @@ if __name__ == '__main__':
 
     if len(assets) > 0:
         # Plot the values of each asset purpose:
-        plotting.plot_asset_purposes(assets, FILENAME_ASSETS_VALUES_PURPOSE, "Total Asset Values According to Purpose")
+        plotting.plot_asset_purposes(assets, FILENAME_ASSETS_VALUES_PURPOSE, "Total Asset Values According to Purpose",
+                                     analyzer)
         # Plot the values of each asset-group:
         plotting.plot_assets_grouped(assets, FILENAME_ASSETS_VALUES_GROUPS_STACKED, "Asset Values According to Group",
-                                     "stacked")
+                                     "stacked", analyzer)
         plotting.plot_assets_grouped(assets, FILENAME_ASSETS_VALUES_GROUPS_LINE, "Asset Values According to Group",
-                                     "line")
+                                     "line", analyzer)
         # Plot the value of all assets:
-        plotting.plot_asset_values_stacked(assets, FILENAME_STACKPLOT_ASSET_VALUES, "Value: All Assets")
+        plotting.plot_asset_values_stacked(assets, FILENAME_STACKPLOT_ASSET_VALUES, "Value: All Assets", analyzer)
 
         # Plot the values of each group:
         if len(ASSET_GROUPS) > 0:
             plotting.plot_asset_groups(assets, ASSET_GROUPS, ASSET_GROUPNAMES, FILENAME_PLOT_GROUP,
-                                       "Group Value (" + BASECURRENCY + ")")
+                                       "Group Value (" + BASECURRENCY + ")", analyzer)
 
         # Plot the values grouped according to currency:
         plotting.plot_currency_values(assets, FILENAME_CURRENCIES_STACKED, "Asset Values According to Currencies "
-                                                                           "(in Basecurrency)", drawstackedplot=True)
+                                                                           "(in Basecurrency)", analyzer,
+                                      drawstackedplot=True)
         plotting.plot_currency_values(assets, FILENAME_CURRENCIES_LINE, "Relative Asset Values According to Currencies",
-                                      drawstackedplot=False)
+                                      analyzer, drawstackedplot=False)
 
     # Plot the forex-rates. Note: one element of the forex-dict is the basecurrency, hence >1 and not >= 1
     if len(forexdict) > 1:
         plotting.plot_forex_rates(forexdict, FILENAME_FOREX_RATES,
-                                  "Forex Rates with the Basecurrency (" + BASECURRENCY + ")")
+                                  "Forex Rates with the Basecurrency (" + BASECURRENCY + ")", analyzer)
 
     print("\nPROFIT is done.")

@@ -86,11 +86,11 @@ class ForexRates:
             lastdate_dt = self.analyzer.str2datetime(dates_full[-1])
             if stopdate_dt > lastdate_dt:
                 dates_full, rates_full = dateoperations.extend_data_future(dates_full, rates_full, self.stopdate,
-                                                                           self.dateformat, zero_padding=False)
+                                                                           self.analyzer, zero_padding=False)
 
             # Interpolate the data to get a consecutive list:
             dates_full, rates_full = dateoperations.interpolate_data(dates_full, rates_full,
-                                                                     self.dateformat)
+                                                                     self.dateformat, self.analyzer)
 
             # The available market-data (from the dataprovider and the database) might not reach back to the
             # desired startdate! Check it:
@@ -123,7 +123,8 @@ class ForexRates:
                 print("Using forex-data in the existing market-data-file: " + self.marketdata_filepath)
                 dates, rates = marketdata.import_marketdata_from_file(self.marketdata_filepath,
                                                                       self.marketdata_dateformat,
-                                                                      self.dateformat, self.marketdata_delimiter)
+                                                                      self.dateformat, self.marketdata_delimiter,
+                                                                      self.analyzer)
 
                 dates_start = self.analyzer.str2datetime(dates[0])
                 dates_stop = self.analyzer.str2datetime(dates[-1])
@@ -143,7 +144,7 @@ class ForexRates:
                 #                                                     self.dateformat, zero_padding=False)
 
                 # Interpolate the data to get a consecutive list:
-                dates, rates = dateoperations.interpolate_data(dates, rates, self.dateformat)
+                dates, rates = dateoperations.interpolate_data(dates, rates, self.dateformat, self.analyzer)
 
                 # Crop the data to the desired period:
                 self.rate_dates, self.rates = dateoperations.format_datelist(dates, rates,
@@ -202,7 +203,7 @@ class ForexRates:
 
         # Convert the values: # Todo: Finalize verification; Is this actually working as intended?
         matches = [self.rate_dates_dict[key] for key in datelist if key in self.rate_dates_dict]
-        if len(matches) != len(set(matches)) or len(matches) != len(vallist): # This should really not happen here
+        if len(matches) != len(set(matches)) or len(matches) != len(vallist):  # This should really not happen here
             raise RuntimeError("The forex-dates are not consecutive, have duplicates, or miss data.")
         conv_val = [vallist[i] * self.rates[idx] for i, idx in enumerate(matches)]
 

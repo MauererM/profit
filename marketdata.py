@@ -61,7 +61,7 @@ def update_check_marketdata_in_file(filepath, dateformat_marketdata, dateformat,
         # Import the currently stored data from the marketdata-file:
         # The dates are already formatted in dateformat.
         mketdates_cur, mketprices_cur = import_marketdata_from_file(filepath, dateformat_marketdata, dateformat,
-                                                                    marketdata_delimiter)
+                                                                    marketdata_delimiter, analyzer)
 
         # Crop the last entry out of the list; it might change after a day, due to end-of-day data and/or
         # potential extrapolation. It will be re-added anyways further below by the data-source. But: Only do this if
@@ -138,8 +138,8 @@ def update_check_marketdata_in_file(filepath, dateformat_marketdata, dateformat,
                     mketprices_update.insert(lastidx, newvals[idx])
 
         # Convert back to string-representation and check the consistency, to be sure nothing went wrong:
-        mketdates_update = [stringoperations.datetime2str(x, dateformat) for x in mketdates_update_dt]
-        if dateoperations.check_date_order(mketdates_update, dateformat, allow_ident_days=False) is False:
+        mketdates_update = [analyzer.datetime2str(x) for x in mketdates_update_dt]
+        if dateoperations.check_date_order(mketdates_update, analyzer, allow_ident_days=False) is False:
             raise RuntimeError("Something went wrong when updating the market-data. Path: " + filepath)
 
         # Write the updated data back into the file:
@@ -158,7 +158,7 @@ def update_check_marketdata_in_file(filepath, dateformat_marketdata, dateformat,
         return mketdates_update, mketprices_update
 
 
-def import_marketdata_from_file(filepath, dateformat_marketdata, dateformat, marketdata_delimiter):
+def import_marketdata_from_file(filepath, dateformat_marketdata, dateformat, marketdata_delimiter, analyzer):
     """Imports recorded market-data from the specified file
     The dates are converted from dateformat_marketdata to dateformat, and returned as strings in the latter format
     :param filepath: String of the path of the file, where data is potentially available
@@ -192,7 +192,7 @@ def import_marketdata_from_file(filepath, dateformat_marketdata, dateformat, mar
         vallist.append(val)
 
     # Sanity checks:
-    if dateoperations.check_date_order(datelist, dateformat, allow_ident_days=False) is False:
+    if dateoperations.check_date_order(datelist, analyzer, allow_ident_days=False) is False:
         raise RuntimeError("The imported dates from the marketdata-file are not in order. They must be consecutive "
                            "and may not contain duplicates. Paht: " + filepath)
 

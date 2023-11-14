@@ -60,7 +60,7 @@ class Investment:
         self.analysis_payouts = None
 
         # Check, if the transaction-dates are in order. Allow identical successive days
-        if dateoperations.check_date_order(self.transactions[setup.DICT_KEY_DATES], dateformat=setup.FORMAT_DATE,
+        if dateoperations.check_date_order(self.transactions[setup.DICT_KEY_DATES], self.analyzer,
                                            allow_ident_days=True) is False:
             raise RuntimeError(
                 "Transaction-dates are not in temporal order (Note: Identical successive dates are allowed). "
@@ -101,7 +101,7 @@ class Investment:
         # Interpolate the balances, such that the entries in balancelist correspond to the days in datelist.
         _, self.balancelist = dateoperations.interpolate_data(self.transactions[setup.DICT_KEY_DATES],
                                                               self.transactions[setup.DICT_KEY_BALANCES],
-                                                              self.dateformat)
+                                                              self.dateformat, self.analyzer)
 
         # The cost and payouts does not need interpolation. Lists are populated (corresponding to datelist), that
         # contain the transactions.
@@ -271,7 +271,8 @@ class Investment:
                                        "Transaction-Nr: " + repr(idx + 1))
         return True
 
-    def populate_full_list(self, trans_dates, trans_amounts, datelist, dateformat, sum_ident_days=False):
+    def populate_full_list(self, trans_dates, trans_amounts, datelist, dateformat,
+                           sum_ident_days=False):  # Todo remove dateformat
         """Populates a list of len(datelist) with amounts of certain transactions, that correspond to the dates in
         datelist and trans_dates.
         All values (trans_amounts) on a given day can be summed up and added to the list.
@@ -291,7 +292,7 @@ class Investment:
             raise RuntimeError("Lists of transaction-dates, actions and amounts must be of equal length.")
 
         # Check, if transaction-dates are in order (they should be, it's checked when an account is generated)
-        if dateoperations.check_date_order(trans_dates, dateformat, allow_ident_days=True) is False:
+        if dateoperations.check_date_order(trans_dates, self.analyzer, allow_ident_days=True) is False:
             raise RuntimeError("Specified transaction-date list is not in order.")
 
         # Check, if the datelist is consecutive:
@@ -378,7 +379,7 @@ class Investment:
 
         return trans_value
 
-    def __get_format_transactions_values(self, startdate, stopdate, dateformat):
+    def __get_format_transactions_values(self, startdate, stopdate, dateformat):  # Todo remove unused variables
         """ From the manually recorded transactions-data, get the prices of the asset and
             pre-format it.
         """
@@ -391,7 +392,7 @@ class Investment:
                                        setup.STRING_INVSTMT_ACTION_UPDATE)
         # Interpolate the values, such that the value-list corresponds to the datelist:
         _, vals = dateoperations.interpolate_data(self.transactions[setup.DICT_KEY_DATES],
-                                                  trans_values, dateformat)
+                                                  trans_values, dateformat, self.analyzer)
         return vals
 
     def set_analysis_data(self, date_start, date_stop, dateformat):

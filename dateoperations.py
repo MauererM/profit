@@ -80,41 +80,41 @@ def format_datelist(datelist, vallist, begin_date, stop_date, dateformat, analyz
 
     # Check, if data can be fully cropped:
     if begin_date_dt >= begin_date_datelist_dt and stop_date_dt <= stop_date_datelist_dt:
-        datelist, vallist = crop_datelist(datelist, vallist, begin_date, stop_date, dateformat, analyzer)
+        datelist, vallist = crop_datelist(datelist, vallist, begin_date, stop_date, analyzer)
         return datelist, vallist
 
     # Check, if begin and end are both in the past:
     if begin_date_dt < begin_date_datelist_dt and stop_date_dt < begin_date_datelist_dt:
         # Extend it first into the past, then crop
-        datelist, vallist = extend_data_past(datelist, vallist, begin_date, dateformat, zero_padding_past)
-        datelist, vallist = crop_datelist(datelist, vallist, begin_date, stop_date, dateformat, analyzer)
+        datelist, vallist = extend_data_past(datelist, vallist, begin_date, analyzer, zero_padding_past)
+        datelist, vallist = crop_datelist(datelist, vallist, begin_date, stop_date, analyzer)
         return datelist, vallist
 
     # Check, if begin and end are both in the future:
     if begin_date_dt > begin_date_datelist_dt and stop_date_dt > begin_date_datelist_dt:
         # Extend it first into the future, then crop
-        datelist, vallist = extend_data_future(datelist, vallist, stop_date, dateformat, zero_padding_future)
-        datelist, vallist = crop_datelist(datelist, vallist, begin_date, stop_date, dateformat, analyzer)
+        datelist, vallist = extend_data_future(datelist, vallist, stop_date, analyzer, zero_padding_future)
+        datelist, vallist = crop_datelist(datelist, vallist, begin_date, stop_date, analyzer)
         return datelist, vallist
 
     # Check, if data needs to be extended into the past:
     if begin_date_dt < begin_date_datelist_dt:
-        datelist, vallist = extend_data_past(datelist, vallist, begin_date, dateformat, zero_padding_past)
+        datelist, vallist = extend_data_past(datelist, vallist, begin_date, analyzer, zero_padding_past)
     # Crop the beginning, but not yet the end:
     else:
-        datelist, vallist = crop_datelist(datelist, vallist, begin_date, datelist[-1], dateformat, analyzer)
+        datelist, vallist = crop_datelist(datelist, vallist, begin_date, datelist[-1], analyzer)
 
     # Check, if data needs to be extended into the future:
     if stop_date_dt > stop_date_datelist_dt:
-        datelist, vallist = extend_data_future(datelist, vallist, stop_date, dateformat, zero_padding_future)
+        datelist, vallist = extend_data_future(datelist, vallist, stop_date, analyzer, zero_padding_future)
     # Crop, now, it can crop the beginning (it will not, since the beginning is handled above)
     else:
-        datelist, vallist = crop_datelist(datelist, vallist, begin_date, stop_date, dateformat, analyzer)
+        datelist, vallist = crop_datelist(datelist, vallist, begin_date, stop_date, analyzer)
 
     return datelist, vallist
 
 
-def crop_datelist(datelist, vallist, begin_date, stop_date, dateformat, analyzer):
+def crop_datelist(datelist, vallist, begin_date, stop_date, analyzer):
     """Takes a list of dates and corresponding values (they must not necessarily be consecutive) and crops them to a
     desired range.
     If the begin/stop dates match, and the date exists in datelist, one value is returned. If the date does not exist
@@ -145,7 +145,7 @@ def crop_datelist(datelist, vallist, begin_date, stop_date, dateformat, analyzer
     return dates_crop, vals_crop
 
 
-def interpolate_data(datelist_incompl, vallist_incompl, dateformat):
+def interpolate_data(datelist_incompl, vallist_incompl, dateformat, analyzer):
     """Takes a list of dates (strings) and corresponding values, and interpolates (zero-order hold) data into
     missing dates, such that a list of consecutive days is created.
     The newly created dates span the range of the provided, incomplete datelist.
@@ -157,7 +157,7 @@ def interpolate_data(datelist_incompl, vallist_incompl, dateformat):
     # Sanity checks:
     if len(datelist_incompl) != len(vallist_incompl):
         raise RuntimeError("Provided lists must be of equal length.")
-    if check_date_order(datelist_incompl, dateformat, allow_ident_days=True) is False:
+    if check_date_order(datelist_incompl, analyzer, allow_ident_days=True) is False:
         raise RuntimeError("The incomplete date list is not in order.")
     if len(datelist_incompl) != len(vallist_incompl):
         raise RuntimeError("The incomplete lists must be of identical length.")
@@ -188,7 +188,7 @@ def interpolate_data(datelist_incompl, vallist_incompl, dateformat):
     return datelist_full, vallist_compl
 
 
-def extend_data_past(datelist, vallist, begin_date, dateformat, zero_padding):
+def extend_data_past(datelist, vallist, begin_date, analyzer, zero_padding):
     """Extends a list of dates and corresponding values into the past, until a specified date (included)
     :param datelist: List of strings of dates
     :param vallist: List of values, corresponding to the dates in datelist
@@ -200,8 +200,8 @@ def extend_data_past(datelist, vallist, begin_date, dateformat, zero_padding):
     (dates, values)
     """
     # Use datetime (this also creates a local copy)
-    datelist_dt = [stringoperations.str2datetime(x, dateformat) for x in datelist]
-    begin_date_dt = stringoperations.str2datetime(begin_date, dateformat)
+    datelist_dt = [analyzer.str2datetime(x) for x in datelist]
+    begin_date_dt = analyzer.str2datetime(begin_date)
     stop_date_dt = datelist_dt[0]
 
     if begin_date_dt > datelist_dt[0]:
@@ -222,11 +222,11 @@ def extend_data_past(datelist, vallist, begin_date, dateformat, zero_padding):
     vallist_extended = auxvals + vallist
 
     # Re-convert dates to strings:
-    datelist_str = [stringoperations.datetime2str(x, dateformat) for x in datelist_dt]
+    datelist_str = [analyzer.datetime2str(x) for x in datelist_dt]
     return datelist_str, vallist_extended
 
 
-def extend_data_future(datelist, vallist, stop_date, dateformat, zero_padding):
+def extend_data_future(datelist, vallist, stop_date, analyzer, zero_padding):
     """Extends a list of dates and the corresponding list of values into the future, until a given date.
     Increment: 1-day steps
     :param datelist: List of strings encoding the given dates
@@ -243,8 +243,8 @@ def extend_data_future(datelist, vallist, stop_date, dateformat, zero_padding):
         raise RuntimeError("List of dates and values must be of identical length.")
 
     # Use datetime (this also creates a local copy)
-    datelist_dt = [stringoperations.str2datetime(x, dateformat) for x in datelist]
-    stop_date_dt = stringoperations.str2datetime(stop_date, dateformat)
+    datelist_dt = [analyzer.str2datetime(x) for x in datelist]
+    stop_date_dt = analyzer.str2datetime(stop_date)
 
     if stop_date_dt <= datelist_dt[-1]:
         raise RuntimeError("Stop-date is not in the future of the given datelist.")
@@ -259,7 +259,7 @@ def extend_data_future(datelist, vallist, stop_date, dateformat, zero_padding):
             vallist_extended.append(vallist_extended[-1])
 
     # Re-convert dates to strings:
-    datelist_str = [stringoperations.datetime2str(x, dateformat) for x in datelist_dt]
+    datelist_str = [analyzer.datetime2str(x) for x in datelist_dt]
     return datelist_str, vallist_extended
 
 
@@ -307,7 +307,7 @@ def create_datelist(startdate, stopdate, dateformat):
     return datelist
 
 
-def check_date_order(datelist, dateformat, allow_ident_days):
+def check_date_order(datelist, analyzer, allow_ident_days):
     """Checks if a list of dates/times is in order.
     Returns false, if an empty list is supplied.
     :param datelist: list of strings of dates
@@ -318,7 +318,7 @@ def check_date_order(datelist, dateformat, allow_ident_days):
     if len(datelist) == 0:
         return False
     # convert to datetime for handling:
-    datelist_dt = [stringoperations.str2datetime(x, dateformat) for x in datelist]
+    datelist_dt = [analyzer.str2datetime(x) for x in datelist]
     # Don't begin with the first element with the iteration:
     oldday = datelist_dt[0]
     for date in datelist_dt[1:]:
@@ -391,7 +391,7 @@ def fuse_two_value_lists(datelist_full, dates_1_partial, vals_1_partial_groundtr
             else:  # Also no match found ==> Needs to be extrapolated below.
                 pass
     # Interpolate the given range to ensure there are no holes:
-    date_out, out = interpolate_data(date_output, output, dateformat)
+    date_out, out = interpolate_data(date_output, output, dateformat, analyzer)
     # Now, date_output and output need to be extrapolated (or cropped) to cover the range of datelist_full.
     _, values_final = format_datelist(date_out, out, datelist_full[0], datelist_full[-1], dateformat, analyzer,
                                       zero_padding_past=zero_padding_past, zero_padding_future=zero_padding_future)

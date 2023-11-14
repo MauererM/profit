@@ -98,7 +98,7 @@ class MarketPrices:
             duration = duration.days
             if duration <= 3:
                 dates_full, prices_full = dateoperations.extend_data_future(dates_full, prices_full, self.stopdate,
-                                                                            self.dateformat, zero_padding=False)
+                                                                            self.analyzer, zero_padding=False)
 
             # Store the latest available price and date, for the holding-period return analysis
             # (It needs to be un-extrapolated)
@@ -107,7 +107,8 @@ class MarketPrices:
 
             # Interpolate the data to get a consecutive list (this only fills holes, and does not extrapolate over the
             # given date-range):
-            dates_full, prices_full = dateoperations.interpolate_data(dates_full, prices_full, self.dateformat)
+            dates_full, prices_full = dateoperations.interpolate_data(dates_full, prices_full, self.dateformat,
+                                                                      self.analyzer)
 
             # The available market-data (from the dataprovider and the database) might not reach back to the
             # desired startdate! Check it:
@@ -148,7 +149,8 @@ class MarketPrices:
                 print("Using data in the existing market-data-file: " + self.marketdata_filepath)
                 dates, prices = marketdata.import_marketdata_from_file(self.marketdata_filepath,
                                                                        self.marketdata_dateformat,
-                                                                       self.dateformat, self.marketdata_delimiter)
+                                                                       self.dateformat, self.marketdata_delimiter,
+                                                                       self.analyzer)
 
                 dates_start = self.analyzer.str2datetime(dates[0])
                 dates_stop = self.analyzer.str2datetime(dates[-1])
@@ -175,7 +177,7 @@ class MarketPrices:
 
                 # Interpolate the data to get a consecutive list: (this only fills holes, and does not extrapolate over
                 # the given date-range):
-                dates, prices = dateoperations.interpolate_data(dates, prices, self.dateformat)
+                dates, prices = dateoperations.interpolate_data(dates, prices, self.dateformat, self.analyzer)
 
                 # Crop the data to the desired period:
                 # NOTE: Do not do this! Merge the market- and the transactions-lists together, don't just "invent"

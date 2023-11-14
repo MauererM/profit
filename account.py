@@ -50,7 +50,7 @@ class Account:
 
         # Check if the transaction-dates are in order. Allow identical successive days (e.g., multiple payouts on one
         # day are possible)
-        if dateoperations.check_date_order(self.transactions[setup.DICT_KEY_DATES], dateformat=setup.FORMAT_DATE,
+        if dateoperations.check_date_order(self.transactions[setup.DICT_KEY_DATES], self.analyzer,
                                            allow_ident_days=True) is False:
             raise RuntimeError("Transaction-dates are not in temporal order. But: identical successive dates are "
                                "allowed. Filename: " + self.filename)
@@ -71,7 +71,7 @@ class Account:
         # Interpolate the balances, such that the entries in balancelist correspond to the days in datelist.
         _, self.balancelist = dateoperations.interpolate_data(self.transactions[setup.DICT_KEY_DATES],
                                                               self.transactions[setup.DICT_KEY_BALANCES],
-                                                              self.dateformat)
+                                                              self.dateformat, self.analyzer)
 
         # The cost and interest does not need interpolation. The lists are populated (corresponding to datelist), i.e.,
         # the values correspond to the day they occur, all other values are set to zero
