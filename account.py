@@ -15,7 +15,7 @@ class Account:
     """Implements an account. Parses transactions, provides analysis-data, performs currency conversions"""
 
     def __init__(self, ident_str, type_str, purpose_str, currency_str, basecurrency_str, filename_str,
-                 transactions_dict, dateformat_str):
+                 transactions_dict, dateformat_str, analyzer):
         """Account constructor
         Use the function parse_account_file to obtain the necessary information from an account file.
         It sets up all internal data structures and analyzes the transactions.
@@ -36,6 +36,7 @@ class Account:
         self.filename = filename_str
         self.transactions = transactions_dict
         self.dateformat = dateformat_str
+        self.analyzer = analyzer
         # Analysis data is not yet prepared:
         self.analysis_data_done = False
         # Forex data has not yet been obtained:
@@ -49,7 +50,7 @@ class Account:
 
         # Check if the transaction-dates are in order. Allow identical successive days (e.g., multiple payouts on one
         # day are possible)
-        if dateoperations.check_date_order(self.transactions[setup.DICT_KEY_DATES], dateformat=setup.FORMAT_DATE,
+        if dateoperations.check_date_order(self.transactions[setup.DICT_KEY_DATES], self.analyzer,
                                            allow_ident_days=True) is False:
             raise RuntimeError("Transaction-dates are not in temporal order. But: identical successive dates are "
                                "allowed. Filename: " + self.filename)
@@ -70,7 +71,7 @@ class Account:
         # Interpolate the balances, such that the entries in balancelist correspond to the days in datelist.
         _, self.balancelist = dateoperations.interpolate_data(self.transactions[setup.DICT_KEY_DATES],
                                                               self.transactions[setup.DICT_KEY_BALANCES],
-                                                              self.dateformat)
+                                                              self.dateformat, self.analyzer)
 
         # The cost and interest does not need interpolation. The lists are populated (corresponding to datelist), i.e.,
         # the values correspond to the day they occur, all other values are set to zero
@@ -107,8 +108,8 @@ class Account:
                                "Account ID: " + self.id)
 
         # Convert to datetime objects:
-        datelist_dt = [stringoperations.str2datetime(x, dateformat) for x in datelist]
-        trans_dates_dt = [stringoperations.str2datetime(x, dateformat) for x in trans_dates]
+        datelist_dt = [self.analyzer.str2datetime(x) for x in datelist]
+        trans_dates_dt = [self.analyzer.str2datetime(x) for x in trans_dates]
 
         # Check if the date-list covers the full range of the transactions:
         if datelist_dt[0] != trans_dates_dt[0] or datelist_dt[-1] != trans_dates_dt[-1]:
@@ -163,21 +164,21 @@ class Account:
         self.analysis_dates, self.analysis_balances = dateoperations.format_datelist(self.datelist,
                                                                                      self.balancelist,
                                                                                      date_start, date_stop,
-                                                                                     dateformat,
+                                                                                     self.dateformat, self.analyzer,
                                                                                      zero_padding_past=True,
                                                                                      zero_padding_future=False)
         # The cost and interest-lists need zero-padding in both directions
         _, self.analysis_costs = dateoperations.format_datelist(self.datelist,
                                                                 self.costlist,
                                                                 date_start, date_stop,
-                                                                dateformat,
+                                                                self.dateformat, self.analyzer,
                                                                 zero_padding_past=True,
                                                                 zero_padding_future=True)
 
         _, self.analysis_interests = dateoperations.format_datelist(self.datelist,
                                                                     self.interestlist,
                                                                     date_start, date_stop,
-                                                                    dateformat,
+                                                                    self.dateformat, self.analyzer,
                                                                     zero_padding_past=True,
                                                                     zero_padding_future=True)
 

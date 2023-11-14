@@ -17,7 +17,7 @@ class ForexRates:
     """
 
     def __init__(self, currency_str, basecurrency_str, marketdata_folder_str, marketdata_dateformat_str,
-                 marketdata_delimiter_str, startdate_str, stopdate_str, dateformat_str, dataprovider):
+                 marketdata_delimiter_str, startdate_str, stopdate_str, dateformat_str, dataprovider, analyzer):
         """ForexRates constructor: Obtains the required data from the dataprovider.
         The exchange rates are obtained such that the currency can be multiplied with the rates to get the value in the
         base currency.
@@ -41,6 +41,7 @@ class ForexRates:
         self.marketdata_delimiter = marketdata_delimiter_str
         self.pricedata_avail = False  # Indicates if it was possible to obtain prices of the currency
         self.provider = dataprovider
+        self.analyzer = analyzer
 
         # Create the path of the file in the marketdata-folder that (should) hold information of this price-object,
         # or which will be generated.
@@ -76,25 +77,25 @@ class ForexRates:
                                                                                 self.marketdata_dateformat,
                                                                                 self.dateformat,
                                                                                 self.marketdata_delimiter,
-                                                                                dates, rates)
+                                                                                dates, rates, self.analyzer)
 
             # The returned forex data might not be available until today (e.g., if this is run on a weekend).
             # Extend the data accordingly into the future. Note: In Forex, this is (probably) OK to do (in investments,
             # it is NOT OK to do this, as there, the manually entered transactions-data may not be overwritten. But in
             # Forex, there is no manually entered transactions-data that could take precedent.
-            lastdate_dt = stringoperations.str2datetime(dates_full[-1], self.dateformat)
+            lastdate_dt = self.analyzer.str2datetime(dates_full[-1])
             if stopdate_dt > lastdate_dt:
                 dates_full, rates_full = dateoperations.extend_data_future(dates_full, rates_full, self.stopdate,
-                                                                           self.dateformat, zero_padding=False)
+                                                                           self.analyzer, zero_padding=False)
 
             # Interpolate the data to get a consecutive list:
             dates_full, rates_full = dateoperations.interpolate_data(dates_full, rates_full,
-                                                                     self.dateformat)
+                                                                     self.dateformat, self.analyzer)
 
             # The available market-data (from the dataprovider and the database) might not reach back to the
             # desired startdate! Check it:
-            dates_full_start = stringoperations.str2datetime(dates_full[0], self.dateformat)
-            dates_full_stop = stringoperations.str2datetime(dates_full[-1], self.dateformat)
+            dates_full_start = self.analyzer.str2datetime(dates_full[0])
+            dates_full_stop = self.analyzer.str2datetime(dates_full[-1])
             if dates_full_start > startdate_dt:
                 print("Available rates (data provider and stored market-data) are only available from the " +
                       dates_full[0] + " onwards. Earliest available data will be extrapolated backwards.")
@@ -105,9 +106,12 @@ class ForexRates:
             # Crop the data to the desired period:
             self.rate_dates, self.rates = dateoperations.format_datelist(dates_full, rates_full,
                                                                          self.startdate, self.stopdate,
-                                                                         self.dateformat,
+                                                                         self.dateformat, self.analyzer,
                                                                          zero_padding_past=False,
                                                                          zero_padding_future=False)
+
+            # Create a dictionary of available dates; this speeds up further searches within the available data:
+            self.__create_date_dictionary(self.rate_dates)
 
             self.pricedata_avail = True
 
@@ -119,10 +123,11 @@ class ForexRates:
                 print("Using forex-data in the existing market-data-file: " + self.marketdata_filepath)
                 dates, rates = marketdata.import_marketdata_from_file(self.marketdata_filepath,
                                                                       self.marketdata_dateformat,
-                                                                      self.dateformat, self.marketdata_delimiter)
+                                                                      self.dateformat, self.marketdata_delimiter,
+                                                                      self.analyzer)
 
-                dates_start = stringoperations.str2datetime(dates[0], self.dateformat)
-                dates_stop = stringoperations.str2datetime(dates[-1], self.dateformat)
+                dates_start = self.analyzer.str2datetime(dates[0])
+                dates_stop = self.analyzer.str2datetime(dates[-1])
                 if dates_start > startdate_dt:
                     print("Available rates (stored market-data) are only available from the " +
                           dates[0] + " onwards. Earliest available data will be extrapolated backwards.")
@@ -139,14 +144,17 @@ class ForexRates:
                 #                                                     self.dateformat, zero_padding=False)
 
                 # Interpolate the data to get a consecutive list:
-                dates, rates = dateoperations.interpolate_data(dates, rates, self.dateformat)
+                dates, rates = dateoperations.interpolate_data(dates, rates, self.dateformat, self.analyzer)
 
                 # Crop the data to the desired period:
                 self.rate_dates, self.rates = dateoperations.format_datelist(dates, rates,
                                                                              self.startdate, self.stopdate,
-                                                                             self.dateformat,
+                                                                             self.dateformat, self.analyzer,
                                                                              zero_padding_past=False,
                                                                              zero_padding_future=False)
+
+                # Create a dictionary of available dates; this speeds up further searches within the available data:
+                self.__create_date_dictionary(self.rate_dates)
 
                 self.pricedata_avail = True
 
@@ -158,6 +166,20 @@ class ForexRates:
                                    self.currency + " and " + self.basecurrency +
                                    ". Provide the data in a marketdata-file. Desired filename: " +
                                    self.marketdata_filepath)
+
+    def __create_date_dictionary(self, dates):
+        """
+        Create a dictionary of the available dates for faster future lookup/matching of partial data to the available
+        data. The key is the date, and the value is the index.
+        :param dates: List of strings.
+        """
+        index_map = {}
+        for idx, date in enumerate(dates):
+            if date not in index_map:
+                index_map[date] = idx  # For each date (which is the key), store the index
+            else:
+                raise RuntimeError("Received duplicated date to create date-dictionary")
+        self.rate_dates_dict = index_map
 
     def get_marketdata_filename(self):
         """Returns the filename of the corresponding file in the marketdata-folder
@@ -180,17 +202,10 @@ class ForexRates:
             raise RuntimeError("The specified date- and value-lists must match in length.")
 
         # Convert the values:
-        conv_val = []
-        for idx, date in enumerate(datelist):
-            # Check, if the current date is in the forexdates-range.
-            indexes = [i for i, x in enumerate(self.rate_dates) if x == date]
-            if not indexes:
-                raise RuntimeError("Did not find required forex-date. Currency: " + self.currency +
-                                   ". Desired date: " + date)
-            else:
-                if len(indexes) > 1:
-                    raise RuntimeError("The forex-dates are not consecutive. Detected more than one identical entry.")
-                conv_val.append(vallist[idx] * self.rates[indexes[0]])
+        matches = [self.rate_dates_dict[key] for key in datelist if key in self.rate_dates_dict]
+        if len(matches) != len(set(matches)) or len(matches) != len(vallist):  # This should really not happen here
+            raise RuntimeError("The forex-dates are not consecutive, have duplicates, or miss data.")
+        conv_val = [vallist[i] * self.rates[idx] for i, idx in enumerate(matches)]
 
         return conv_val
 

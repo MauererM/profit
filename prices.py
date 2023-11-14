@@ -17,7 +17,7 @@ class MarketPrices:
     """
 
     def __init__(self, symbol_str, exchange_str, currency_str, marketdata_folder_str, marketdata_dateformat_str,
-                 marketdata_delimiter_str, startdate_str, stopdate_str, dateformat_str, dataprovider):
+                 marketdata_delimiter_str, startdate_str, stopdate_str, dateformat_str, dataprovider, analyzer):
         """Constructor. Sets up internal storage.
         Tries to obtain updated prices from the dataprovider of the corresponding asset.
         Matches potentially updated data with the potentially stored data in the marketdata-folder
@@ -45,6 +45,7 @@ class MarketPrices:
         self.marketdata_delimiter = marketdata_delimiter_str
         self.pricedata_avail = False  # Indicates if it was possible to obtain prices of the asset.
         self.provider = dataprovider
+        self.analyzer = analyzer
 
         # Create the path of the file in the marketdata-folder that (should) hold information of this price-object,
         # or which will be generated.
@@ -79,7 +80,7 @@ class MarketPrices:
                                                                                  self.marketdata_dateformat,
                                                                                  self.dateformat,
                                                                                  self.marketdata_delimiter,
-                                                                                 dates, prices)
+                                                                                 dates, prices, self.analyzer)
 
             # The returned market data might not be available until today (e.g., if this is run on a weekend, or if the
             # provider does not provide the full set).
@@ -97,7 +98,7 @@ class MarketPrices:
             duration = duration.days
             if duration <= 3:
                 dates_full, prices_full = dateoperations.extend_data_future(dates_full, prices_full, self.stopdate,
-                                                                            self.dateformat, zero_padding=False)
+                                                                            self.analyzer, zero_padding=False)
 
             # Store the latest available price and date, for the holding-period return analysis
             # (It needs to be un-extrapolated)
@@ -106,12 +107,13 @@ class MarketPrices:
 
             # Interpolate the data to get a consecutive list (this only fills holes, and does not extrapolate over the
             # given date-range):
-            dates_full, prices_full = dateoperations.interpolate_data(dates_full, prices_full, self.dateformat)
+            dates_full, prices_full = dateoperations.interpolate_data(dates_full, prices_full, self.dateformat,
+                                                                      self.analyzer)
 
             # The available market-data (from the dataprovider and the database) might not reach back to the
             # desired startdate! Check it:
-            dates_full_start = stringoperations.str2datetime(dates_full[0], self.dateformat)
-            dates_full_stop = stringoperations.str2datetime(dates_full[-1], self.dateformat)
+            dates_full_start = self.analyzer.str2datetime(dates_full[0])
+            dates_full_stop = self.analyzer.str2datetime(dates_full[-1])
             if dates_full_start > startdate_dt:
                 print("Available prices (data provider and stored market-data) are only available from the " +
                       dates_full[
@@ -141,16 +143,17 @@ class MarketPrices:
 
         # It was not possible to obtain market-data: Use potentially recorded historic data in the marketdata-folder
         else:
-            #print("Could not obtain updated market prices for " + self.symbol) Redundant.
+            # print("Could not obtain updated market prices for " + self.symbol) Redundant.
             # Check, if there is a marketdata-file if yes: import the data:
             if files.file_exists(self.marketdata_filepath) is True:
                 print("Using data in the existing market-data-file: " + self.marketdata_filepath)
                 dates, prices = marketdata.import_marketdata_from_file(self.marketdata_filepath,
                                                                        self.marketdata_dateformat,
-                                                                       self.dateformat, self.marketdata_delimiter)
+                                                                       self.dateformat, self.marketdata_delimiter,
+                                                                       self.analyzer)
 
-                dates_start = stringoperations.str2datetime(dates[0], self.dateformat)
-                dates_stop = stringoperations.str2datetime(dates[-1], self.dateformat)
+                dates_start = self.analyzer.str2datetime(dates[0])
+                dates_stop = self.analyzer.str2datetime(dates[-1])
                 if dates_start > startdate_dt:
                     print("Available prices (stored market-data) are only available from the " +
                           dates[0] + " onwards. Earliest available data will be extrapolated backwards.")
@@ -174,7 +177,7 @@ class MarketPrices:
 
                 # Interpolate the data to get a consecutive list: (this only fills holes, and does not extrapolate over
                 # the given date-range):
-                dates, prices = dateoperations.interpolate_data(dates, prices, self.dateformat)
+                dates, prices = dateoperations.interpolate_data(dates, prices, self.dateformat, self.analyzer)
 
                 # Crop the data to the desired period:
                 # NOTE: Do not do this! Merge the market- and the transactions-lists together, don't just "invent"
@@ -201,7 +204,8 @@ class MarketPrices:
         """
         if self.pricedata_avail is True:
             dates, vals = dateoperations.format_datelist(self.market_dates, self.market_prices, self.startdate,
-                                                         self.stopdate, self.dateformat, zero_padding_past=False,
+                                                         self.stopdate, self.dateformat, self.analyzer,
+                                                         zero_padding_past=False,
                                                          zero_padding_future=False)
             self.market_dates = dates
             self.market_prices = vals

@@ -19,7 +19,7 @@ import plotting_aux
 import helper
 
 
-def plot_currency_values(assetlist, fname, titlestring, drawstackedplot=True):
+def plot_currency_values(assetlist, fname, titlestring, analyzer, drawstackedplot=True):
     """Plots the values of the assets grouped according to their currencies
     :param assetlist: List of asset-objects
     :param fname: String of desired filename
@@ -37,7 +37,7 @@ def plot_currency_values(assetlist, fname, titlestring, drawstackedplot=True):
     # x-data for the plots:
     datelist = assetlist[0].get_analysis_datelist()  # Should be the same length everywhere -
     # we consider the analysis range...
-    xlist = [stringoperations.str2datetime(x, setup.FORMAT_DATE) for x in datelist]
+    xlist = [analyzer.str2datetime(x) for x in datelist]
 
     # Collect the currencies:
     curlist = [asset.get_currency() for asset in assetlist]
@@ -116,7 +116,7 @@ def plot_currency_values(assetlist, fname, titlestring, drawstackedplot=True):
             plotting_aux.open_plot(fname)
 
 
-def plot_asset_groups(assets, grouplist, groupnames, fname, titlestring):
+def plot_asset_groups(assets, grouplist, groupnames, fname, titlestring, analyzer):
     """Plots the values of each user-defined group.
     Each group is on a new plot.
     :param assets: List of assets
@@ -156,7 +156,7 @@ def plot_asset_groups(assets, grouplist, groupnames, fname, titlestring):
 
         datelist = assets[0].get_analysis_datelist()  # Should be the same length everywhere -
         # we consider the analysis range...
-        xlist = [stringoperations.str2datetime(x, setup.FORMAT_DATE) for x in datelist]
+        xlist = [analyzer.str2datetime(x) for x in datelist]
 
         # This holds the total value of the group:
         totsum = [0] * len(datelist)
@@ -215,7 +215,7 @@ def plot_asset_groups(assets, grouplist, groupnames, fname, titlestring):
                 plotting_aux.open_plot(fname_cur)
 
 
-def plot_forex_rates(forexobjdict, fname, titlestr):
+def plot_forex_rates(forexobjdict, fname, titlestr, analyzer):
     """Plot the forex rates.
     The forex-objects are stored in a dictionary, whose keys are the strings of the currencies, e.g., "USD".
     :param forexobjdict: Dictionary with the forex-objects
@@ -237,7 +237,7 @@ def plot_forex_rates(forexobjdict, fname, titlestr):
         # Only plot foreign rates:
         if key != cfg.BASECURRENCY:
             date, rate = obj.get_dates_rates()
-            xlist = [stringoperations.str2datetime(x, setup.FORMAT_DATE) for x in date]
+            xlist = [analyzer.str2datetime(x) for x in date]
             ax.plot(xlist, rate, alpha=1.0, zorder=3, clip_on=False, color=colorlist[i], marker='',
                     label=obj.get_currency())
             # Label the last value:
@@ -267,7 +267,7 @@ def plot_forex_rates(forexobjdict, fname, titlestr):
         plotting_aux.open_plot(fname)
 
 
-def plot_assets_grouped(assetlist, fname, titlestr, plottype):
+def plot_assets_grouped(assetlist, fname, titlestr, plottype, analyzer):
     """Plots the values of the assets, grouped according to their groups (see main-file)
     A stacked plot is used.
     :param assetlist: List of asset-objects
@@ -317,7 +317,7 @@ def plot_assets_grouped(assetlist, fname, titlestr, plottype):
     # Create a stacked plot:
     xlist = assetlist[0].get_analysis_datelist()
     dateformat = assetlist[0].get_dateformat()
-    xlist = [stringoperations.str2datetime(x, dateformat) for x in xlist]
+    xlist = [analyzer.str2datetime(x) for x in xlist]
 
     colorlist = plotting_aux.create_colormap("rainbow", len(vals_groups), False)
 
@@ -368,7 +368,7 @@ def plot_assets_grouped(assetlist, fname, titlestr, plottype):
         raise RuntimeError("Unknown plottype. Only 'stacked' or 'line' are possible")
 
 
-def plot_asset_purposes(assetlist, fname, titlestr):
+def plot_asset_purposes(assetlist, fname, titlestr, analyzer):
     """Plots the values of the assets, grouped according to their purposes.
     Furthermore, The asset-type (i.e., account or investment) is differentiated
     Multiple lines are plotted in a single plot
@@ -416,7 +416,7 @@ def plot_asset_purposes(assetlist, fname, titlestr):
         # Plot the total value:
         datelist = assets_cur[0].get_analysis_datelist()
         dateformat = assets_cur[0].get_dateformat()
-        x = [stringoperations.str2datetime(x, dateformat) for x in datelist]
+        x = [analyzer.str2datetime(x) for x in datelist]
 
         # Get the type of these assets (either account or investment)
         # This is used for further distinction
@@ -447,7 +447,7 @@ def plot_asset_purposes(assetlist, fname, titlestr):
                 # Plot the total value of the current purpose and asset-type:
                 datelist = assetlist_type[0].get_analysis_datelist()
                 dateformat = assets_cur[0].get_dateformat()
-                x = [stringoperations.str2datetime(x, dateformat) for x in datelist]
+                x = [analyzer.str2datetime(x) for x in datelist]
                 labelstr = "     Type: " + typ
                 if len(x) < 40.0:
                     marker_div = 1
@@ -477,7 +477,7 @@ def plot_asset_purposes(assetlist, fname, titlestr):
         plotting_aux.open_plot(fname)
 
 
-def plot_asset_values_indices(assetlist, indexlist, fname, titlestr):
+def plot_asset_values_indices(assetlist, indexlist, fname, titlestr, analyzer):
     """Plots the summed values of the given assets, together with some stock-market indices
     :param assetlist: List of asset-objects
     :param indexlist: List of MarketPrices-objects that contain the index-data
@@ -553,7 +553,7 @@ def plot_asset_values_indices(assetlist, indexlist, fname, titlestr):
     ax = fig.add_subplot(111)  # Only one plot
 
     dateformat = assetlist[0].get_dateformat()
-    x = [stringoperations.str2datetime(x, dateformat) for x in datelist]
+    x = [analyzer.str2datetime(x) for x in datelist]
     ax.plot(x, sumlist_corr, alpha=1.0, zorder=3, clip_on=False, color=setup.PLOTS_COLORS[0], marker='',
             label="Asset Value",
             linewidth=1.6)
@@ -604,7 +604,7 @@ def plot_asset_values_indices(assetlist, indexlist, fname, titlestr):
         plotting_aux.open_plot(fname)
 
 
-def plot_asset_projections(assetlist, interest, num_years, fname, titlestr):
+def plot_asset_projections(assetlist, interest, num_years, fname, titlestr, analyzer):
     """Plots the past summed value of the assets and projects the value into the future, assuming a certain
     interest rate. Compounded growth is assumed.
     :param assetlist: List of asset-objects. Their value will be summed and used for the projection.
@@ -650,7 +650,7 @@ def plot_asset_projections(assetlist, interest, num_years, fname, titlestr):
     ax = fig.add_subplot(111)  # Only one plot
 
     dateformat = assetlist[0].get_dateformat()
-    x = [stringoperations.str2datetime(x, dateformat) for x in datelist_fut]
+    x = [analyzer.str2datetime(x) for x in datelist_fut]
 
     labelstr = f"{(interest * fact_up):.2f} %"
     ax.plot(x, vallist_fut_upper, alpha=1.0, zorder=3, clip_on=False, color=setup.PLOTS_COLORS[0], marker='',
@@ -696,8 +696,8 @@ def plot_asset_projections(assetlist, interest, num_years, fname, titlestr):
         plotting_aux.open_plot(fname)
 
 
-def plot_asset_total_absolute_returns_accumulated(dates, returns, fname):
-    """Plots the accumulated absolute
+def plot_asset_total_absolute_returns_accumulated(dates, returns, fname, analyzer):
+    """Plots the accumulated absolute returns
     :param dates: List of dates
     :param returns: List of day-wise, summed returns of all investments
     """
@@ -720,7 +720,7 @@ def plot_asset_total_absolute_returns_accumulated(dates, returns, fname):
     fig = plt.figure()
     ax = fig.add_subplot(111)  # Only one plot
     dateformat = setup.MARKETDATA_FORMAT_DATE
-    x = [stringoperations.str2datetime(x, dateformat) for x in dates]
+    x = [analyzer.str2datetime(x) for x in dates]
 
     ax.plot(x, returns, alpha=1.0, zorder=3, clip_on=False, color=setup.PLOTS_COLORS[0], marker='', linewidth=1.6)
     # Label the last value:
@@ -747,7 +747,7 @@ def plot_asset_total_absolute_returns_accumulated(dates, returns, fname):
         plotting_aux.open_plot(fname)
 
 
-def plot_assets_returns_total(assetlist, fname, titlestr):
+def plot_assets_returns_total(assetlist, fname, titlestr, analyzer):
     """Plots the returns of all assets combined, for different periods (7, 30, 100 and 365 days)
     :param assetlist: List of asset-objects
     :param fname: String of the desired filename of the plot
@@ -773,44 +773,44 @@ def plot_assets_returns_total(assetlist, fname, titlestr):
     ax = fig.add_subplot(111)  # Only one plot
 
     plotted = False
-    dates, returns = analysis.get_returns_assets_accumulated(assetlist, 2, setup.FORMAT_DATE)
+    dates, returns = analysis.get_returns_assets_accumulated(assetlist, 2, analyzer)
     # Only plot if there is something to plot:
     if helper.list_all_zero(returns) is False:
-        x = [stringoperations.str2datetime(x, dateformat) for x in dates]
+        x = [analyzer.str2datetime(x) for x in dates]
         ax.plot(x, returns, alpha=1.0, zorder=3, clip_on=False, color=setup.PLOTS_COLORS[0], marker='o',
                 label="2-day return")
         plotted = True
 
-    dates, returns = analysis.get_returns_assets_accumulated(assetlist, 7, setup.FORMAT_DATE)
+    dates, returns = analysis.get_returns_assets_accumulated(assetlist, 7, analyzer)
     # Only plot if there is something to plot:
     if helper.list_all_zero(returns) is False:
-        x = [stringoperations.str2datetime(x, dateformat) for x in dates]
+        x = [analyzer.str2datetime(x) for x in dates]
         ax.plot(x, returns, alpha=1.0, zorder=3, clip_on=False, color=setup.PLOTS_COLORS[1], marker='x',
                 label="7-day return",
                 markersize=5)
         plotted = True
 
-    dates, returns = analysis.get_returns_assets_accumulated(assetlist, 30, setup.FORMAT_DATE)
+    dates, returns = analysis.get_returns_assets_accumulated(assetlist, 30, analyzer)
     # Only plot if there is something to plot:
     if helper.list_all_zero(returns) is False:
-        x = [stringoperations.str2datetime(x, dateformat) for x in dates]
+        x = [analyzer.str2datetime(x) for x in dates]
         ax.plot(x, returns, alpha=1.0, zorder=3, clip_on=False, color=setup.PLOTS_COLORS[2], marker='d',
                 label="30-day return",
                 markersize=4)
         plotted = True
 
-    dates, returns = analysis.get_returns_assets_accumulated(assetlist, 100, setup.FORMAT_DATE)
+    dates, returns = analysis.get_returns_assets_accumulated(assetlist, 100, analyzer)
     # Only plot if there is something to plot:
     if helper.list_all_zero(returns) is False:
-        x = [stringoperations.str2datetime(x, dateformat) for x in dates]
+        x = [analyzer.str2datetime(x) for x in dates]
         ax.plot(x, returns, alpha=1.0, zorder=3, clip_on=False, color=setup.PLOTS_COLORS[3], marker='s',
                 label="100-day return")
         plotted = True
 
-    dates, returns = analysis.get_returns_assets_accumulated(assetlist, 365, setup.FORMAT_DATE)
+    dates, returns = analysis.get_returns_assets_accumulated(assetlist, 365, analyzer)
     # Only plot if there is something to plot:
     if helper.list_all_zero(returns) is False:
-        x = [stringoperations.str2datetime(x, dateformat) for x in dates]
+        x = [analyzer.str2datetime(x) for x in dates]
         ax.plot(x, returns, alpha=1.0, zorder=3, clip_on=False, color=setup.PLOTS_COLORS[4], marker='+',
                 label="365-day return",
                 markersize=5)
@@ -841,7 +841,7 @@ def plot_assets_returns_total(assetlist, fname, titlestr):
         plotting_aux.open_plot(fname)
 
 
-def plot_asset_values_cost_payout_individual(assetlist, fname):
+def plot_asset_values_cost_payout_individual(assetlist, fname, analyzer):
     """Plots the values of assets, with and without cost and payouts
     The plots are created on a 2x3 grid
     :param assetlist: List of asset-objects
@@ -888,14 +888,14 @@ def plot_asset_values_cost_payout_individual(assetlist, fname):
             ax = fig.add_subplot(2, 3, plotidx)
 
             # Obtain the returns in 7-day periods:
-            dates = asset.get_analysis_datelist()
+            dates = analyzer.get_analysis_datelist()
             values = asset.get_analysis_valuelist()
             costs = asset.get_analysis_costlist()
             payouts = asset.get_analysis_payoutlist()
             costs_accu = helper.accumulate_list(costs)
             payouts_accu = helper.accumulate_list(payouts)
             # Datetime for matplotlib:
-            x = [stringoperations.str2datetime(i, dateformat) for i in dates]
+            x = analyzer.get_analysis_datelist_dt()
             # Don't plot too many markers:
             if len(dates) < 40.0:
                 marker_div = 1
@@ -967,7 +967,7 @@ def plot_asset_values_cost_payout_individual(assetlist, fname):
             plotting_aux.open_plot(fname_ext)
 
 
-def plot_asset_returns_individual(assetlist, fname):
+def plot_asset_returns_individual(assetlist, fname, analyzer):
     """Plots different returns of each asset in an individual plot.
     The plots are created on a 2x3 grid
     :param assetlist: List of asset-objects
@@ -1016,31 +1016,31 @@ def plot_asset_returns_individual(assetlist, fname):
 
             plotted = False
             # Obtain the returns in 7-day periods:
-            dates, returns = analysis.get_returns_asset(asset, 7, dateformat)
+            dates, returns = analysis.get_returns_asset(asset, 7, analyzer)
             if helper.list_all_zero(returns) is False:
-                x = [stringoperations.str2datetime(i, dateformat) for i in dates]
+                x = [analyzer.str2datetime(i) for i in dates]
                 ax.plot(x, returns, alpha=1.0, zorder=3, clip_on=False, color=setup.PLOTS_COLORS[0], marker='o',
                         label="7-day return")
                 plotted = True
 
             # Obtain the returns in 30-day periods:
-            dates, returns = analysis.get_returns_asset(asset, 30, dateformat)
+            dates, returns = analysis.get_returns_asset(asset, 30, analyzer)
             if helper.list_all_zero(returns) is False:
-                x = [stringoperations.str2datetime(i, dateformat) for i in dates]
+                x = [analyzer.str2datetime(i) for i in dates]
                 ax.plot(x, returns, alpha=1.0, zorder=3, clip_on=False, color=setup.PLOTS_COLORS[1], marker='d',
                         label="30-day return")
                 plotted = True
 
             # Obtain the returns in 365-day periods:
-            dates, returns = analysis.get_returns_asset(asset, 365, dateformat)
+            dates, returns = analysis.get_returns_asset(asset, 365, analyzer)
             if helper.list_all_zero(returns) is False:
-                x = [stringoperations.str2datetime(i, dateformat) for i in dates]
+                x = [analyzer.str2datetime(i) for i in dates]
                 ax.plot(x, returns, alpha=1.0, zorder=3, clip_on=False, color=setup.PLOTS_COLORS[2], marker='x',
                         label="365-day return")
                 plotted = True
 
             # Obtain the asset's return of the whole analysis-period:
-            ret_a = analysis.get_returns_asset_analysisperiod(asset, dateformat)
+            ret_a = analysis.get_returns_asset_analysisperiod(asset, analyzer)
             # Obtain the asset's holding period return:
             ret_h = analysis.get_return_asset_holdingperiod(asset, dateformat)
             # String for displaying in the plot:
@@ -1099,7 +1099,7 @@ def plot_asset_returns_individual(assetlist, fname):
             plotting_aux.open_plot(fname_ext)
 
 
-def plot_asset_returns_individual_absolute(assetlist, fname):
+def plot_asset_returns_individual_absolute(assetlist, fname, analyzer):
     """Plots different absolute returns of each asset in an individual plot.
     The plots are created on a 2x3 grid
     :param assetlist: List of asset-objects
@@ -1148,10 +1148,10 @@ def plot_asset_returns_individual_absolute(assetlist, fname):
             plotidx = idx + 1
             ax = fig.add_subplot(2, 3, plotidx)
             try:
-                dates, returns = analysis.get_returns_asset_daily_absolute_analysisperiod(asset, dateformat)
+                dates, returns = analysis.get_returns_asset_daily_absolute_analysisperiod(asset, dateformat, analyzer)
                 returns_total = [a + b for a, b in zip(returns, returns_total)]
                 if helper.list_all_zero(returns) is False:
-                    x = [stringoperations.str2datetime(i, dateformat) for i in dates]
+                    x = [analyzer.str2datetime(i) for i in dates]
                     ax.plot(x, returns, alpha=1.0, zorder=3, clip_on=False, color=setup.PLOTS_COLORS[0], marker='',
                             label="Absolute Returns")
                 else:
@@ -1203,7 +1203,7 @@ def plot_asset_returns_individual_absolute(assetlist, fname):
     return dates, returns_total
 
 
-def plot_asset_values_stacked(assetlist, fname, title):
+def plot_asset_values_stacked(assetlist, fname, title, analyzer):
     """This function plots the values of the given assets with a stacked plot.
     :param assetlist: List of asset-objects
     :param fname: String of desired filename
@@ -1243,9 +1243,8 @@ def plot_asset_values_stacked(assetlist, fname, title):
         return
 
     # The dates should be identical for all accounts, due to the way the data is generated:
-    xlist = assets_plt[0].get_analysis_datelist()
     # Matplotlib takes a datetime-list:
-    xlist = [stringoperations.str2datetime(x, dateformat) for x in xlist]
+    xlist = analyzer.get_analysis_datelist_dt()
     # Generate a list of the lists of values
     ylists = []
     legendlist = []
