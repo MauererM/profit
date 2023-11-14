@@ -322,7 +322,7 @@ def check_date_order(datelist, analyzer, allow_ident_days):
     datelist_dt = [analyzer.str2datetime(x) for x in datelist]
     # Don't begin with the first element with the iteration:
     oldday = datelist_dt[0]
-    for date in datelist_dt[1:]:
+    for date in datelist_dt[1:]: # Todo can this be made faster?
         if allow_ident_days is True:
             if date < oldday:
                 return False
@@ -365,32 +365,26 @@ def fuse_two_value_lists(datelist_full, dates_1_partial, vals_1_partial_groundtr
     :param vals_2_partial: Values of second partial list
     :return: A single list with interpolated and extrapolated values that corresponds to datelist_full
     """
+    # Create a dictionary of the lists. Note: This will always store the most recent index, if there are duplicates.
+    dates_1_dict = {}
+    for i, date in enumerate(dates_1_partial):
+        dates_1_dict[date] = i
+    dates_2_dict = {}
+    for i, date in enumerate(dates_2_partial):
+        dates_2_dict[date] = i
+
     output = []
     date_output = []
-    for idx, date in enumerate(datelist_full):  # Todo speed this code up
-        indexes_1 = [i for i, x in enumerate(dates_1_partial) if x == date]
-        if len(indexes_1) > 1:
-            # raise RuntimeError("There seem to be multiple dates. This seems wrong...") This is actually OK: Multiple
-            # transactions can be recorded for the same day. Use the most recent value.
-            pass
-        elif len(indexes_1) >= 1:  # Match found: Use it, but find the non-zero value (mult. actions on the same day...)
-            val_max = 0.0  # Simply use the largest value
-            for i, idx in enumerate(indexes_1):
-                if vals_1_partial_groundtruth[idx] > val_max:
-                    val_max = vals_1_partial_groundtruth[idx]
-            if val_max > 1e-6:  # The transactions-data also contains zero-values for price. Ignore those.
-                output.append(val_max)
-                date_output.append(date)
-        else:  # No match found: Check the other list:
-            indexes_2 = [i for i, x in enumerate(dates_2_partial) if x == date]
-            if len(indexes_2) > 1:
-                raise RuntimeError("There seem to be multiple dates. "
-                                   "This seems wrong (this is the online market list)...")
-            elif len(indexes_2) == 1 and vals_2_partial[indexes_2[0]] > 1e-6:
-                output.append(vals_2_partial[indexes_2[0]])
-                date_output.append(date)
-            else:  # Also no match found ==> Needs to be extrapolated below.
-                pass
+    for idx, date in enumerate(datelist_full):
+        val = 0.0
+        if date in dates_1_dict:
+            val = vals_1_partial_groundtruth[dates_1_dict[date]]
+        elif date in dates_2_dict: # If no entry in list 1, check list 2
+            val = vals_2_partial[dates_2_dict[date]]
+        if val > 1e-6: # The transactions-data also contains zero-values for price. Ignore those.
+            output.append(val)
+            date_output.append(date)
+
     # Interpolate the given range to ensure there are no holes:
     date_out, out = interpolate_data(date_output, output, dateformat, analyzer)
     # Now, date_output and output need to be extrapolated (or cropped) to cover the range of datelist_full.
