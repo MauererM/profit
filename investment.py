@@ -463,7 +463,7 @@ class Investment:
             # If the balances are zero all the time (in the analysis-period)
             if startidx == len(self.analysis_balances) + 1:
                 # Set the startidx equal to the stop-idx:
-                indexes = [i for i, x in enumerate(self.analysis_dates) if x == date_stop]
+                indexes = [i for i, x in enumerate(self.analysis_dates) if x == date_stop] # Todo can this be done better via find or so?
                 startidx = indexes[0]
             # Use this start-value to get the asset-prices:
             startdate_prices = self.analysis_dates[startidx]

@@ -54,7 +54,7 @@ def asset_get_earliest_forex_trans_date(assets, dateformat):
 
 
 def format_datelist(datelist, vallist, begin_date, stop_date, dateformat, analyzer, zero_padding_past,
-                    zero_padding_future):
+                    zero_padding_future): # todo remove unused variables
     """Extends or crops a datelist (and the corresponding values) to fit a certain range of dates.
     Missing data is extrapolated forwards or backwards, either with zeros or with the last known values.
     :param datelist: List of strings of given dates
@@ -169,21 +169,22 @@ def interpolate_data(datelist_incompl, vallist_incompl, dateformat, analyzer):
     # The complete list of all dates:
     datelist_full = create_datelist(start, stop, dateformat)
 
+    # Create a dictionary that contains the last value in the incomplete datelist for faster lookup.
+    # The last value is needed as datelist_incompl could contain duplicate entries.
+    last_vals = {}
+    for i, date in enumerate(datelist_incompl):
+        last_vals[date] = i
+
     vallist_compl = []
-    for date in datelist_full:  # Todo: Improve/speed this code up
-        # Check, if the current date is in the incomplete list, and how many times it is there:
-        indexes = [i for i, x in enumerate(datelist_incompl) if x == date]
-        # Current date is not in the incomplete list: Extrapolation is required
-        if not indexes:
-            # There are already some values in the filled list: use the last value given
-            if len(vallist_compl) > 0:
-                vallist_compl.append(vallist_compl[-1])
-            # No value has yet been found. Simply use the first value of the incomplete list, as it's closest.
-            else:
-                vallist_compl.append(vallist_incompl[0])
-        # The current date is (at least once) in the incomplete list: take the last occurrence:
-        else:
-            vallist_compl.append(vallist_incompl[indexes[-1]])
+    for date in datelist_full:
+        if date in last_vals: # We have a match: Do not interpolate
+            v = vallist_incompl[last_vals[date]]
+        else: # No match found: Interpolation needed
+            v = vallist_compl[-1]
+        vallist_compl.append(v)
+
+    if len(datelist_full) != len(vallist_compl):
+        raise RuntimeError("Someting went wrong, these list should be of identical size")
 
     return datelist_full, vallist_compl
 
