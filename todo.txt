@@ -1,3 +1,1 @@
-Run a static code analysis tool
 Check the "todo" strings in the code
-
