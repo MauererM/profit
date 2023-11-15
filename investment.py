@@ -505,12 +505,12 @@ class Investment:
                             mismatches.append((date, record, data))
                 if len(mismatches) > 0:
                     print("Some obtained market-prices deviate by >5% from the recorded transactions:")
-                    print("Date;\tRecorded Price;\tObtained Price")
+                    print("Date;\t\t\tRecorded Price;\tObtained Price")
                     for i in range(len(mismatches)):
                         str1 = mismatches[i][0]
                         str2 = "{:.2f}".format(mismatches[i][1])
                         str3 = "{:.2f}".format(mismatches[i][2])
-                        print(str1 + ";\t" + str2 + ";\t" + str3 + ";\t")
+                        print(str1 + ";\t\t" + str2 + ";\t\t\t" + str3 + ";")
 
                 # Calculate the values of the investment:
                 self.analysis_values = []
@@ -525,10 +525,6 @@ class Investment:
 
             # No online/marke prices are available:
             else:
-                # Market prices could not be obtained, or other errors occurred.
-                # Fallback: obtain prices from transactions-data
-                # print("WARNING: Could not obtain any prices for " + self.symbol + " traded at " + self.exchange +
-                #      ". Investment-File: " + self.filename)
                 print("Deriving prices from transactions-data.")
                 trans_values_interp = self.__get_format_transactions_values(dateformat)
                 # Crop the values to the desired analysis-range; in this case, we can not merge data with market-prices:

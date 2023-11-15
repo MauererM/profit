@@ -1,7 +1,5 @@
 Run a static code analysis tool
 Check the "todo" strings in the code
-Check AUUSI.SW: Is the split handling better if Adj Close is used instead of Close (in dataprovider_yahoo)?
 Check reverse split of OUST/Implement reverse split
 Debug the (recent) spike in SQ VHYL (see truecrypt; baseline-plot)
-Do a check of recorded vs. obtained prices
-Throttle these warnigns: WARNING: Some obtained market data does not match the recorded values. Potentially double-check.
+
