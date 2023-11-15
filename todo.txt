@@ -1,5 +1,3 @@
 Run a static code analysis tool
 Check the "todo" strings in the code
-Check reverse split of OUST/Implement reverse split
-Debug the (recent) spike in SQ VHYL (see truecrypt; baseline-plot)
 
