@@ -303,11 +303,11 @@ class Investment:
         # Create a dictionary of the full datelist for faster indexing
         datelist_dict = {date: idx for idx, date in enumerate(datelist)}
 
-        trans_dates_unique = list(dict.fromkeys(trans_dates)) # Maintain the order
+        trans_dates_unique = list(dict.fromkeys(trans_dates))  # Maintain the order
 
         for trans_date in trans_dates_unique:
             idx_global = datelist_dict[trans_date]
-            indexes = [i for i , date in enumerate(trans_dates) if date == trans_date]
+            indexes = [i for i, date in enumerate(trans_dates) if date == trans_date]
             if sum_ident_days is True:
                 # Sum all amounts of the current day:
                 sum_amounts = [trans_amounts[i] for i in indexes]
@@ -374,7 +374,7 @@ class Investment:
 
         return trans_value
 
-    def __get_format_transactions_values(self, startdate, stopdate, dateformat):  # Todo remove unused variables
+    def __get_format_transactions_values(self, dateformat):
         """ From the manually recorded transactions-data, get the prices of the asset and
             pre-format it.
         """
@@ -458,7 +458,8 @@ class Investment:
             # If the balances are zero all the time (in the analysis-period)
             if startidx == len(self.analysis_balances) + 1:
                 # Set the startidx equal to the stop-idx:
-                indexes = [i for i, x in enumerate(self.analysis_dates) if x == date_stop] # Todo can this be done better via find or so?
+                indexes = [i for i, x in enumerate(self.analysis_dates) if
+                           x == date_stop]  # Todo can this be done better via find or so?
                 startidx = indexes[0]
             # Use this start-value to get the asset-prices:
             startdate_prices = self.analysis_dates[startidx]
@@ -492,6 +493,25 @@ class Investment:
                                                                     self.dateformat, self.analyzer,
                                                                     zero_padding_past=True,
                                                                     zero_padding_future=False)
+
+                marketdates_dict = {date: i for i, date in enumerate(marketdates)}
+                mismatches = []
+                # Perform a sanity-check to see if the recorded and obtained prices do not significantly deviate:
+                for idx, date in enumerate(transactions_dates):
+                    if date in marketdates_dict:
+                        record = transactions_prices[idx]
+                        data = marketprices[marketdates_dict[date]]
+                        if record > 1e-6 and helper.within_tol(record, data, 5.0 / 100) is False:
+                            mismatches.append((date, record, data))
+                if len(mismatches) > 0:
+                    print("Some obtained market-prices deviate by >5% from the recorded transactions:")
+                    print("Date;\tRecorded Price;\tObtained Price")
+                    for i in range(len(mismatches)):
+                        str1 = mismatches[i][0]
+                        str2 = "{:.2f}".format(mismatches[i][1])
+                        str3 = "{:.2f}".format(mismatches[i][2])
+                        print(str1 + ";\t" + str2 + ";\t" + str3 + ";\t")
+
                 # Calculate the values of the investment:
                 self.analysis_values = []
                 for idx, date in enumerate(self.analysis_dates):
@@ -510,7 +530,7 @@ class Investment:
                 # print("WARNING: Could not obtain any prices for " + self.symbol + " traded at " + self.exchange +
                 #      ". Investment-File: " + self.filename)
                 print("Deriving prices from transactions-data.")
-                trans_values_interp = self.__get_format_transactions_values(date_start, date_stop, dateformat)
+                trans_values_interp = self.__get_format_transactions_values(dateformat)
                 # Crop the values to the desired analysis-range; in this case, we can not merge data with market-prices:
                 _, self.analysis_values = dateoperations.format_datelist(self.datelist,
                                                                          trans_values_interp,
@@ -524,7 +544,7 @@ class Investment:
             # print("Investment in file " + self.filename + " cannot obtain prices.")
             print(
                 "Investment is not listed as security. Deriving prices from transactions-data. File: " + self.filename)
-            trans_values_interp = self.__get_format_transactions_values(date_start, date_stop, dateformat)
+            trans_values_interp = self.__get_format_transactions_values(dateformat)
             # Crop the values to the desired analysis-range; in this case, we can not merge data with market-prices:
             _, self.analysis_values = dateoperations.format_datelist(self.datelist,
                                                                      trans_values_interp,

@@ -86,8 +86,8 @@ def update_check_marketdata_in_file(filepath, dateformat_marketdata, dateformat,
                 idx_new = newdates_dict[date_cur]
                 price_cur = mketprices_cur[idx]
                 price_new = newvals[idx_new]
-                # The values should match within 0.5% at least.
-                if helper.within_tol(price_cur, price_new, 0.5 / 100.0) is False:
+                # The values should match within 2% at least.
+                if helper.within_tol(price_cur, price_new, 2.0 / 100.0) is False:
                     # It is assumed that the marketdata-file is always correct:
                     newvals[idx_new] = price_cur
                     # Record a string for later output:
@@ -96,12 +96,13 @@ def update_check_marketdata_in_file(filepath, dateformat_marketdata, dateformat,
                     discrepancy_entries.append(discrepancy_str)
 
         # Output the mismatching entries of the market data file:
+        numentry = min(len(discrepancy_entries), 20)
         if len(discrepancy_entries) > 0:
-            print("WARNING: Some obtained market data does not match the recorded values. Potentially double-check.")
-            print("File: " + filepath + ". Entries:")
-            print("Date;\tRecorded Price;\tObtained Price")
-            for _, lineout in enumerate(discrepancy_entries):
-                print(lineout)
+            print(f"WARNING: {len(discrepancy_entries)} obtained market data entries do not match the recorded values (tolerance: 2%).")
+            print("File: " + filepath + f". Entries (listing only first {numentry} elements):")
+            print("Date;\t\tRecorded Price;\t\tObtained Price")
+            for i in range(numentry):
+                print(discrepancy_entries[i])
 
         # The obtained new values now match the existing values (if there are double entries), which is good.
         # In the following: the new values are sorted into the existing market-data, and the file is updated
