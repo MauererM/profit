@@ -7,7 +7,7 @@ Copyright (c) 2018 Mario Mauerer
 import dateoperations
 import stringoperations
 import helper
-# Todo check if there are no unused imports
+
 
 class AnalysisRange:
     """Stores data related to the analysis-data-range, which is often used across various functions
@@ -18,7 +18,7 @@ class AnalysisRange:
         self.datetime_converter = datetime_converter  # Note: This instance is referenced, not copied
         self.startdate_dt = self.datetime_converter.str2datetimecached(startdate, dateformat)
         self.stopdate_dt = self.datetime_converter.str2datetimecached(stopdate, dateformat)
-        self.analysis_datelist = dateoperations.create_datelist(startdate, stopdate, self.dateformat)
+        self.analysis_datelist = dateoperations.create_datelist(startdate, stopdate, None, dateformat=self.dateformat)
         self.analysis_datelist_dt = [self.str2datetime(x) for x in self.analysis_datelist]
 
     def str2datetime(self, str):
@@ -49,7 +49,7 @@ def project_values(datelist, valuelist, num_years, interest_percent, dateformat)
     # Find the end-date:
     date_end = dateoperations.add_years(datelist[-1], num_years, dateformat)
     # Create a datelist for the days of the projection:
-    datelist_fut = dateoperations.create_datelist(date_start, date_end, dateformat)
+    datelist_fut = dateoperations.create_datelist(date_start, date_end, None, dateformat)
     interest_day = (interest_percent / 100.0) / 365.0  # The daily interest rate. Annual compounding is assumed.
     vallist_fut = list(valuelist)
     for _ in datelist_fut:

@@ -53,8 +53,8 @@ def asset_get_earliest_forex_trans_date(assets, dateformat):
     return stringoperations.datetime2str(earliest, dateformat)
 
 
-def format_datelist(datelist, vallist, begin_date, stop_date, dateformat, analyzer, zero_padding_past,
-                    zero_padding_future): # todo remove unused variables
+def format_datelist(datelist, vallist, begin_date, stop_date, analyzer, zero_padding_past,
+                    zero_padding_future):
     """Extends or crops a datelist (and the corresponding values) to fit a certain range of dates.
     Missing data is extrapolated forwards or backwards, either with zeros or with the last known values.
     :param datelist: List of strings of given dates
@@ -145,7 +145,7 @@ def crop_datelist(datelist, vallist, begin_date, stop_date, analyzer):
     return dates_crop, vals_crop
 
 
-def interpolate_data(datelist_incompl, vallist_incompl, dateformat, analyzer):
+def interpolate_data(datelist_incompl, vallist_incompl, analyzer):
     """Takes a list of dates (strings) and corresponding values, and interpolates (zero-order hold) data into
     missing dates, such that a list of consecutive days is created.
     The newly created dates span the range of the provided, incomplete datelist.
@@ -157,6 +157,8 @@ def interpolate_data(datelist_incompl, vallist_incompl, dateformat, analyzer):
     # Sanity checks:
     if len(datelist_incompl) != len(vallist_incompl):
         raise RuntimeError("Provided lists must be of equal length.")
+    if len(datelist_incompl) == 0:
+        raise RuntimeError("Received an empty list")
     if check_date_order(datelist_incompl, analyzer, allow_ident_days=True) is False:
         raise RuntimeError("The incomplete date list is not in order.")
     if len(datelist_incompl) != len(vallist_incompl):
@@ -167,7 +169,7 @@ def interpolate_data(datelist_incompl, vallist_incompl, dateformat, analyzer):
     start = datelist_incompl[0]
     stop = datelist_incompl[-1]
     # The complete list of all dates:
-    datelist_full = create_datelist(start, stop, dateformat)
+    datelist_full = create_datelist(start, stop, analyzer)
 
     # Create a dictionary that contains the last value in the incomplete datelist for faster lookup.
     # The last value is needed as datelist_incompl could contain duplicate entries.
@@ -177,9 +179,9 @@ def interpolate_data(datelist_incompl, vallist_incompl, dateformat, analyzer):
 
     vallist_compl = []
     for date in datelist_full:
-        if date in last_vals: # We have a match: Do not interpolate
+        if date in last_vals:  # We have a match: Do not interpolate
             v = vallist_incompl[last_vals[date]]
-        else: # No match found: Interpolation needed
+        else:  # No match found: Interpolation needed
             v = vallist_compl[-1]
         vallist_compl.append(v)
 
@@ -282,7 +284,7 @@ def get_date_today(dateformat, datetime_obj=False):
         return stringoperations.str2datetime(today, dateformat)
 
 
-def create_datelist(startdate, stopdate, dateformat):
+def create_datelist(startdate, stopdate, analyzer, dateformat=None):
     """Takes two dates (as strings) and creates a list of days (strings) between (including) these dates.
     Granularity: day (step size between dates)
     startdate must be before stopdate
@@ -292,17 +294,36 @@ def create_datelist(startdate, stopdate, dateformat):
     :param dateformat: String that encodes the format of the dates, e.g. "%d.%m.%Y"
     :return: List of strings, containing dates between start and stop, including the boundary dates
     """
+    # This distinction is needed as this function is needed when setting up the analyzer-object.
+    if analyzer is None and dateformat is not None:
+        def str2datetime_lambda(date):
+            return stringoperations.str2datetime(date, dateformat)
+
+        def datetime2str_lambda(obj):
+            return stringoperations.datetime2str(obj, dateformat)
+    elif analyzer is not None:
+        def str2datetime_lambda(date):
+            return analyzer.str2datetime(date)
+
+        def datetime2str_lambda(obj):
+            return analyzer.datetime2str(obj)
+    else:
+        raise RuntimeError("Provide either an analyzer or a dateformat")
+
     # Convert to datetime objects:
-    start = stringoperations.str2datetime(startdate, dateformat)
-    stop = stringoperations.str2datetime(stopdate, dateformat)
+    start = str2datetime_lambda(startdate)
+    stop = str2datetime_lambda(stopdate)
 
     if start > stop:
         raise RuntimeError("startdate is after stopdate")
 
-    datelist = []
+    dur = stop - start
+    dur = dur.days + 1
+
+    datelist = [0] * dur
     curdate = start
-    while curdate <= stop:
-        datelist.append(stringoperations.datetime2str(curdate, dateformat))
+    for i in range(dur):
+        datelist[i] = datetime2str_lambda(curdate)
         curdate += datetime.timedelta(days=1)
 
     return datelist
@@ -322,7 +343,7 @@ def check_date_order(datelist, analyzer, allow_ident_days):
     datelist_dt = [analyzer.str2datetime(x) for x in datelist]
     # Don't begin with the first element with the iteration:
     oldday = datelist_dt[0]
-    for date in datelist_dt[1:]: # Todo can this be made faster?
+    for date in datelist_dt[1:]:  # Todo can this be made faster?
         if allow_ident_days is True:
             if date < oldday:
                 return False
@@ -357,7 +378,8 @@ def fuse_two_value_lists(datelist_full, dates_1_partial, vals_1_partial_groundtr
     """Fuses two lists of values together, e.g., combines transactions-prices with market-prices.
     Applies extrapolation, too, to cover the full date-list.
     Note that zero-values are discarded!
-    :param datelist_full: The full list of dates that the merged list will cover.
+    First, the two lists are merged fully, and then cropped/extended to datelist_full
+    :param datelist_full: The final list of dates that the merged list will cover.
     :param dates_1_partial: Dates of first partial list
     :param vals_1_partial_groundtruth: Values of first partial list. If both lists have values at the same date,
     this value is taken.
@@ -373,22 +395,33 @@ def fuse_two_value_lists(datelist_full, dates_1_partial, vals_1_partial_groundtr
     for i, date in enumerate(dates_2_partial):
         dates_2_dict[date] = i
 
+    start_1 = analyzer.str2datetime(dates_1_partial[0])
+    stop_1 = analyzer.str2datetime(dates_1_partial[-1])
+    start_2 = analyzer.str2datetime(dates_2_partial[0])
+    stop_2 = analyzer.str2datetime(dates_2_partial[-1])
+
+    # Find the earliest and the latest date; create a new datelist and iterate over this list to fully merge the lists
+    # Then, further below, we crop the list to the desired range of datelist_full
+    start_earliest = analyzer.datetime2str(min(start_1, stop_1, start_2, stop_2))
+    stop_latest = analyzer.datetime2str(max(start_1, stop_1, start_2, stop_2))
+    merge_list_full = create_datelist(start_earliest, stop_latest, analyzer)
+
     output = []
     date_output = []
-    for idx, date in enumerate(datelist_full):
+    for idx, date in enumerate(merge_list_full):
         val = 0.0
         if date in dates_1_dict:
             val = vals_1_partial_groundtruth[dates_1_dict[date]]
-        elif date in dates_2_dict: # If no entry in list 1, check list 2
+        elif date in dates_2_dict:  # If no entry in list 1, check list 2
             val = vals_2_partial[dates_2_dict[date]]
-        if val > 1e-6: # The transactions-data also contains zero-values for price. Ignore those.
+        if val > 1e-6:  # The transactions-data also contains zero-values for price. Ignore those.
             output.append(val)
             date_output.append(date)
 
     # Interpolate the given range to ensure there are no holes:
-    date_out, out = interpolate_data(date_output, output, dateformat, analyzer)
+    date_out, out = interpolate_data(date_output, output, analyzer)
     # Now, date_output and output need to be extrapolated (or cropped) to cover the range of datelist_full.
-    _, values_final = format_datelist(date_out, out, datelist_full[0], datelist_full[-1], dateformat, analyzer,
+    _, values_final = format_datelist(date_out, out, datelist_full[0], datelist_full[-1], analyzer,
                                       zero_padding_past=zero_padding_past, zero_padding_future=zero_padding_future)
     return values_final
 

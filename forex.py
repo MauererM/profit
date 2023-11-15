@@ -89,8 +89,7 @@ class ForexRates:
                                                                            self.analyzer, zero_padding=False)
 
             # Interpolate the data to get a consecutive list:
-            dates_full, rates_full = dateoperations.interpolate_data(dates_full, rates_full,
-                                                                     self.dateformat, self.analyzer)
+            dates_full, rates_full = dateoperations.interpolate_data(dates_full, rates_full, self.analyzer)
 
             # The available market-data (from the dataprovider and the database) might not reach back to the
             # desired startdate! Check it:
@@ -106,7 +105,7 @@ class ForexRates:
             # Crop the data to the desired period:
             self.rate_dates, self.rates = dateoperations.format_datelist(dates_full, rates_full,
                                                                          self.startdate, self.stopdate,
-                                                                         self.dateformat, self.analyzer,
+                                                                         self.analyzer,
                                                                          zero_padding_past=False,
                                                                          zero_padding_future=False)
 
@@ -144,12 +143,12 @@ class ForexRates:
                 #                                                     self.dateformat, zero_padding=False)
 
                 # Interpolate the data to get a consecutive list:
-                dates, rates = dateoperations.interpolate_data(dates, rates, self.dateformat, self.analyzer)
+                dates, rates = dateoperations.interpolate_data(dates, rates, self.analyzer)
 
                 # Crop the data to the desired period:
                 self.rate_dates, self.rates = dateoperations.format_datelist(dates, rates,
                                                                              self.startdate, self.stopdate,
-                                                                             self.dateformat, self.analyzer,
+                                                                             self.analyzer,
                                                                              zero_padding_past=False,
                                                                              zero_padding_future=False)
 

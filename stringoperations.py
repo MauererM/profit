@@ -89,6 +89,7 @@ def read_crop_string_delimited(string, delim):
     else:
         return string, string
 
+
 class DateTimeConversion:
     """A small class that provides caching for the frequently used datetime-conversion functions
     """
@@ -126,6 +127,7 @@ def str2datetime(string, fmt):
     """
     return dt.datetime.strptime(string, fmt)
 
+
 def datetime2str(datetimeobj, fmt):
     """Converts a datetime object to a string
     :param datetimeobj: datetime-object to be converted
@@ -133,6 +135,7 @@ def datetime2str(datetimeobj, fmt):
     :return: datetime object
     """
     return datetimeobj.strftime(fmt)
+
 
 def datestr_convert_date_fmt(string, fmt_a, fmt_b):
     """Converts a date-string from one date-format to another

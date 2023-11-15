@@ -172,7 +172,7 @@ class DataproviderMain:
             return None
 
         # Fill in missing data in the vector
-        dates_full, values_full = dateoperations.interpolate_data(dates, values, self.dateformat, self.analyzer)
+        dates_full, values_full = dateoperations.interpolate_data(dates, values, self.analyzer)
         return dates_full, values_full
 
 

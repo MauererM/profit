@@ -66,12 +66,12 @@ class Account:
 
         # Create a list of consecutive calendar days that corresponds to the date-range of the recorded transactions:
         self.datelist = dateoperations.create_datelist(self.get_first_transaction_date(),
-                                                       self.get_last_transaction_date(), self.dateformat)
+                                                       self.get_last_transaction_date(), self.analyzer)
 
         # Interpolate the balances, such that the entries in balancelist correspond to the days in datelist.
         _, self.balancelist = dateoperations.interpolate_data(self.transactions[setup.DICT_KEY_DATES],
                                                               self.transactions[setup.DICT_KEY_BALANCES],
-                                                              self.dateformat, self.analyzer)
+                                                              self.analyzer)
 
         # The cost and interest does not need interpolation. The lists are populated (corresponding to datelist), i.e.,
         # the values correspond to the day they occur, all other values are set to zero
@@ -164,21 +164,21 @@ class Account:
         self.analysis_dates, self.analysis_balances = dateoperations.format_datelist(self.datelist,
                                                                                      self.balancelist,
                                                                                      date_start, date_stop,
-                                                                                     self.dateformat, self.analyzer,
+                                                                                     self.analyzer,
                                                                                      zero_padding_past=True,
                                                                                      zero_padding_future=False)
         # The cost and interest-lists need zero-padding in both directions
         _, self.analysis_costs = dateoperations.format_datelist(self.datelist,
                                                                 self.costlist,
                                                                 date_start, date_stop,
-                                                                self.dateformat, self.analyzer,
+                                                                self.analyzer,
                                                                 zero_padding_past=True,
                                                                 zero_padding_future=True)
 
         _, self.analysis_interests = dateoperations.format_datelist(self.datelist,
                                                                     self.interestlist,
                                                                     date_start, date_stop,
-                                                                    self.dateformat, self.analyzer,
+                                                                    self.analyzer,
                                                                     zero_padding_past=True,
                                                                     zero_padding_future=True)
 

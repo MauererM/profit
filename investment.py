@@ -96,12 +96,12 @@ class Investment:
         # Process the transactions, extend the dates/data etc.
         # Create a list of consecutive calendar days that corresponds to the date-range of the recorded transactions:
         self.datelist = dateoperations.create_datelist(self.get_first_transaction_date(),
-                                                       self.get_last_transaction_date(), self.dateformat)
+                                                       self.get_last_transaction_date(), self.analyzer)
 
         # Interpolate the balances, such that the entries in balancelist correspond to the days in datelist.
         _, self.balancelist = dateoperations.interpolate_data(self.transactions[setup.DICT_KEY_DATES],
                                                               self.transactions[setup.DICT_KEY_BALANCES],
-                                                              self.dateformat, self.analyzer)
+                                                              self.analyzer)
 
         # The cost and payouts does not need interpolation. Lists are populated (corresponding to datelist), that
         # contain the transactions.
@@ -161,9 +161,9 @@ class Investment:
                     raise RuntimeError("The first transaction is a split?! This should have been caught earlier!")
                 print("Split detected. Stock: " + self.symbol + ". Double-check that data from "
                                                                 "dataprovider reflects this.")
-                if trans_balance[idx - 1] > 1e-9: # Derive the ratio from the provided balance-entry
+                if trans_balance[idx - 1] > 1e-9:  # Derive the ratio from the provided balance-entry
                     r = trans_balance[idx] / trans_balance[idx - 1]
-                else: # Balance is 0 (i.e., all stock sold): Derive ratio from the quantity-column
+                else:  # Balance is 0 (i.e., all stock sold): Derive ratio from the quantity-column
                     r = trans_quantity[idx]
                 split_factor = split_factor * r
                 # In the split transaction, price and balance are already updated:
@@ -227,13 +227,13 @@ class Investment:
                     raise RuntimeError("First investment-transcation cannot be a split.")
                 if trans_balance[idx - 1] > 1e-9:
                     split_ratio = trans_balance[idx] / trans_balance[idx - 1]
-                else: # If balance is 0 (e.g., all stock sold), the split ratio has to be given in the quantity column!
+                else:  # If balance is 0 (e.g., all stock sold), the split ratio has to be given in the quantity column!
                     split_ratio = trans_quantity[idx]
 
                 if split_ratio > 150:
                     print("Split ratio > 150 detected. Sensible?")
 
-                if split_ratio < 1.0/150:
+                if split_ratio < 1.0 / 150:
                     print("Split ratio < 1/150 detected. Sensible?")
 
                 if trans_price[idx] < 1e-9:
@@ -383,7 +383,7 @@ class Investment:
                                        setup.STRING_INVSTMT_ACTION_UPDATE)
         # Interpolate the values, such that the value-list corresponds to the datelist:
         _, vals = dateoperations.interpolate_data(self.transactions[setup.DICT_KEY_DATES],
-                                                  trans_values, dateformat, self.analyzer)
+                                                  trans_values, self.analyzer)
         return vals
 
     def set_analysis_data(self, date_start, date_stop, dateformat):
@@ -404,40 +404,40 @@ class Investment:
         self.analysis_dates, self.analysis_balances = dateoperations.format_datelist(self.datelist,
                                                                                      self.balancelist,
                                                                                      date_start, date_stop,
-                                                                                     self.dateformat, self.analyzer,
+                                                                                     self.analyzer,
                                                                                      zero_padding_past=True,
                                                                                      zero_padding_future=False)
         # The cost and payout-lists need zero-padding in both directions
         _, self.analysis_costs = dateoperations.format_datelist(self.datelist,
                                                                 self.costlist,
                                                                 date_start, date_stop,
-                                                                self.dateformat, self.analyzer,
+                                                                self.analyzer,
                                                                 zero_padding_past=True,
                                                                 zero_padding_future=True)
 
         _, self.analysis_payouts = dateoperations.format_datelist(self.datelist,
                                                                   self.payoutlist,
                                                                   date_start, date_stop,
-                                                                  self.dateformat, self.analyzer,
+                                                                  self.analyzer,
                                                                   zero_padding_past=True,
                                                                   zero_padding_future=True)
         # The inflows and outflows also need zero-padding in both directions:
         _, self.analysis_inflows = dateoperations.format_datelist(self.datelist,
                                                                   self.inflowlist,
                                                                   date_start, date_stop,
-                                                                  self.dateformat, self.analyzer,
+                                                                  self.analyzer,
                                                                   zero_padding_past=True,
                                                                   zero_padding_future=True)
         _, self.analysis_outflows = dateoperations.format_datelist(self.datelist,
                                                                    self.outflowlist,
                                                                    date_start, date_stop,
-                                                                   self.dateformat, self.analyzer,
+                                                                   self.analyzer,
                                                                    zero_padding_past=True,
                                                                    zero_padding_future=True)
         _, self.analysis_prices = dateoperations.format_datelist(self.datelist,
                                                                  self.pricelist,
                                                                  date_start, date_stop,
-                                                                 self.dateformat, self.analyzer,
+                                                                 self.analyzer,
                                                                  zero_padding_past=True,
                                                                  zero_padding_future=True)
 
@@ -527,7 +527,7 @@ class Investment:
                 _, self.analysis_values = dateoperations.format_datelist(self.datelist,
                                                                          trans_values_interp,
                                                                          date_start, date_stop,
-                                                                         self.dateformat, self.analyzer,
+                                                                         self.analyzer,
                                                                          zero_padding_past=True,
                                                                          zero_padding_future=False)
 
@@ -541,7 +541,7 @@ class Investment:
             _, self.analysis_values = dateoperations.format_datelist(self.datelist,
                                                                      trans_values_interp,
                                                                      date_start, date_stop,
-                                                                     self.dateformat, self.analyzer,
+                                                                     self.analyzer,
                                                                      zero_padding_past=True,
                                                                      zero_padding_future=False)
         # Sanity check:

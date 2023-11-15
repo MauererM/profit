@@ -98,7 +98,8 @@ def update_check_marketdata_in_file(filepath, dateformat_marketdata, dateformat,
         # Output the mismatching entries of the market data file:
         numentry = min(len(discrepancy_entries), 20)
         if len(discrepancy_entries) > 0:
-            print(f"WARNING: {len(discrepancy_entries)} obtained market data entries do not match the recorded values (tolerance: 2%).")
+            print(
+                f"WARNING: {len(discrepancy_entries)} obtained market data entries do not match the recorded values (tolerance: 2%).")
             print("File: " + filepath + f". Entries (listing only first {numentry} elements):")
             print("Date;\t\tRecorded Price;\t\tObtained Price")
             for i in range(numentry):
@@ -120,7 +121,7 @@ def update_check_marketdata_in_file(filepath, dateformat_marketdata, dateformat,
                 newdate_dt = analyzer.str2datetime(newdate)
                 # Find the index, where it has to go:
                 inserted = False
-                for idxup, date_update in enumerate(mketdates_update_dt): # Todo Is there a way to make this faster?
+                for idxup, date_update in enumerate(mketdates_update_dt):  # Todo Is there a way to make this faster?
                     # Insert it according to the date:
                     if newdate_dt < date_update:
                         mketdates_update_dt.insert(idxup, newdate_dt)
