@@ -5,7 +5,9 @@ MIT License
 Copyright (c) 2020-2023 Mario Mauerer
 """
 
-import urllib.request, urllib.parse, urllib.error
+import urllib.request
+import urllib.parse
+import urllib.error
 import time
 import stringoperations
 from io import StringIO
