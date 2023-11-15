@@ -94,7 +94,7 @@ STRING_EXCHANGE = "Exchange"
 STRING_TRANSACTIONS = "Transactions"
 
 # Version of PROFIT:
-PROFIT_VERSION = 1.2
+PROFIT_VERSION = 1.3
 
 # Dashes for moving averages:
 DASHES_MA = [4, 2]

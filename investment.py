@@ -136,12 +136,12 @@ class Investment:
                                                     self.datelist, self.dateformat)
 
     def adjust_splits(self, trans_actions, trans_price, trans_balance, trans_quantity):
-        """
-         A split affects the price and balance
+        """A split affects the price and balance.
         This is needed as online data provider usually provide historical data that reflects the newest value after
         all splits. Thus, for the obtained data to match, the recorded data must be adjusted accordingly.
         The balances and prices are directly affected if a split is detected.
         Note that the dates must be in temporal order. This is checked above in the constructor, so we're good.
+        Reverse splits are also possible.
         :param trans_actions: List of strings of actions, e.g, "sell" or "buy" (transactions)
         :param trans_price: List of values corresponding to the price of the investment (one unit) (transactions
         :param trans_balance: List of values, corresponding to the balance of the nr. of investments/stocks
@@ -151,25 +151,21 @@ class Investment:
         price_mod = [0] * len(trans_actions)
         bal_mod = [0] * len(trans_actions)
         quant_mod = [0] * len(trans_actions)
-        split_factor = int(1)  # tracks the running split factor (if multiple splits). Only integer splits allowed.
+        split_factor = 1.0  # tracks the running split factor (if multiple splits). Floats are allowed (reverse splits)
         # Iterate in reverse, i.e., start with the newest transaction:
         for idx in range(len(trans_actions) - 1, -1, -1):
-            # Check for a split. Note that in the split-transaction, the newest price and balance are already modified/given.
+            # Check for a split.
+            # Note that in the split-transaction, the newest price and balance are already modified/given.
             if trans_actions[idx] == setup.STRING_INVSTMT_ACTION_SPLIT:
                 if idx == 0:
-                    raise RuntimeError(
-                        "Seems like the first transaction is a split. This should have been caught earlier! Something is really wrong!")
-                print(
-                    "Split detected. Stock: " + self.symbol + ". Double-check data provided by dataprovider, if all is in order.")
-                if trans_balance[idx - 1] > 1e-9:
+                    raise RuntimeError("The first transaction is a split?! This should have been caught earlier!")
+                print("Split detected. Stock: " + self.symbol + ". Double-check that data from "
+                                                                "dataprovider reflects this.")
+                if trans_balance[idx - 1] > 1e-9: # Derive the ratio from the provided balance-entry
                     r = trans_balance[idx] / trans_balance[idx - 1]
-                else:
-                    r = trans_quantity[
-                        idx]  # If balance is 0 (e.g., all stock sold), the split ratio has to be given in the quantity column!
-                if not helper.isinteger(r):
-                    raise RuntimeError("Non-integer split detected!")
-                else:
-                    split_factor = split_factor * int(r)
+                else: # Balance is 0 (i.e., all stock sold): Derive ratio from the quantity-column
+                    r = trans_quantity[idx]
+                split_factor = split_factor * r
                 # In the split transaction, price and balance are already updated:
                 price_mod[idx] = trans_price[idx]
                 bal_mod[idx] = trans_balance[idx]
@@ -177,7 +173,7 @@ class Investment:
             else:  # No split detected: adjust the price, quantities (e.g., sell, buy) and balances:
                 price_mod[idx] = trans_price[idx] / float(split_factor)
                 bal_mod[idx] = trans_balance[idx] * float(split_factor)
-                quant_mod[idx] = trans_quantity[idx] * int(split_factor)
+                quant_mod[idx] = trans_quantity[idx] * float(split_factor)
         return price_mod, bal_mod, quant_mod
 
     def transactions_sanity_check(self, trans_dates, trans_actions, trans_quantity, trans_price, trans_cost,
@@ -212,12 +208,12 @@ class Investment:
             if trans_actions[idx] == setup.STRING_INVSTMT_ACTION_BUY:
                 if idx == 0:
                     if trans_balance[idx] != trans_quantity[idx]:
-                        raise RuntimeError("Transactions not in order (balance not correct). "
+                        raise RuntimeError("Transactions not in order (balance or quantity not correct). "
                                            "Transaction-Nr: " + repr(idx + 1))
                 else:
                     if helper.isclose(trans_balance[idx],
                                       (trans_balance[idx - 1] + trans_quantity[idx])) is False:
-                        raise RuntimeError("Transactions not in order (balance not correct). "
+                        raise RuntimeError("Transactions not in order (balance or quantity not correct). "
                                            "Transaction-Nr: " + repr(idx + 1))
             elif trans_actions[idx] == setup.STRING_INVSTMT_ACTION_SELL:
                 if idx == 0:
@@ -231,14 +227,14 @@ class Investment:
                     raise RuntimeError("First investment-transcation cannot be a split.")
                 if trans_balance[idx - 1] > 1e-9:
                     split_ratio = trans_balance[idx] / trans_balance[idx - 1]
-                else:
-                    split_ratio = trans_quantity[
-                        idx]  # If balance is 0 (e.g., all stock sold), the split ratio has to be given in the quantity column!
-                if not helper.isinteger(split_ratio):
-                    raise RuntimeError("Non-integer split detected. Transaction-Nr: " + repr(idx + 1))
+                else: # If balance is 0 (e.g., all stock sold), the split ratio has to be given in the quantity column!
+                    split_ratio = trans_quantity[idx]
 
                 if split_ratio > 150:
-                    raise RuntimeError("Split ratio > 150 detected. Sensible?!")
+                    print("Split ratio > 150 detected. Sensible?")
+
+                if split_ratio < 1.0/150:
+                    print("Split ratio < 1/150 detected. Sensible?")
 
                 if trans_price[idx] < 1e-9:
                     raise RuntimeError("The new price must be given for a split-transaction!")
