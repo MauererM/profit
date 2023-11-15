@@ -54,8 +54,8 @@ class MarketPrices:
         self.marketdata_filepath = files.create_path(self.marketdata_folder, self.marketdata_fname)
 
         # Sanity-Checks:
-        startdate_dt = stringoperations.str2datetime(self.startdate, self.dateformat)
-        stopdate_dt = stringoperations.str2datetime(self.stopdate, self.dateformat)
+        startdate_dt = self.analyzer.str2datetime(self.startdate)
+        stopdate_dt = self.analyzer.str2datetime(self.stopdate,)
         if startdate_dt > stopdate_dt:
             raise RuntimeError("Startdate cannot be after stopdate. Symbol: " + self.symbol + ", exchange: " +
                                self.exchange)

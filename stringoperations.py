@@ -44,9 +44,8 @@ def get_filename(pathstr, keep_type=False):
     filename = pathstr.split('/')[-1]
     if keep_type is True:
         return filename
-    else:
-        filename = filename.split('.')[-2]
-        return filename
+    filename = filename.split('.')[-2]
+    return filename
 
 
 def check_allowed_strings(strlist, reflist):
@@ -55,7 +54,7 @@ def check_allowed_strings(strlist, reflist):
     :param reflist: List of allowed strings
     :return: False, if string not in allowed list. Else: True
     """
-    for i, inpt in enumerate(strlist):
+    for _, inpt in enumerate(strlist):
         if inpt not in reflist:
             return False
     return True
@@ -86,8 +85,7 @@ def read_crop_string_delimited(string, delim):
         string = string[delim_idx + 1:]  # Crop the remainder of the string
         return result, string
     # Delimiter not found:
-    else:
-        return string, string
+    return string, string
 
 
 class DateTimeConversion:
@@ -135,17 +133,6 @@ def datetime2str(datetimeobj, fmt):
     :return: datetime object
     """
     return datetimeobj.strftime(fmt)
-
-
-def datestr_convert_date_fmt(string, fmt_a, fmt_b):
-    """Converts a date-string from one date-format to another
-    :param string: Input date-string
-    :param fmt_a: Format of the input-string
-    :param fmt_b: Desired date-format
-    :return: String of the re-formatted date
-    """
-    out = str2datetime(string, fmt_a)
-    return datetime2str(out, fmt_b)
 
 
 """

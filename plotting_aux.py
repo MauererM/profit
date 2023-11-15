@@ -130,7 +130,7 @@ def create_stackedplot(xlist, ylists, legendlist, colorlist, titlestring, xlabel
     legendlist = [legendlist[i] for i in sortedidx]
 
     # The list of lists needs to be re-formatted for matplotlib:
-    ylists = [x for x in ylists]
+    ylists = list(ylists)
 
     ax.stackplot(xlist, ylists, alpha=alpha, zorder=1, clip_on=True, baseline="zero", colors=colorlist,
                  labels=legendlist, edgecolor='w', linewidth=1.0)

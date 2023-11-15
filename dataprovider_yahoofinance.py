@@ -5,14 +5,17 @@ MIT License
 Copyright (c) 2020-2023 Mario Mauerer
 """
 
-import urllib.request, urllib.parse, urllib.error
+import urllib.request
+import urllib.parse
+import urllib.error
 import time
-import stringoperations
 from io import StringIO
 import pandas as pd
+import stringoperations
 
 
 class DataproviderYahoo:
+    """Gets data from the yahoo finance website, their "historical data" option."""
 
     def __init__(self, dateformat):
         """
@@ -94,7 +97,7 @@ class DataproviderYahoo:
 
         return forexdates, forexrates  # Returns strings and floats
 
-    def retrieve_stock_data(self, p1, p2, symbol, symbol_exchange):
+    def retrieve_stock_data(self, p1, p2, symbol, symbol_exchange=None):
         """Pulls historic stock data from the Yahoo website.
         :param p1, p2: Epoch time of start- and stop of desired historic interval
         :param symbol: String of the stock symbol, as used by the data provider.
@@ -111,7 +114,8 @@ class DataproviderYahoo:
         param['period2'] = str(p2)
         param['interval'] = '1d'
         param['events'] = 'history'
-        param['includeAdjustedClose'] = 'true'  # Todo: Check this: Rather non-adjusted data better for my system? How am I handling splits?
+        param[
+            'includeAdjustedClose'] = 'true'
         param['crumb'] = self.crumb
         params = urllib.parse.urlencode(param)
         url = 'http://query1.finance.yahoo.com/v7/finance/download/{}?{}'.format(symbol, params)
@@ -130,7 +134,8 @@ class DataproviderYahoo:
         strlines = StringIO(strlines)
         df = pd.read_csv(strlines, sep=",")
         pricedates = df['Date']
-        stockprices = df['Close']  # This is a float64 numpy array. # Todo (see above): Rather use "Adj Close"?
+        stockprices = df['Close']  # This is a float64 numpy array. # Yahoo includes splits in the non-adjusted
+        # close-column already. Otherwise, "Adj Close" could be used here, too.
 
         # Convert to strings and python-internal structures:
         pricedates = [pd.to_datetime(str(x)) for x in pricedates]
@@ -184,11 +189,10 @@ class DataproviderYahoo:
         p2 = int(time.mktime(stopdate_dt.timetuple()))
 
         try:
-            d, p = self.retrieve_stock_data(p1, p2, symbol, None)
+            d, _ = self.retrieve_stock_data(p1, p2, symbol, None)
         except:
             return False
 
         if len(d) < MIN_DURATION:  # Something likely went wrong/way too little data provided
             return False
-        else:
-            return True
+        return True

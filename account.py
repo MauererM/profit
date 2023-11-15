@@ -78,16 +78,14 @@ class Account:
         self.costlist = self.populate_full_list(self.transactions[setup.DICT_KEY_DATES],
                                                 self.transactions[setup.DICT_KEY_ACTIONS],
                                                 self.transactions[setup.DICT_KEY_AMOUNTS],
-                                                setup.STRING_ACCOUNT_ACTION_COST, self.datelist,
-                                                self.dateformat)
+                                                setup.STRING_ACCOUNT_ACTION_COST, self.datelist)
         self.interestlist = self.populate_full_list(self.transactions[setup.DICT_KEY_DATES],
                                                     self.transactions[setup.DICT_KEY_ACTIONS],
                                                     self.transactions[setup.DICT_KEY_AMOUNTS],
                                                     setup.STRING_ACCOUNT_ACTION_INTEREST,
-                                                    self.datelist,
-                                                    self.dateformat)
+                                                    self.datelist)
 
-    def populate_full_list(self, trans_dates, trans_actions, trans_amounts, triggerstring, datelist, dateformat):
+    def populate_full_list(self, trans_dates, trans_actions, trans_amounts, triggerstring, datelist):
         """Populates a list with amounts of certain transactions
         The dates correspond to the dates in both datelist and trans_dates.
         The type of transaction is given by "triggerstring"
@@ -148,7 +146,7 @@ class Account:
             self.forex_obj = forex_obj
             self.forex_data_given = True
 
-    def set_analysis_data(self, date_start, date_stop, dateformat):
+    def set_analysis_data(self, date_start, date_stop):
         """Creates data for further analysis, within the desired date-range.
         Values are converted into the basecurrency.
         Data is cropped or extrapolated to fit the desired range.
@@ -256,7 +254,3 @@ class Account:
     def get_type(self):
         """Returns the type of the account (as string)"""
         return self.type
-
-    def is_investment(self):
-        """Returns False, as the account is not an investment."""
-        return False

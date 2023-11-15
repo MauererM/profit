@@ -220,6 +220,5 @@ class ForexRates:
         """Returns a tuple of the stored forex dates and rates"""
         if self.pricedata_avail is True:
             return self.rate_dates, self.rates
-        else:
-            raise RuntimeError("No forex rates available. Currency: " + self.currency + "Basecurrency: " +
-                               self.basecurrency)
+        raise RuntimeError(
+            "No forex rates available. Currency: " + self.currency + "Basecurrency: " + self.basecurrency)

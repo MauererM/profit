@@ -42,15 +42,14 @@ def within_tol(a, b, tol):
     """
     if b > 1e-9:
         return abs((a / b) - 1.0) <= tol
-    elif a > 1e-9:
+    if a > 1e-9:
         return abs((b / a) - 1.0) <= tol
-    else:
-        return True
+    return True
 
 
 def list_all_zero(vallist):
     """Checks if all elements of a list are smaller than 1e-9"""
-    return all([-1e-9 < x < 1e-9 for x in vallist])
+    return all(-1e-9 < x < 1e-9 for x in vallist)
 
 
 def accumulate_list(inlist):

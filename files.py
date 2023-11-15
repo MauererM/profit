@@ -18,12 +18,12 @@ def write_file_lines(filepath, lines, overwrite=False):
     :return: Nothing.
     """
     if overwrite is True:
-        with open(filepath, 'w') as f:
+        with open(filepath, 'w', encoding='utf8') as f:
             for line in lines:
                 string = line + '\n'
                 f.write(string)
     else:
-        with open(filepath, 'a') as f:
+        with open(filepath, 'a', encoding='utf8') as f:
             for line in lines:
                 string = line + '\n'
                 f.write(string)
@@ -35,7 +35,7 @@ def get_file_lines(filepath):
     :return: List of strings
     """
     # Read all lines in the file:
-    with open(filepath) as f:
+    with open(filepath, encoding='utf8') as f:
         lines = f.readlines()
     return lines
 
@@ -77,8 +77,7 @@ def get_file_list(folderpath, extension):
     if extension is not None:
         return [f for f in os.listdir(folderpath) if (os.path.isfile(os.path.join(folderpath, f))
                                                       and f.endswith(extension) is True)]
-    else:
-        return [f for f in os.listdir(folderpath) if (os.path.isfile(os.path.join(folderpath, f)))]
+    return [f for f in os.listdir(folderpath) if os.path.isfile(os.path.join(folderpath, f))]
 
 
 """
@@ -93,8 +92,5 @@ if __name__ == '__main__':
 
     # write_file_lines(filepath, ["First line", "Second Line"], overwrite=True)
 
-    test = 3.4452
-    test2 = str(test)
     test3 = create_path("folder", "fi^l:e")
     print(test3)
-    pass

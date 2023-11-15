@@ -9,7 +9,6 @@ Copyright (c) 2018 Mario Mauerer
 import matplotlib
 import matplotlib.pyplot as plt
 from matplotlib.ticker import FormatStrFormatter
-import matplotlib.dates as mdates
 import pylab
 import PROFIT_main as cfg
 import stringoperations
@@ -316,7 +315,6 @@ def plot_assets_grouped(assetlist, fname, titlestr, plottype, analyzer):
 
     # Create a stacked plot:
     xlist = assetlist[0].get_analysis_datelist()
-    dateformat = assetlist[0].get_dateformat()
     xlist = [analyzer.str2datetime(x) for x in xlist]
 
     colorlist = plotting_aux.create_colormap("rainbow", len(vals_groups), False)
@@ -415,7 +413,6 @@ def plot_asset_purposes(assetlist, fname, titlestr, analyzer):
         asset_val_tot_cur = analysis.get_asset_values_summed(assets_cur)
         # Plot the total value:
         datelist = assets_cur[0].get_analysis_datelist()
-        dateformat = assets_cur[0].get_dateformat()
         x = [analyzer.str2datetime(x) for x in datelist]
 
         # Get the type of these assets (either account or investment)
@@ -446,7 +443,6 @@ def plot_asset_purposes(assetlist, fname, titlestr, analyzer):
                 asset_val_tot_cur = analysis.get_asset_values_summed(assetlist_type)
                 # Plot the total value of the current purpose and asset-type:
                 datelist = assetlist_type[0].get_analysis_datelist()
-                dateformat = assets_cur[0].get_dateformat()
                 x = [analyzer.str2datetime(x) for x in datelist]
                 labelstr = "     Type: " + typ
                 if len(x) < 40.0:
@@ -552,7 +548,6 @@ def plot_asset_values_indices(assetlist, indexlist, fname, titlestr, analyzer):
     fig = plt.figure()
     ax = fig.add_subplot(111)  # Only one plot
 
-    dateformat = assetlist[0].get_dateformat()
     x = [analyzer.str2datetime(x) for x in datelist]
     ax.plot(x, sumlist_corr, alpha=1.0, zorder=3, clip_on=False, color=setup.PLOTS_COLORS[0], marker='',
             label="Asset Value",
@@ -649,7 +644,6 @@ def plot_asset_projections(assetlist, interest, num_years, fname, titlestr, anal
     fig = plt.figure()
     ax = fig.add_subplot(111)  # Only one plot
 
-    dateformat = assetlist[0].get_dateformat()
     x = [analyzer.str2datetime(x) for x in datelist_fut]
 
     labelstr = f"{(interest * fact_up):.2f} %"
@@ -719,7 +713,7 @@ def plot_asset_total_absolute_returns_accumulated(dates, returns, fname, analyze
     plotting_aux.configure_lineplot()
     fig = plt.figure()
     ax = fig.add_subplot(111)  # Only one plot
-    dateformat = setup.MARKETDATA_FORMAT_DATE
+
     x = [analyzer.str2datetime(x) for x in dates]
 
     ax.plot(x, returns, alpha=1.0, zorder=3, clip_on=False, color=setup.PLOTS_COLORS[0], marker='', linewidth=1.6)
@@ -1109,7 +1103,7 @@ def plot_asset_returns_individual_absolute(assetlist, fname, analyzer):
     # Sanity Check:
     if len(assetlist) == 0:
         print("No assets given for plot: " + fname)
-        return
+        return [0], [0]
 
     # Only plot assets with some value during the analysis period:
     assetlist_plot = []
@@ -1119,7 +1113,7 @@ def plot_asset_returns_individual_absolute(assetlist, fname, analyzer):
 
     if len(assetlist_plot) == 0:
         print("No assets of value given at the end of the analysis-period. Not plotting. File: " + fname)
-        return
+        return [0], [0]
 
     dateformat = assetlist_plot[0].get_dateformat()
     if len(assetlist_plot) > 1:

@@ -5,24 +5,25 @@ MIT License
 Copyright (c) 2020-2023 Mario Mauerer
 """
 
+import time
 import stringoperations
 import dateoperations
-import time
+# Import the available data providers:
+from dataprovider_yahoofinance import DataproviderYahoo
+from dataprovider_empty import DataproviderEmpty
 
 
 class DataproviderMain:
+    """The main data-provider class that wraps different data-providers
+    """
 
-    def __init__(self, dateformat, analyzer):
+    def __init__(self, dateformat_str, analyzer):
         """
         Constructor: Also obtains a cookie/crumb from yahoo finance to enable subsequent downloads. 
         :param dateformat: String that encodes the format of the dates, e.g. "%d.%m.%Y"
         """
-        self.dateformat = dateformat
+        self.dateformat = dateformat_str
         self.analyzer = analyzer
-
-        # Import the available data providers:
-        from dataprovider_yahoofinance import DataproviderYahoo
-        from dataprovider_empty import DataproviderEmpty
         # The list of available/feasible data providers. The last provider here should be DataproviderEmpty
         self.providers = [DataproviderYahoo, DataproviderEmpty]
 
@@ -35,8 +36,7 @@ class DataproviderMain:
                 self.active_provider = p
                 print("Dataprovider " + p.get_name() + " successfully initialized")
                 break
-            else:
-                print("Failed to initialize provider " + p.get_name() + ". Attempting next provider")
+            print("Failed to initialize provider " + p.get_name() + ". Attempting next provider")
         # Now, we either have a functioning provider initialized, or the Empty-provider (which will trigger
         # the falling functions to fall back to alternative means, making the data-source selection somewhat automatic)
 
@@ -58,7 +58,7 @@ class DataproviderMain:
         if self.active_provider is None:
             return RuntimeError("Initialize a data provider first")
 
-        p1, p2, startdate_dt, stopdate_dt = self.__perform_date_sanity_check(startdate, stopdate)
+        p1, p2, _, stopdate_dt = self.__perform_date_sanity_check(startdate, stopdate)
 
         res = self.active_provider.retrieve_stock_data(p1, p2, sym_stock, sym_exchange)
         if res is not None:
@@ -71,8 +71,7 @@ class DataproviderMain:
         if res is not None:
             pricedates_full, stockprices_full = res
             return pricedates_full, stockprices_full
-        else:
-            return None
+        return None
 
     def get_forex_data(self, sym_a, sym_b, startdate, stopdate):
         """Provides foreign-exchange rates for two currencies
@@ -88,7 +87,7 @@ class DataproviderMain:
         if self.active_provider is None:
             return RuntimeError("Initialize a data provider first")
 
-        p1, p2, startdate_dt, stopdate_dt = self.__perform_date_sanity_check(startdate, stopdate)
+        p1, p2, _, stopdate_dt = self.__perform_date_sanity_check(startdate, stopdate)
 
         res = self.active_provider.retrieve_forex_data(sym_a, sym_b, p1, p2)
         if res is not None:
@@ -101,8 +100,7 @@ class DataproviderMain:
         if res is not None:
             forexdates_full, forexrates_full = res
             return forexdates_full, forexrates_full
-        else:
-            return None
+        return None
 
     def __perform_date_sanity_check(self, startdate, stopdate):
         """
@@ -180,4 +178,4 @@ class DataproviderMain:
     Stand-alone execution for testing:
 """
 if __name__ == '__main__':
-    dateformat = "%d.%m.%Y"
+    pass

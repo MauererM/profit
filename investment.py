@@ -51,7 +51,6 @@ class Investment:
         self.forex_obj = None
         self.analysis_dates = None
         self.analysis_balances = None
-        self.analysis_prices = None
         self.analysis_values = None
         self.analysis_inflows = None
         self.analysis_outflows = None
@@ -124,7 +123,7 @@ class Investment:
                                                    self.transactions[setup.DICT_KEY_QUANTITY],
                                                    self.transactions[setup.DICT_KEY_PRICE],
                                                    setup.STRING_INVSTMT_ACTION_BUY,
-                                                   self.datelist, self.dateformat)
+                                                   self.datelist)
 
         # This list contains outflows of the investment (e.g., "Sell"-values). The values are in the currency of
         # the investment.
@@ -133,7 +132,7 @@ class Investment:
                                                     self.transactions[setup.DICT_KEY_QUANTITY],
                                                     self.transactions[setup.DICT_KEY_PRICE],
                                                     setup.STRING_INVSTMT_ACTION_SELL,
-                                                    self.datelist, self.dateformat)
+                                                    self.datelist)
 
     def adjust_splits(self, trans_actions, trans_price, trans_balance, trans_quantity):
         """A split affects the price and balance.
@@ -199,7 +198,7 @@ class Investment:
             raise RuntimeError("First investment-transaction must be a buy.")
 
         # Check every transaction:
-        for idx, date in enumerate(trans_dates):
+        for idx, _ in enumerate(trans_dates):
             # Negative investment-balances do not make sense:
             if trans_balance[idx] < 0.0:
                 raise RuntimeError("Detected a negative balance. This does not make sense. "
@@ -251,7 +250,7 @@ class Investment:
                                        "Transaction-Nr: " + repr(idx + 1))
         # Do some further checks:
         # Check every transaction:
-        for idx, date in enumerate(trans_dates):
+        for idx, _ in enumerate(trans_dates):
             if trans_actions[idx] == setup.STRING_INVSTMT_ACTION_BUY or trans_actions[idx] \
                     == setup.STRING_INVSTMT_ACTION_SELL or trans_actions[idx] == setup.STRING_INVSTMT_ACTION_SPLIT:
                 if trans_payout[idx] > 1e-9:
@@ -278,7 +277,6 @@ class Investment:
         :param trans_dates: List of strings of transaction-dates
         :param trans_amounts: List of floats of corresponding amounts
         :param datelist: List of strings of the full date list, spanning all days between the transactions
-        :param dateformat: String that specifies the format of the date-strings
         :param sum_ident_days: Bool, if True, transactions-amounts on identical days are summed. Otherwise, not.
         :return: List of transaction-values, for each date in datelist
         """
@@ -316,7 +314,7 @@ class Investment:
         return value_list
 
     def get_inoutflow_value(self, trans_dates, trans_actions, trans_quantity, trans_prices, action_trigger_str,
-                            datelist, dateformat):
+                            datelist):
         """Determines the inflow or outflow into an investment from the transactions.
         The buy/sell transactions are selected and the corresponding value obtained (=quantity*price)
         The data is then also populated onto a full date-list, such that it corresponds to the dates in datelist
@@ -370,7 +368,7 @@ class Investment:
 
         return trans_value
 
-    def __get_format_transactions_values(self, dateformat):
+    def __get_format_transactions_values(self):
         """ From the manually recorded transactions-data, get the prices of the asset and
             pre-format it.
         """
@@ -386,7 +384,7 @@ class Investment:
                                                   trans_values, self.analyzer)
         return vals
 
-    def set_analysis_data(self, date_start, date_stop, dateformat):
+    def set_analysis_data(self, date_start, date_stop):
         """Re-formats the balances, cost, payouts and prices for further analysis
         Values are converted into the basecurrency.
         Market prices are obtained to determine the value of the investment.
@@ -394,7 +392,6 @@ class Investment:
         :param date_start: String of a date that designates the date where analysis starts from. Can be earlier
         than recorded data.
         :param date_stop: String of a date that designates the stop-date. Cannot be in the future.
-        :param dateformat: String that specifies the format of the date-strings
         """
         print("\n" + self.symbol + ":")
 
@@ -434,12 +431,6 @@ class Investment:
                                                                    self.analyzer,
                                                                    zero_padding_past=True,
                                                                    zero_padding_future=True)
-        _, self.analysis_prices = dateoperations.format_datelist(self.datelist,
-                                                                 self.pricelist,
-                                                                 date_start, date_stop,
-                                                                 self.analyzer,
-                                                                 zero_padding_past=True,
-                                                                 zero_padding_future=True)
 
         # Determine the value of the investment:
         # If the investment is a security, obtain the market prices. If not, use the transaction-price to determine
@@ -465,7 +456,7 @@ class Investment:
             self.marketpricesobj = prices.MarketPrices(self.symbol, self.exchange, self.currency,
                                                        setup.MARKETDATA_FOLDER,
                                                        setup.MARKETDATA_FORMAT_DATE, setup.MARKETDATA_DELIMITER,
-                                                       startdate_prices, date_stop, dateformat, self.provider,
+                                                       startdate_prices, date_stop, self.dateformat, self.provider,
                                                        self.analyzer)
 
             # Asset prices during the analysis-period are available:
@@ -486,7 +477,7 @@ class Investment:
                 # for a given date. Also: ZOH-extrapolation is used (going with ZOH into the past makes no diff, though)
                 prices_merged = dateoperations.fuse_two_value_lists(self.analysis_dates, transactions_dates,
                                                                     transactions_prices, marketdates, marketprices,
-                                                                    self.dateformat, self.analyzer,
+                                                                    self.analyzer,
                                                                     zero_padding_past=True,
                                                                     zero_padding_future=False)
 
@@ -502,10 +493,10 @@ class Investment:
                 if len(mismatches) > 0:
                     print("Some obtained market-prices deviate by >5% from the recorded transactions:")
                     print("Date;\t\t\tRecorded Price;\tObtained Price")
-                    for i in range(len(mismatches)):
-                        str1 = mismatches[i][0]
-                        str2 = "{:.2f}".format(mismatches[i][1])
-                        str3 = "{:.2f}".format(mismatches[i][2])
+                    for i, entry in enumerate(mismatches):
+                        str1 = entry[0]
+                        str2 = "{:.2f}".format(entry[1])
+                        str3 = "{:.2f}".format(entry[2])
                         print(str1 + ";\t\t" + str2 + ";\t\t\t" + str3 + ";")
 
                 # Calculate the values of the investment:
@@ -522,7 +513,7 @@ class Investment:
             # No online/marke prices are available:
             else:
                 print("Deriving prices from transactions-data.")
-                trans_values_interp = self.__get_format_transactions_values(dateformat)
+                trans_values_interp = self.__get_format_transactions_values()
                 # Crop the values to the desired analysis-range; in this case, we can not merge data with market-prices:
                 _, self.analysis_values = dateoperations.format_datelist(self.datelist,
                                                                          trans_values_interp,
@@ -536,7 +527,7 @@ class Investment:
             # print("Investment in file " + self.filename + " cannot obtain prices.")
             print(
                 "Investment is not listed as security. Deriving prices from transactions-data. File: " + self.filename)
-            trans_values_interp = self.__get_format_transactions_values(dateformat)
+            trans_values_interp = self.__get_format_transactions_values()
             # Crop the values to the desired analysis-range; in this case, we can not merge data with market-prices:
             _, self.analysis_values = dateoperations.format_datelist(self.datelist,
                                                                      trans_values_interp,
@@ -637,14 +628,6 @@ class Investment:
         """Return the stored basecurrency (as string)"""
         return self.basecurrency
 
-    def get_symbol(self):
-        """Return the symbol of the investment (ticker symbol, as string)"""
-        return self.symbol
-
-    def get_exchange(self):
-        """Return the stock exchange, where the investment is traded (as string)"""
-        return self.exchange
-
     def get_analysis_datelist(self):
         """Return the list of dates of the analysis-data (dates as strings)"""
         if self.analysis_data_done is False:
@@ -694,7 +677,3 @@ class Investment:
     def get_dateformat(self):
         """Return the dateformat"""
         return self.dateformat
-
-    def is_investment(self):
-        """Returns True, if the object is an Investment"""
-        return True
