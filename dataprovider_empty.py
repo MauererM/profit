@@ -5,7 +5,11 @@ PROFIT - Python-Based Return on Investment and Financial Investigation Tool
 MIT License
 Copyright (c) 2023 Mario Mauerer
 """
+
+
 class DataproviderEmpty:
+    """An empty data-provider that will always be fallen back to. The calling functions handle the errors raised
+    by this empty data provider themselves."""
 
     def __init__(self, dateformat):
         """
@@ -17,13 +21,15 @@ class DataproviderEmpty:
         self.dateformat = dateformat
 
     def initialize(self):
-        return True # The empty provider (used last by dataprovider_main) must succeed here
+        return True  # The empty provider (used last by dataprovider_main) must succeed here
 
     def get_name(self):
         return self.name
 
-    def retrieve_forex_data(self, sym_a, sym_b, p1, p2):
-        raise RuntimeError("Online dataprovider not available") # This will trigger the calling functions to fall back to other methods
+    def retrieve_forex_data(self):
+        raise RuntimeError(
+            "Online dataprovider not available")  # This will trigger the calling functions to fall back to other methods
 
-    def retrieve_stock_data(self, p1, p2, symbol, symbol_exchange):
-        raise RuntimeError("Online dataprovider not available") # This will trigger the calling functions to fall back to other methods
+    def retrieve_stock_data(self):
+        raise RuntimeError(
+            "Online dataprovider not available")  # This will trigger the calling functions to fall back to other methods

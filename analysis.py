@@ -13,16 +13,22 @@ class AnalysisRange:
     """Stores data related to the analysis-data-range, which is often used across various functions
     """
 
-    def __init__(self, startdate, stopdate, dateformat, datetime_converter):
-        self.dateformat = dateformat
+    def __init__(self, startdate, stopdate, dateformat_str, datetime_converter):
+        """Constructor
+        :param startdate: String for start-date
+        :param stopdate: String for stop-date
+        :param dateformat_str: The utilized date-format string
+        :param datetime_converter: Object of the datetime-converter functions that use caching
+        """
+        self.dateformat = dateformat_str
         self.datetime_converter = datetime_converter  # Note: This instance is referenced, not copied
-        self.startdate_dt = self.datetime_converter.str2datetimecached(startdate, dateformat)
-        self.stopdate_dt = self.datetime_converter.str2datetimecached(stopdate, dateformat)
+        self.startdate_dt = self.datetime_converter.str2datetimecached(startdate, self.dateformat)
+        self.stopdate_dt = self.datetime_converter.str2datetimecached(stopdate, self.dateformat)
         self.analysis_datelist = dateoperations.create_datelist(startdate, stopdate, None, dateformat=self.dateformat)
         self.analysis_datelist_dt = [self.str2datetime(x) for x in self.analysis_datelist]
 
-    def str2datetime(self, str):
-        return self.datetime_converter.str2datetimecached(str, self.dateformat)
+    def str2datetime(self, string):
+        return self.datetime_converter.str2datetimecached(string, self.dateformat)
 
     def datetime2str(self, dt):
         return self.datetime_converter.datetime2strcached(dt, self.dateformat)
@@ -62,43 +68,6 @@ def project_values(datelist, valuelist, num_years, interest_percent, dateformat)
     return datelist_fut, vallist_fut
 
 
-def calc_median_filt(xlist, ylist, winlen):
-    """Calculates the median-filtered values of a XY data-set. The correspondingly filtered tuple is returned
-    (xlist is not altered)
-    The returned lists are of identical length than the input. The boundary values are not filtered.
-    If the list is shorter than the window or the window length is 1, the input is returned unaltered.
-    :param xlist: List of x-values. Must not necessarily be numeric.
-    :param ylist: List of to-be-filtered y-values
-    :param winlen: Length of the window, can be 0 or 1 or negative (no filtering performed then)
-    :return: tuple of filtered x,y values
-    """
-
-    if winlen <= 1 or len(ylist) < winlen:
-        return (xlist, ylist)
-    if len(xlist) != len(ylist):
-        raise RuntimeError("X, Y lists of moving-avg filter must be of same length")
-    if (winlen % 2) == 0:
-        raise RuntimeError("Window length of median filter must be odd!")
-
-    halfwin = int((winlen - 1) / 2)
-    filtval = []
-    # No filtering at lower list boundary:
-    for idx in range(0, halfwin):
-        filtval.append(ylist[idx])
-    # Filtering:
-    for idx in range(halfwin, len(ylist) - halfwin):
-        startidx = idx - halfwin
-        stopidx = idx + halfwin
-        win = ylist[startidx:stopidx + 1]
-        win.sort()
-        filtval.append(win[halfwin])
-    # No filtering at upper list boundary:
-    for idx in range(len(ylist) - halfwin, len(ylist)):
-        filtval.append(ylist[idx])
-
-    return (xlist, filtval)
-
-
 def calc_moving_avg(xlist, ylist, winlen):
     """Calculates the moving-average of a XY data-set. The correspondingly filtered tuple is returned
     (which might be of a shorter length, if winlen > 1) ==> Values are only added, once the moving window is full of
@@ -128,19 +97,18 @@ def calc_moving_avg(xlist, ylist, winlen):
         return xfilt, yfilt
 
     # Window shorter than data lists:
-    else:
-        xfilt = []
-        yfilt = []
-        # Middle index:
-        mididx = int(round(n / 2.0))
-        for i, y in enumerate(ylist, start=n):
-            if i == len(ylist) + 1:
-                break
-            win = ylist[i - n:i]
-            avg = sum(win) / n
-            xfilt.append(xlist[i - n + mididx - 1])
-            yfilt.append(avg)
-        return xfilt, yfilt
+    xfilt = []
+    yfilt = []
+    # Middle index:
+    mididx = int(round(n / 2.0))
+    for i, y in enumerate(ylist, start=n):
+        if i == len(ylist) + 1:
+            break
+        win = ylist[i - n:i]
+        avg = sum(win) / n
+        xfilt.append(xlist[i - n + mididx - 1])
+        yfilt.append(avg)
+    return xfilt, yfilt
 
 
 def get_asset_values_summed(assets):
@@ -684,7 +652,6 @@ if __name__ == '__main__':
     payoutlist = [0, 10, 0, 0, 0, 0]
     inflowlist = [0, 99, 0, 0, 0, 0]
     outflowlist = [0, 5, 0, 0, 160, 5]
-    timestep = 4
 
     # print(calc_return_absolute(valuelist[0], valuelist[-1], sum(outflowlist), sum(inflowlist), sum(payoutlist), sum(costlist)))
     # print(calc_returns_daily_absolute(datelist, valuelist, costlist, payoutlist, inflowlist, outflowlist, dateformat))

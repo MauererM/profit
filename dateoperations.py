@@ -278,10 +278,9 @@ def get_date_today(dateformat, datetime_obj=False):
     if datetime_obj is False:
         # Strip the exact time of the day, such that only the desired date-format remains.
         return stringoperations.datetime2str(today, dateformat)
-    else:
-        # Strip the exact time of the day, such that only the desired date-format remains.
-        today = stringoperations.datetime2str(today, dateformat)
-        return stringoperations.str2datetime(today, dateformat)
+    # Strip the exact time of the day, such that only the desired date-format remains.
+    today = stringoperations.datetime2str(today, dateformat)
+    return stringoperations.str2datetime(today, dateformat)
 
 
 def create_datelist(startdate, stopdate, analyzer, dateformat=None):
@@ -374,7 +373,7 @@ def check_dates_consecutive(datelist, analyzer):
 
 
 def fuse_two_value_lists(datelist_full, dates_1_partial, vals_1_partial_groundtruth, dates_2_partial, vals_2_partial,
-                         dateformat, analyzer, zero_padding_past, zero_padding_future):
+                         analyzer, zero_padding_past, zero_padding_future):
     """Fuses two lists of values together, e.g., combines transactions-prices with market-prices.
     Applies extrapolation, too, to cover the full date-list.
     Note that zero-values are discarded!
@@ -408,7 +407,7 @@ def fuse_two_value_lists(datelist_full, dates_1_partial, vals_1_partial_groundtr
 
     output = []
     date_output = []
-    for idx, date in enumerate(merge_list_full):
+    for _, date in enumerate(merge_list_full):
         val = 0.0
         if date in dates_1_dict:
             val = vals_1_partial_groundtruth[dates_1_dict[date]]

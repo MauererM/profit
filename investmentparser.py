@@ -25,7 +25,7 @@ def parse_investment_file(filepath, dateformat, dataprovider, analyzer):
     """
 
     # Read all lines in the file:
-    with open(filepath) as f:
+    with open(filepath, encoding='utf8') as f:
         lines = f.readlines()
 
     # Get rid of white spaces in last line of file, then check if it ends with "EOF":
@@ -64,7 +64,7 @@ def parse_investment_file(filepath, dateformat, dataprovider, analyzer):
                 # Leave for-loop, as the transactions are treated differently below
                 break
             # Store the type, purpose, symbol, exchange and currency of the investment
-            elif line_id == setup.STRING_TYPE:
+            if line_id == setup.STRING_TYPE:
                 invstmt_type = line_val
             elif line_id == setup.STRING_PURPOSE:
                 invstmt_purpose = line_val

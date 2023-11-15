@@ -1103,7 +1103,7 @@ def plot_asset_returns_individual_absolute(assetlist, fname, analyzer):
     # Sanity Check:
     if len(assetlist) == 0:
         print("No assets given for plot: " + fname)
-        return
+        return [0], [0]
 
     # Only plot assets with some value during the analysis period:
     assetlist_plot = []
@@ -1113,7 +1113,7 @@ def plot_asset_returns_individual_absolute(assetlist, fname, analyzer):
 
     if len(assetlist_plot) == 0:
         print("No assets of value given at the end of the analysis-period. Not plotting. File: " + fname)
-        return
+        return [0], [0]
 
     dateformat = assetlist_plot[0].get_dateformat()
     if len(assetlist_plot) > 1:

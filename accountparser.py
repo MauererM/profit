@@ -23,7 +23,7 @@ def parse_account_file(filepath, dateformat, analyzer):
     :return: Account-object
     """
     # Read all lines in the file:
-    with open(filepath) as f:
+    with open(filepath, encoding='utf8') as f:
         lines = f.readlines()
 
     # Get rid of white spaces in last line of file, then check if it ends with "EOF":
@@ -60,7 +60,7 @@ def parse_account_file(filepath, dateformat, analyzer):
                 # Leave for-loop, as the transactions are treated differently below
                 break
             # Store the type, purpose and currency of the account:
-            elif line_id == setup.STRING_TYPE:
+            if line_id == setup.STRING_TYPE:
                 accnt_type = line_val
             elif line_id == setup.STRING_PURPOSE:
                 accnt_purpose = line_val

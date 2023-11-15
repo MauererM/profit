@@ -5,12 +5,12 @@ PROFIT - Python-Based Return on Investment and Financial Investigation Tool
 MIT License
 Copyright (c) 2018 Mario Mauerer
 """
+import datetime
 import accountparser
 import investmentparser
 import files
 import stringoperations
 import forex
-import datetime
 import dateoperations
 import plotting
 import analysis
@@ -275,7 +275,7 @@ if __name__ == '__main__':
     """
     print("\nPreparing analysis-data for accounts and investments.")
     for asset in assets:
-        asset.set_analysis_data(date_analysis_start_str, date_today_str, setup.FORMAT_DATE)
+        asset.set_analysis_data(date_analysis_start_str, date_today_str)
 
     """
     Obtain Stockmarket-Indices
