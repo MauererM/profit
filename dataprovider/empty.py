@@ -6,8 +6,9 @@ MIT License
 Copyright (c) 2023 Mario Mauerer
 """
 
+from dataprovider import DataProvider
 
-class DataproviderEmpty:
+class EmptyProvider(DataProvider):
     """An empty data-provider that will always be fallen back to. The calling functions handle the errors raised
     by this empty data provider themselves."""
 

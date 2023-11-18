@@ -12,9 +12,10 @@ import time
 from io import StringIO
 import pandas as pd
 import stringoperations
+from dataprovider.provider_abc import DataProvider
 
 
-class DataproviderYahoo:
+class DataproviderYahoo(DataProvider):
     """Gets data from the yahoo finance website, their "historical data" option."""
 
     def __init__(self, dateformat):

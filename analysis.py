@@ -39,6 +39,9 @@ class AnalysisRange:
     def get_analysis_datelist_dt(self):
         return self.analysis_datelist_dt
 
+    def get_dateformat(self):
+        return self.dateformat
+
 
 def project_values(datelist, valuelist, num_years, interest_percent, dateformat):
     """Projects values into the future given a certian interest rate. Annual compounding is assumed.

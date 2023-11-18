@@ -16,7 +16,7 @@ import plotting
 import analysis
 import prices
 import setup
-from dataprovider_main import DataproviderMain
+from dataprovider.dataprovider import DataproviderMain
 
 """
 These strings specify the folders from which the account and investment files
@@ -175,7 +175,7 @@ if __name__ == '__main__':
     analyzer = analysis.AnalysisRange(date_analysis_start_str, date_today_str, setup.FORMAT_DATE, datetimeconverter)
 
     # Initialize the data provider. If none can be initialized, an empty fallback provider will be selected.
-    provider = DataproviderMain(setup.FORMAT_DATE, analyzer)
+    provider = DataproviderMain(analyzer)
 
     """
     Sanity checks:
@@ -196,7 +196,7 @@ if __name__ == '__main__':
     investments = []
     for file in invstmtfiles:
         filepath = files.create_path(INVESTMENT_FOLDER, file)  # Get path of file, including its folder
-        investments.append(investmentparser.parse_investment_file(filepath, setup.FORMAT_DATE, provider, analyzer))
+        investments.append(investmentparser.parse_investment_file(filepath, setup.FORMAT_DATE, provider, analyzer, BASECURRENCY, ASSET_PURPOSES))
     if len(investments) > 0:
         print("Successfully parsed " + str(len(investments)) + " investments.")
 
@@ -212,7 +212,7 @@ if __name__ == '__main__':
     accounts = []
     for file in accountfiles:
         filepath = files.create_path(ACCOUNT_FOLDER, file)  # Get path of file, including its folder
-        accounts.append(accountparser.parse_account_file(filepath, setup.FORMAT_DATE, analyzer))
+        accounts.append(accountparser.parse_account_file(filepath, setup.FORMAT_DATE, analyzer, BASECURRENCY, ASSET_PURPOSES))
     if len(accounts) > 0:
         print("Successfully parsed " + str(len(accounts)) + " accounts.")
 

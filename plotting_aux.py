@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 import pylab
 import files
 import setup
-import PROFIT_main as cfg
+#import PROFIT_main as cfg # Todo remove this
 
 
 def configure_plot_common():

@@ -6,26 +6,53 @@ Copyright (c) 2020-2023 Mario Mauerer
 """
 
 import time
-import stringoperations
-import dateoperations
-# Import the available data providers:
-from dataprovider_yahoofinance import DataproviderYahoo
-from dataprovider_empty import DataproviderEmpty
+import pkgutil
+import inspect
+import importlib
+from stringoperations import *
+from dateoperations import *
+from .provider_abc import DataProvider
 
+
+# Todo: Have each provider as subpackage in the dataprovider package, and discover them automatically?
+# Todo: Is it still sensible to have the EmptyProvider? Solve this differently?
+# Todo: Is it possible/sensible to import date/stringoperations from the high-level package (PROFIT)?
+# Todo: Rather use pkgutil and importlib, or setuptools?
 
 class DataproviderMain:
-    """The main data-provider class that wraps different data-providers
+    """The main data-provider class that wraps different data-providers.
+    It imports dataproviders from the respective subpackages.
     """
 
-    def __init__(self, dateformat_str, analyzer):
+    def __init__(self, analyzer):
         """
-        Constructor: Also obtains a cookie/crumb from yahoo finance to enable subsequent downloads. 
-        :param dateformat: String that encodes the format of the dates, e.g. "%d.%m.%Y"
         """
-        self.dateformat = dateformat_str
+        self.dateformat = analyzer.get_dateformat()
         self.analyzer = analyzer
+
+        # Find all subpackages:
+        toplevel_name = 'dataprovider'
+        submodules = pkgutil.iter_modules([toplevel_name])
+        loaded_modules = []
+        for loader, name, is_pkg in submodules:
+            full_module_name = f"{toplevel_name}.{name}"
+            if is_pkg:
+                module = importlib.import_module(full_module_name)
+                loaded_modules.append(module)
+
+        classes = []
+        for module in loaded_modules:
+            for name, obj in inspect.getmembers(module):
+                if inspect.isclass(obj):
+                    if issubclass(obj, DataProvider):
+                        if obj is not DataProvider:
+                            classes.append[obj]
+
+
+
+
         # The list of available/feasible data providers. The last provider here should be DataproviderEmpty
-        self.providers = [DataproviderYahoo, DataproviderEmpty]
+        self.providers = [DataproviderYahoo, EmptyProvider]
 
         self.active_provider = None
 

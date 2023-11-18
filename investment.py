@@ -6,7 +6,6 @@ Copyright (c) 2018 Mario Mauerer
 """
 
 import dateoperations
-import PROFIT_main as cfg
 import stringoperations
 import prices
 import setup
@@ -17,7 +16,7 @@ class Investment:
     """Implements an investment. Parses transactions, provides analysis-data, performs currency conversions"""
 
     def __init__(self, id_str, type_str, purpose_str, currency_str, basecurrency_str, symbol_str, exchange_str,
-                 filename_str, transactions_dict, dateformat_str, dataprovider, analyzer):
+                 filename_str, transactions_dict, dateformat_str, dataprovider, analyzer, assetpurposes):
         """Investment constructor
         Use the function parse_investment_file to obtain the necessary information from an investment file.
         It sets up all internal data structures and analyzes the transactions, and creates some basic data
@@ -71,7 +70,7 @@ class Investment:
             raise RuntimeError("Actions-column contains faulty strings. Filename: " + self.filename)
 
         # Check, if the purpose-string only contains allowed purposes:
-        if stringoperations.check_allowed_strings([self.purpose], cfg.ASSET_PURPOSES) is False:
+        if stringoperations.check_allowed_strings([self.purpose], assetpurposes) is False:
             raise RuntimeError("Purpose of investment is not recognized. Filename: " + self.filename)
 
         # Perform sanity-checks with the transactions.

@@ -8,10 +8,9 @@ Copyright (c) 2018 Mario Mauerer
 import stringoperations as stringops
 import account
 import setup
-import PROFIT_main as cfg
 
 
-def parse_account_file(filepath, dateformat, analyzer):
+def parse_account_file(filepath, dateformat, analyzer, basecurrency, assetpurposes):
     """Parses an account-file.
     Calls the constructor of the account-class at the end.
     Any relevant information in the file may not contain whitespaces! They are all eliminated while parsing.
@@ -172,6 +171,6 @@ def parse_account_file(filepath, dateformat, analyzer):
                     setup.DICT_KEY_BALANCES: balance, setup.DICT_KEY_NOTES: notes}
 
     # Create and populate the account-object:
-    accnt = account.Account(accnt_id, accnt_type, accnt_purpose, accnt_currency, cfg.BASECURRENCY, filepath,
-                            transactions, dateformat, analyzer)
+    accnt = account.Account(accnt_id, accnt_type, accnt_purpose, accnt_currency, basecurrency, filepath,
+                            transactions, dateformat, analyzer, assetpurposes)
     return accnt

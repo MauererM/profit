@@ -10,7 +10,7 @@ import matplotlib
 import matplotlib.pyplot as plt
 from matplotlib.ticker import FormatStrFormatter
 import pylab
-import PROFIT_main as cfg
+#import PROFIT_main as cfg # Todo: remove this
 import stringoperations
 import analysis
 import setup

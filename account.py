@@ -5,7 +5,6 @@ MIT License
 Copyright (c) 2018 Mario Mauerer
 """
 
-import PROFIT_main as cfg
 import setup
 import stringoperations
 import dateoperations
@@ -15,7 +14,7 @@ class Account:
     """Implements an account. Parses transactions, provides analysis-data, performs currency conversions"""
 
     def __init__(self, ident_str, type_str, purpose_str, currency_str, basecurrency_str, filename_str,
-                 transactions_dict, dateformat_str, analyzer):
+                 transactions_dict, dateformat_str, analyzer, assetpurposes):
         """Account constructor
         Use the function parse_account_file to obtain the necessary information from an account file.
         It sets up all internal data structures and analyzes the transactions.
@@ -61,7 +60,7 @@ class Account:
             raise RuntimeError("Actions-column contains faulty strings. Filename: " + self.filename)
 
         # Check, if the purpose-string only contains allowed purposes:
-        if stringoperations.check_allowed_strings([self.purpose], cfg.ASSET_PURPOSES) is False:
+        if stringoperations.check_allowed_strings([self.purpose], assetpurposes) is False:
             raise RuntimeError("Purpose of Account is not recognized. Filename: " + self.filename)
 
         # Create a list of consecutive calendar days that corresponds to the date-range of the recorded transactions:
