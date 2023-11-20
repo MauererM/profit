@@ -425,6 +425,19 @@ def fuse_two_value_lists(datelist_full, dates_1_partial, vals_1_partial_groundtr
     return values_final
 
 
+def is_date_valid(datestring, dateformat):
+    """Checks if the provided date-string is a valid date
+    :param datestring: String of a date
+    :param dateformat: Desired date-format
+    :return True, if datestring adheres to dateformat
+    """
+    try:
+        datetime.datetime.strptime(datestring, dateformat)
+        return True
+    except:
+        return False
+
+
 """
     Stand-alone execution for testing:
 """

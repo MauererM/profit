@@ -8,7 +8,13 @@ Copyright (c) 2018 Mario Mauerer
 import dateoperations
 import stringoperations
 import files
-import marketdata
+
+class ForexData:
+    def __init__(self, fname, interpol_days, data):
+        self.name = fname
+        self.interpol_days = interpol_days
+        self.dates = data[0]
+        self.values = data[1]
 
 
 class ForexRates:

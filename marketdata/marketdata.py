@@ -1,14 +1,210 @@
-"""Functions for handling the file-based marketdata-repository. Used by prices and forex
+"""Package for handling the file-based marketdata-repository
 
 PROFIT - Python-Based Return on Investment and Financial Investigation Tool
 MIT License
-Copyright (c) 2018 Mario Mauerer
+Copyright (c) 2018-2023 Mario Mauerer
 """
 
+import re
 import stringoperations
 import dateoperations
 import files
 import helper
+from forex import ForexData
+from stock import StockData
+from index import IndexData
+
+# Layout/Todo:
+"""
+What are the goals? 
+More complex csv-storage, inclusion of header.
+ 
+Header-content: 
+Forex: Allowed interpolation for data to be able to enter the storage
+Stocks: Splits, Allowed interpolation
+
+Treatment of stocks- and forex-files differently. 
+
+Verification of existing storage at startup. How to identify the different files?
+
+Good input sanitization
+
+One single path for marketdata-storage (all csv into one folder)
+"""
+
+
+class MarketData:
+    """
+    The content-format for forex- and stockmarket-index-files is as follows:
+    Header;
+    MAX_INTERPOLATION_DAYS; <N>
+    Data;
+    08.03.2020;1.434
+    ...
+
+    The content-format for stock price-files is as follows:
+    Header;
+    MAX_INTERPOLATION_DAYS; <N>
+    Split;<date>;<float>
+    Data;
+    03.02.2020;134.30
+    ...
+    Note: The split-lines are optional. The split-value can be float. With this, reverse splits are also possible
+
+    """
+    DELIMITER = ";"
+    EXTENSION = "csv"
+    HEADER_STRING = "Header"
+    DATA_STRING = "Data"
+    SPLIT_STRING = "Split"
+    INTERPOLATION_HEADER_STRING = "MAX_INTERPOLATION_DAYS"
+    # forex + Symbol A + Symbol B:
+    FORMAT_FOREX = r'^forex_[a-zA-Z0-9]{1,5}_[a-zA-Z0-9]{1,5}\.csv$'
+    # stock + Symbol + Exchange + Currency:
+    FORMAT_STOCK = r'^stock_[a-zA-Z0-9.]{1,10}_[a-zA-Z0-9.]{1,10}_[a-zA-Z0-9]{1,5}\.csv$'
+    # index + Symbol:
+    FORMAT_INDEX = r'^index_[a-zA-Z0-9.]{1,10}\.csv$'
+
+    def __init__(self, path_to_storage_folder, dateformat, analyzer):
+        self.storage_folder_path = path_to_storage_folder
+        self.dateformat = dateformat
+        self.analyzer = analyzer
+        self.filesdict = {"stock": [], "index": [], "forex": []}
+        self.forexobjects = []
+        self.stockobjects = []
+        self.indexobjects = []
+
+        self.verify_and_read_storage() # Reads _all_ stored files in the folder. For regular data-integrity checks.
+
+    def __is_string_valid_format(self, s, pattern):
+        return bool(re.match(pattern, s))
+
+    def __check_filenames(self, flist):
+        for f in flist:
+            if f[0:5] == "forex":
+                if self.__is_string_valid_format(f, self.FORMAT_FOREX) is False:
+                    raise RuntimeError("Misformatted string for " + f)
+                self.filesdict["forex"].append(files.create_path(self.storage_folder_path, f))
+            elif f[0:5] == "stock":
+                if self.__is_string_valid_format(f, self.FORMAT_STOCK) is False:
+                    raise RuntimeError("Misformatted string for " + f)
+                self.filesdict["stock"].append(files.create_path(self.storage_folder_path, f))
+            elif f[0:5] == "index":
+                if self.__is_string_valid_format(f, self.FORMAT_INDEX) is False:
+                    raise RuntimeError("Misformatted string for " + f)
+                self.filesdict["index"].append(files.create_path(self.storage_folder_path, f))
+            else:
+                raise RuntimeError("Detected faulty file name in marketdata storage: " + f +
+                                   ". File names must start with forex, stock or index")
+
+    def __parse_forex_index_file(self, fname, is_index=False):
+        lines = files.get_file_lines(fname)
+
+        # Read the header:
+        d_interp = None
+        dates = []
+        vals = []
+        for line_nr, line in enumerate(lines):
+            stripline = stringoperations.strip_whitespaces(line)
+            if line_nr == 0:
+                txt, _ = stringoperations.read_crop_string_delimited(stripline, self.DELIMITER)
+                if txt != self.HEADER_STRING:
+                    raise RuntimeError("File must start with Header-string. File: " + fname)
+            elif line_nr == 1:
+                txt, val = stringoperations.read_crop_string_delimited(stripline, self.DELIMITER)
+                if txt != self.INTERPOLATION_HEADER_STRING:
+                    raise RuntimeError("After Header, the value for max. "
+                                       "interpolation days must follow. File: " + fname)
+                try:
+                    d_interp = int(val)
+                except:
+                    raise RuntimeError("Could not convert interpolation-days string to integer.")
+            elif line_nr == 2:
+                txt, _ = stringoperations.read_crop_string_delimited(stripline, self.DELIMITER)
+                if txt != self.DATA_STRING:
+                    raise RuntimeError("After max. interpolation days must follow data-string. File: " + fname)
+            else:
+                d, v = stringoperations.read_crop_string_delimited(stripline, self.DELIMITER)
+                if dateoperations.is_date_valid(d, self.dateformat) is True:
+                    dates.append(d)
+                    vals.append(float(v))
+                else:
+                    raise RuntimeError("Invalid date found! File: " + fname + ". Date: " + d)
+
+        if dateoperations.check_dates_consecutive(dates, self.analyzer) is False:
+            raise RuntimeError("The dates in a forex-storage file must be consecutive! There are dates missing.")
+        if is_index is False:
+            f = ForexData(fname, d_interp, (dates, vals))
+        else:
+            f = IndexData(fname, d_interp, (dates, vals))
+        return f
+
+    def __parse_stock_file(self, fname):
+        lines = files.get_file_lines(fname)
+
+        # Read the header:
+        d_interp = None
+        splits = []
+        dates = []
+        vals = []
+        data_reached = False
+        for line_nr, line in enumerate(lines):
+            stripline = stringoperations.strip_whitespaces(line)
+            if line_nr == 0:
+                txt, _ = stringoperations.read_crop_string_delimited(stripline, self.DELIMITER)
+                if txt != self.HEADER_STRING:
+                    raise RuntimeError("File must start with Header-string. File: " + fname)
+            elif line_nr == 1:
+                txt, val = stringoperations.read_crop_string_delimited(stripline, self.DELIMITER)
+                if txt != self.INTERPOLATION_HEADER_STRING:
+                    raise RuntimeError("After Header, the value for max. "
+                                       "interpolation days must follow. File: " + fname)
+                try:
+                    d_interp = int(val)
+                except:
+                    raise RuntimeError("Could not convert interpolation-days string to integer.")
+            elif line_nr >= 2 and data_reached is False:  # Can be "SPLIT" or "Data"
+                begin, rest = stringoperations.read_crop_string_delimited(stripline, self.DELIMITER)
+                if begin == self.SPLIT_STRING:
+                    split_date, split_value = stringoperations.read_crop_string_delimited(rest, self.DELIMITER)
+                    if dateoperations.is_date_valid(split_date, self.dateformat) is True:
+                        splits.append((split_date, float(split_value)))
+                    else:
+                        raise RuntimeError("Invalid date found! File: " + fname + ". Date: " + split_date)
+                elif begin == self.DATA_STRING:
+                    data_reached = True
+                else:
+                    raise RuntimeError("After max. interpolation days must follow data- or split-string. "
+                                       "File: " + fname)
+            elif data_reached is True:
+                d, v = stringoperations.read_crop_string_delimited(stripline, self.DELIMITER)
+                if dateoperations.is_date_valid(d, self.dateformat) is True:
+                    dates.append(d)
+                    vals.append(float(v))
+                else:
+                    raise RuntimeError("Invalid date found! File: " + fname + ". Date: " + d)
+        if dateoperations.check_dates_consecutive(dates, self.analyzer) is False:
+            raise RuntimeError("The dates in a stock-storage file must be consecutive! There are dates missing "
+                               "or out of order. File: " + fname)
+        f = StockData(fname, d_interp, (dates, vals), splits)
+        return f
+
+    def verify_and_read_storage(self):
+        """ Check _all_ files in the storage folder for validity. Do this regularly to make sure the database
+        is not getting corrupted.
+        """
+        f = files.get_file_list(self.storage_folder_path, self.EXTENSION)
+        self.__check_filenames(
+            f)  # This also fills the dictionary/sorts the file-names according to what they represent
+
+        for file in self.filesdict["stock"]:
+            self.stockobjects.append(self.__parse_stock_file(file))
+
+        for file in self.filesdict["forex"]:
+            self.forexobjects.append(self.__parse_forex_index_file(file, is_index=False))
+
+        for file in self.filesdict["index"]:
+            self.indexobjects.append(self.__parse_forex_index_file(file, is_index=True))
 
 
 def update_check_marketdata_in_file(filepath, dateformat_marketdata, dateformat, marketdata_delimiter,
@@ -200,9 +396,9 @@ def import_marketdata_from_file(filepath, dateformat_marketdata, dateformat, mar
     Stand-alone execution for testing:
 """
 if __name__ == '__main__':
-    test = list(reversed(list(range(3))))
-    print(test)
-
-    # lis = [1, 2, 3, 4]
-    # lis.insert(4, 8)
-    # print(lis)
+    storage_path = "../marketdata_storage"
+    dateformat = "%d.%m.%Y"
+    dtconverter = stringoperations.DateTimeConversion()
+    import analysis
+    analyzer = analysis.AnalysisRange("01.01.2020", "01.01.2023", dateformat, dtconverter)
+    obj = MarketData(storage_path, dateformat, analyzer)

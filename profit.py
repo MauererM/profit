@@ -10,11 +10,9 @@ import accountparser
 import investmentparser
 import files
 import stringoperations
-import forex
 import dateoperations
 import plotting
 import analysis
-import prices
 import config
 from dataprovider.dataprovider import DataproviderMain
 
@@ -131,6 +129,9 @@ if __name__ == '__main__':
 
     # Initialize the data provider. If none can be initialized, an empty fallback provider will be selected.
     provider = DataproviderMain(analyzer)
+
+    # Initialize the market data system.
+    # Todo
 
     """
     Sanity checks:

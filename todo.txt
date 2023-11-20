@@ -9,3 +9,4 @@ Separate data and packages. Provide a search-path for the data (input and output
 
 Investment, account also as plugin...? Subpackage? Sensible? 
 
+

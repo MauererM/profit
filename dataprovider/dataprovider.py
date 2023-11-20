@@ -5,7 +5,6 @@ MIT License
 Copyright (c) 2020-2023 Mario Mauerer
 """
 
-import time
 import pkgutil
 import inspect
 import importlib
