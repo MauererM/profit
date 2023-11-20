@@ -10,14 +10,13 @@ import matplotlib
 import matplotlib.pyplot as plt
 import pylab
 import files
-import setup
-import PROFIT_main as cfg
+import config
 
 
 def configure_plot_common():
     """Set plot-configurations that are common to all plots:
     """
-    plt.rcParams['figure.figsize'] = setup.PLOTSIZE
+    plt.rcParams['figure.figsize'] = config.PLOTSIZE
     plt.rcParams['figure.autolayout'] = True
     plt.rcParams['font.weight'] = 'medium'
     plt.rcParams['text.usetex'] = False  # Don't use Latex
@@ -155,7 +154,7 @@ def create_stackedplot(xlist, ylists, legendlist, colorlist, titlestring, xlabel
     # PDF Export:
     plt.savefig(fname)
 
-    if cfg.OPEN_PLOTS is True:
+    if config.OPEN_PLOTS is True:
         open_plot(fname)
 
 

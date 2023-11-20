@@ -5,6 +5,53 @@ MIT License
 Copyright (c) 2018 Mario Mauerer
 """
 
+"""
+All asset values are calculated in the base currency.
+Provide a string like "CHF", "USD", "HKD" etc.
+"""
+BASECURRENCY = "CHF"
+
+"""
+This switch determines whether the plots are opened directly after creation or not.
+If it is set to True, many PDFs will be opened
+"""
+OPEN_PLOTS = False
+
+"""
+Select, if existing plots are deleted before new ones are created. Might prevent confusion/mixups with old/new plots
+"""
+PURGE_OLD_PLOTS = True
+
+"""
+Window length (in days) of moving average filter. Some plots contain filtered data.
+"""
+WINLEN_MA = 30
+
+"""
+Purposes of the Assets
+Each asset has a designated purpose. The following list of strings names them all.
+The asset purpose must be a member of this list, as otherwise an error is thrown.
+Don't use whitespaces in the strings - they are stripped when parsing the asset-files.
+"""
+ASSET_PURPOSES = ["Liquidity", "Cash", "Retirement_Open", "Retirement_Closed", "Safety_Reserve",
+                  "Savings_Car", "Savings_House", "Other"]
+
+"""
+Asset Purpose-Groups
+The different assets can be grouped according to their purpose, which is used for some plots and provides some insight
+into the distribution of asset values.
+The groups are given below as list of strings (with arbitrary names).
+However, the overall list of lists that collects the groups must be named "ASSET_GROUPS".
+"""
+ASSET_GROUP_1 = [ASSET_PURPOSES[0], ASSET_PURPOSES[1], ASSET_PURPOSES[7]]
+ASSET_GROUP_2 = [ASSET_PURPOSES[2], ASSET_PURPOSES[3]]
+ASSET_GROUP_3 = [ASSET_PURPOSES[4]]
+ASSET_GROUP_4 = [ASSET_PURPOSES[5], ASSET_PURPOSES[6]]
+# This list collects all asset groups. Its name must be ASSET_GROUPS!
+ASSET_GROUPS = [ASSET_GROUP_1, ASSET_GROUP_2, ASSET_GROUP_3, ASSET_GROUP_4]
+# Corresponding user-defined names can be given for the groups, which will be used in the plots.
+ASSET_GROUPNAMES = ["Freely Available Money", "Retirement", "Safety", "Savings"]
+
 # The marketdata-folder stores different files containing historic prices and forex-rates
 MARKETDATA_FOLDER = "marketdata"
 # The plots-folder:

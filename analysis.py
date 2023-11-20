@@ -39,6 +39,9 @@ class AnalysisRange:
     def get_analysis_datelist_dt(self):
         return self.analysis_datelist_dt
 
+    def get_dateformat(self):
+        return self.dateformat
+
 
 def project_values(datelist, valuelist, num_years, interest_percent, dateformat):
     """Projects values into the future given a certian interest rate. Annual compounding is assumed.
@@ -101,7 +104,7 @@ def calc_moving_avg(xlist, ylist, winlen):
     yfilt = []
     # Middle index:
     mididx = int(round(n / 2.0))
-    for i, y in enumerate(ylist, start=n):
+    for i, _ in enumerate(ylist, start=n):  # Todo: The start=n here seems to crash Pylint...
         if i == len(ylist) + 1:
             break
         win = ylist[i - n:i]
@@ -124,9 +127,8 @@ def get_asset_values_summed(assets):
                 raise RuntimeError("Assets contain value-lists of differing length.")
             sumval = [x + y for x, y in zip(sumval, val)]
         return sumval
-    else:
-        sumval = assets[0].get_analysis_valuelist()
-        return sumval
+    sumval = assets[0].get_analysis_valuelist()
+    return sumval
 
 
 def get_asset_inflows_summed(assets):
@@ -142,9 +144,8 @@ def get_asset_inflows_summed(assets):
                 raise RuntimeError("Assets contain value-lists of differing length.")
             sumval = [x + y for x, y in zip(sumval, val)]
         return sumval
-    else:
-        sumval = assets[0].get_analysis_inflowlist()
-        return sumval
+    sumval = assets[0].get_analysis_inflowlist()
+    return sumval
 
 
 def get_asset_outflows_summed(assets):
@@ -160,9 +161,8 @@ def get_asset_outflows_summed(assets):
                 raise RuntimeError("Assets contain value-lists of differing length.")
             sumval = [x + y for x, y in zip(sumval, val)]
         return sumval
-    else:
-        sumval = assets[0].get_analysis_outflowlist()
-        return sumval
+    sumval = assets[0].get_analysis_outflowlist()
+    return sumval
 
 
 def get_asset_payouts_summed(assets):
@@ -178,9 +178,8 @@ def get_asset_payouts_summed(assets):
                 raise RuntimeError("Assets contain value-lists of differing length.")
             sumval = [x + y for x, y in zip(sumval, val)]
         return sumval
-    else:
-        sumval = assets[0].get_analysis_payoutlist()
-        return sumval
+    sumval = assets[0].get_analysis_payoutlist()
+    return sumval
 
 
 def get_asset_costs_summed(assets):
@@ -196,9 +195,8 @@ def get_asset_costs_summed(assets):
                 raise RuntimeError("Assets contain value-lists of differing length.")
             sumval = [x + y for x, y in zip(sumval, val)]
         return sumval
-    else:
-        sumval = assets[0].get_analysis_costlist()
-        return sumval
+    sumval = assets[0].get_analysis_costlist()
+    return sumval
 
 
 def get_return_asset_holdingperiod(asset, dateformat):
@@ -395,7 +393,7 @@ def get_returns_assets_accumulated(assets, period, analyzer):
                 raise RuntimeError("All assets must have identical datelists for the return-analysis.")
 
             # Add the values up:
-            for idx, date in enumerate(dates):
+            for idx, _ in enumerate(dates):
                 tot_valuelist[idx] += values[idx]
                 tot_costlist[idx] += costs[idx]
                 tot_payoutlist[idx] += payouts[idx]
@@ -536,7 +534,7 @@ def get_returns_asset_daily_absolute_analysisperiod(asset, dateformat, analyzer)
     # If there is an asset-price available, get the latest possible one that is recorded:
     today_price_avail = False
     if priceobj.is_price_avail() is True:
-        latest_date, latest_price = priceobj.get_latest_price_date()
+        latest_date, _ = priceobj.get_latest_price_date()
         latest_date_dt = analyzer.str2datetime(latest_date)
         # The value can be determined from most recent price!
         if latest_date_dt >= today_dt:  # We have a price, even for today; this is good.
@@ -602,7 +600,7 @@ def calc_returns_daily_absolute(datelist, valuelist, costlist, payoutlist, inflo
         raise RuntimeError("The lists must all be of equal lenghts.")
 
     ret = []
-    for idx, date in enumerate(datelist):
+    for idx, _ in enumerate(datelist):
         cost = sum(costlist[0:idx + 1])
         payout = sum(payoutlist[0:idx + 1])
         inflow = sum(inflowlist[0:idx + 1])

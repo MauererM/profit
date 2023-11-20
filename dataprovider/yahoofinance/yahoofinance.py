@@ -12,15 +12,14 @@ import time
 from io import StringIO
 import pandas as pd
 import stringoperations
+from dataprovider.provider_abc import DataProvider
 
 
-class DataproviderYahoo:
+class DataproviderYahoo(DataProvider):
     """Gets data from the yahoo finance website, their "historical data" option."""
 
     def __init__(self, dateformat):
-        """
-        Constructor: Also obtains a cookie/crumb from yahoo finance to enable subsequent downloads. 
-        :param dateformat: String that encodes the format of the dates, e.g. "%d.%m.%Y"
+        """:param dateformat: String that encodes the format of the dates, e.g. "%d.%m.%Y"
         """
         self.cookie = None
         self.crumb = None
@@ -32,8 +31,7 @@ class DataproviderYahoo:
         self.name = "Yahoo Finance"
 
     def initialize(self):
-        """
-        Initializes this provider: Can we obtain a cookie, and can we successfully pull some data?
+        """Initializes this provider: Can we obtain a cookie, and can we successfully pull some data?
         """
         urllib.request.install_opener(self.opener)
         try:
@@ -46,21 +44,28 @@ class DataproviderYahoo:
                                                   self.dateformat)
         stopdate = stringoperations.datetime2str(stringoperations.str2datetime("01.09.2020", self.dateformat),
                                                  self.dateformat)
-        symbol = "BAC"
-        return self.__check_functionality(startdate, stopdate, symbol)
+
+        return self.__check_functionality(startdate, stopdate)
 
     def get_name(self):
+        """:return: The name of this data provider"""
         return self.name
 
-    def retrieve_forex_data(self, sym_a, sym_b, p1, p2):
+    def retrieve_forex_data(self, sym_a, sym_b, startdate, stopdate):
         """Pulls historic forex data from the Yahoo website.
-        :param p1, p2: Epoch time of start- and stop of desired historic interval
         :param sym_a, sym_b: String of the currency symbol, as used by the data provider.
+        :param startdate: stopdate: Strings for the date-interval of the desired historic data.
         :return: Two lists, one a list of strings (dates) and the corresponding forex values (list of floats)
          """
         # Wait for the API/homepage to cool down (frequent requests are not allowed)
         print(f"Waiting {self.cooldown:.1f}s for API cooldown")
         time.sleep(self.cooldown)
+
+        startdate_dt = stringoperations.str2datetime(startdate, self.dateformat)
+        stopdate_dt = stringoperations.str2datetime(stopdate, self.dateformat)
+
+        p1 = int(time.mktime(startdate_dt.timetuple()))
+        p2 = int(time.mktime(stopdate_dt.timetuple()))
 
         curr_str = sym_a + sym_b
         curr_str = curr_str + "=X"
@@ -97,10 +102,11 @@ class DataproviderYahoo:
 
         return forexdates, forexrates  # Returns strings and floats
 
-    def retrieve_stock_data(self, p1, p2, symbol, symbol_exchange=None):
+    def retrieve_stock_data(self, symbol, startdate, stopdate, symbol_exchange=None):
         """Pulls historic stock data from the Yahoo website.
-        :param p1, p2: Epoch time of start- and stop of desired historic interval
         :param symbol: String of the stock symbol, as used by the data provider.
+        :param startdate: String of the start-date of the interval that should be retrieved
+        :param stopdate: String of the stop-date of the interval that should be retrieved
         :param symbol_exchange: String of the exchange, e.g., "SWX". Unused in Yahoo finance, as the exchange
         is encoded in the symbol (e.g., CSGN.SW)
         :return: Two lists, one a list of strings (dates) and the corresponding stock values (list of floats)
@@ -108,6 +114,12 @@ class DataproviderYahoo:
         # Wait for the API/Yahoo finance to cool down (frequent requests are likely not allowed)
         print(f"Waiting {self.cooldown:.1f}s for API cooldown")
         time.sleep(self.cooldown)
+
+        startdate_dt = stringoperations.str2datetime(startdate, self.dateformat)
+        stopdate_dt = stringoperations.str2datetime(stopdate, self.dateformat)
+
+        p1 = int(time.mktime(startdate_dt.timetuple()))
+        p2 = int(time.mktime(stopdate_dt.timetuple()))
 
         param = dict()
         param['period1'] = str(p1)
@@ -172,11 +184,16 @@ class DataproviderYahoo:
             # print("Not sure if cookie from Yahoo finance was obtained correctly.")
             pass
 
-    def __check_functionality(self, startdate, stopdate, symbol):
+    def __check_functionality(self, startdate, stopdate):
         """ Performs a functionality-check: (try to) obtain some stock-data.
         :param startdate, stopdate: String for the start/stop data of the intended period
-        :param symbol: String of the desired stock-symbol to be attempted to retrieve
+        :return True if success, False otherwise
         """
+
+        SYM_STOCK = "BAC"
+        SYM_1_FOREX = "CHF"
+        SYM_2_FOREX = "USD"
+
         startdate_dt = stringoperations.str2datetime(startdate, self.dateformat)
         stopdate_dt = stringoperations.str2datetime(stopdate, self.dateformat)
         duration = stopdate_dt - startdate_dt
@@ -185,14 +202,21 @@ class DataproviderYahoo:
         if duration < (MIN_DURATION + 10):
             raise RuntimeError(
                 "It's probably better to check the functionality of yahoo finance with a longer interval > 15d")
-        p1 = int(time.mktime(startdate_dt.timetuple()))
-        p2 = int(time.mktime(stopdate_dt.timetuple()))
 
         try:
-            d, _ = self.retrieve_stock_data(p1, p2, symbol, None)
+            d, _ = self.retrieve_stock_data(SYM_STOCK, startdate, stopdate, symbol_exchange=None)
         except:
             return False
 
         if len(d) < MIN_DURATION:  # Something likely went wrong/way too little data provided
             return False
+
+        try:
+            d, _ = self.retrieve_forex_data(SYM_1_FOREX, SYM_2_FOREX, startdate, stopdate)
+        except:
+            return False
+
+        if len(d) < MIN_DURATION:  # Something likely went wrong/way too little data provided
+            return False
+
         return True
