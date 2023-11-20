@@ -35,7 +35,7 @@ class ForexData(MarketDataStorage):
         self.symbol_b = groups[1]
 
     def get_filename(self):
-        return self.fname
+        return self.fname # Don't return the path-name
 
 
 class ForexRates:

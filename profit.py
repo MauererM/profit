@@ -133,7 +133,6 @@ if __name__ == '__main__':
 
     # Initialize the market data system.
     marketdata = MarketDataMain("marketdata_storage", config.FORMAT_DATE, analyzer)
-    debug = marketdata.get_marketdata_object("testname")
 
     """
     Sanity checks:

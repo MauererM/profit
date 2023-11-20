@@ -55,7 +55,7 @@ class StockData(MarketDataStorage):
                 raise RuntimeError("Not all splits were available in the provided dataset. File: " + self.fname)
 
     def get_filename(self):
-        return self.fname
+        return self.fname # Don't return the path-name
 
 
 class MarketPrices:

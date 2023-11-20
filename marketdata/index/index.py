@@ -31,4 +31,4 @@ class IndexData(MarketDataStorage):
         self.index = groups[0]
 
     def get_filename(self):
-        return self.fname
+        return self.fname # Don't return the path-name

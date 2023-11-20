@@ -211,15 +211,40 @@ class MarketDataMain:
         for file in self.filesdict["index"]:
             self.indexobjects.append(self.__parse_forex_index_file(file, is_index=True))
 
-
-    def get_marketdata_object(self, fname):
+    def __get_marketdata_object(self, fname):
         """Checks if a marketdata file is available for a given file name, and returns the related object if available.
         Returns none, if the file/related data is not available.
         It searches for file-names, not path-names.
         """
         for obj in self.dataobjects:
-            pass # Todo continue here
+            if obj.get_filename() == fname:
+                return obj
+        return None
 
+    def __build_stock_filename(self, symbol, exchange, currency):
+        return "stock_" + symbol + "_" + exchange + "_" + currency + ".csv"
+
+    def __build_forex_filename(self, symbol_a, symbol_b):
+        return "forex_" + symbol_a + "_" + symbol_b + ".csv"
+
+    def __build_index_filename(self, indexname):
+        return "index_" + indexname + ".csv"
+
+    def get_marketdata_object(self, obj_type, symbols):
+        if obj_type == "stock":
+            symbol = symbols[0]
+            exchange = symbols[1]
+            currency = symbols[2]
+            return self.__get_marketdata_object(self.__build_stock_filename(symbol, exchange, currency))
+        elif obj_type == "forex":
+            symbol_a = symbols[0]
+            symbol_b = symbols[1]
+            return self.__get_marketdata_object(self.__build_forex_filename(symbol_a, symbol_b))
+        elif obj_type == "index":
+            indexname = symbols[0]
+            return self.get_marketdata_object(self.__build_index_filename(indexname))
+        else:
+            return RuntimeError("Object type not known. Must be stock, forex or index")
 
 
 def update_check_marketdata_in_file(filepath, dateformat_marketdata, dateformat, marketdata_delimiter,
