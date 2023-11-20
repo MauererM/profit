@@ -1,8 +1,5 @@
 Check the "todo" strings in the code
 
-Implement the dataprovider-system as a plugin. How to code a proper plugin, incl. ABC? Inheritance? setuptools
-
-Make the whole thing a proper package with sub-packages? Is a plugin a subpackage?
 
 Use the ZKB API as plugin? Swissquote? CS?
 
