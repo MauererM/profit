@@ -29,6 +29,12 @@ Stocks: Splits, Allowed interpolation
 If splits are given, then the data, when further processed, is automatically adjusted according to the splits. # Todo document this in the docs, also the fact how the headers should look. 
 
 Good input sanitization
+
+# Todo: Continue here: 
+# Data-retrieval of marketdata-objects: Enforce same behavior via ABC? How to match/find the range? String-search? What if the range is not available? Provide as much as possible, and provide missing dates?!
+# Do this via a single function in marketdata, or in the sub-packages? Might make sense to do this in marketdata, as it is the same for all...
+
+# Data-insertion: Append data at beginning or end. Prepare, though, for the option to overwrite data that is not matching, on a per-file basis!
 """
 
 
