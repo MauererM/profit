@@ -5,16 +5,33 @@ MIT License
 Copyright (c) 2018 Mario Mauerer
 """
 
+import re
 import dateoperations
 import stringoperations
 import files
 
+
 class ForexData:
-    def __init__(self, fname, interpol_days, data):
-        self.name = fname
+    """Represents data from a marketdata-csv.
+    Forex files have this format:
+    forex + Symbol A + Symbol B:
+    "forex_[a-zA-Z0-9]{1,5}_[a-zA-Z0-9]{1,5}\.csv"
+    """
+
+    FORMAT_FNAME_GROUPS = r'forex_([a-zA-Z0-9]{1,5})_([a-zA-Z0-9]{1,5})\.csv'
+
+    def __init__(self, pathname, interpol_days, data):
+        self.pname = pathname
         self.interpol_days = interpol_days
         self.dates = data[0]
         self.values = data[1]
+
+        # From the pathname, extract the name of the file and its constituents.
+        self.fname = files.get_filename_from_path(self.pname)
+        match = re.match(self.FORMAT_FNAME_GROUPS, self.fname)
+        groups = match.groups()
+        self.symbol_a = groups[0]
+        self.symbol_b = groups[1]
 
 
 class ForexRates:

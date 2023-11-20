@@ -16,20 +16,19 @@ from index import IndexData
 
 # Layout/Todo:
 """
-What are the goals? 
-More complex csv-storage, inclusion of header.
+Fundamental principles: 
+1) Ony consecutive dates allowed to be stored in marketdata-files. 
+2) Some amount of interpolation is allowed. Defined on per-file basis via its header. 
+3) Marketdata-files have precedent/are ground truth. 
+4) Stock splits can optionally be given in header of stock-files. Read data will be adjusted accordingly (but no stored data is overwritten). Reason: Some data providers do not reflect splits; This allows to correct this. 
+5) # Todo: Flag in header to allow overwrite of stored data from data provider? Reason: Change of provider? More flexibility?
+
  
 Header-content: 
-Forex: Allowed interpolation for data to be able to enter the storage
 Stocks: Splits, Allowed interpolation
-
-Treatment of stocks- and forex-files differently. 
-
-Verification of existing storage at startup. How to identify the different files?
+If splits are given, then the data, when further processed, is automatically adjusted according to the splits. # Todo document this in the docs, also the fact how the headers should look. 
 
 Good input sanitization
-
-One single path for marketdata-storage (all csv into one folder)
 """
 
 
@@ -50,6 +49,7 @@ class MarketData:
     03.02.2020;134.30
     ...
     Note: The split-lines are optional. The split-value can be float. With this, reverse splits are also possible
+    Normal splits have a split-factor >1. Reverse splits are <1.
 
     """
     DELIMITER = ";"
@@ -74,7 +74,7 @@ class MarketData:
         self.stockobjects = []
         self.indexobjects = []
 
-        self.verify_and_read_storage() # Reads _all_ stored files in the folder. For regular data-integrity checks.
+        self.verify_and_read_storage()  # Reads _all_ stored files in the folder. For regular data-integrity checks.
 
     def __is_string_valid_format(self, s, pattern):
         return bool(re.match(pattern, s))
@@ -130,7 +130,8 @@ class MarketData:
                     vals.append(float(v))
                 else:
                     raise RuntimeError("Invalid date found! File: " + fname + ". Date: " + d)
-
+        if len(dates) != len(vals):
+            raise RuntimeError("Dates and values must have same length. File: " + fname)
         if dateoperations.check_dates_consecutive(dates, self.analyzer) is False:
             raise RuntimeError("The dates in a forex-storage file must be consecutive! There are dates missing.")
         if is_index is False:
@@ -183,6 +184,8 @@ class MarketData:
                     vals.append(float(v))
                 else:
                     raise RuntimeError("Invalid date found! File: " + fname + ". Date: " + d)
+        if len(dates) != len(vals):
+            raise RuntimeError("Dates and values must have same length. File: " + fname)
         if dateoperations.check_dates_consecutive(dates, self.analyzer) is False:
             raise RuntimeError("The dates in a stock-storage file must be consecutive! There are dates missing "
                                "or out of order. File: " + fname)
@@ -194,8 +197,7 @@ class MarketData:
         is not getting corrupted.
         """
         f = files.get_file_list(self.storage_folder_path, self.EXTENSION)
-        self.__check_filenames(
-            f)  # This also fills the dictionary/sorts the file-names according to what they represent
+        self.__check_filenames(f)  # This also fills the dictionary according to what they represent
 
         for file in self.filesdict["stock"]:
             self.stockobjects.append(self.__parse_stock_file(file))
@@ -400,5 +402,6 @@ if __name__ == '__main__':
     dateformat = "%d.%m.%Y"
     dtconverter = stringoperations.DateTimeConversion()
     import analysis
+
     analyzer = analysis.AnalysisRange("01.01.2020", "01.01.2023", dateformat, dtconverter)
     obj = MarketData(storage_path, dateformat, analyzer)

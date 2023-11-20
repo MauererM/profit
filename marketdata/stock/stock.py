@@ -5,18 +5,54 @@ MIT License
 Copyright (c) 2018 Mario Mauerer
 """
 
+import re
 import files
 import stringoperations
 import dateoperations
 
+
 class StockData:
-    def __init__(self, fname, interpol_days, data, splits):
-        self.name = fname
+    """Represents data from a marketdata-csv.
+    Stock files have this format:
+    stock + Symbol + Exchange + Currency:
+    "stock_[a-zA-Z0-9.]{1,10}_[a-zA-Z0-9.]{1,10}_[a-zA-Z0-9]{1,5}\.csv"
+    """
+    FORMAT_FNAME_GROUPS = r'stock_([a-zA-Z0-9.]{1,10})_([a-zA-Z0-9.]{1,10})_([a-zA-Z0-9]{1,5})\.csv'
+
+    def __init__(self, pathname, interpol_days, data, splits):
+        self.pname = pathname
         self.interpol_days = interpol_days
         self.dates = data[0]
         self.values = data[1]
-        self.splits = splits
-        # Todo Likely some more data needed? Splits?
+        self.splits = splits  # List of tuples. Normal splits have a value >1. Reverse splits have <1.
+
+        # From the pathname, extract the name of the file and its constituents.
+        self.fname = files.get_filename_from_path(self.pname)
+        match = re.match(self.FORMAT_FNAME_GROUPS, self.fname)
+        groups = match.groups()
+        self.symbol = groups[0]
+        self.exchange = groups[1]
+        self.currency = groups[2]
+
+        # If there are splits given in the marketdata-file: Adjust the read data accordingly (but do not
+        # overwrite storec csv data).
+        # This can be needed as some data providers do not account properly for the splits in the data they provide;
+        # This allows to do it manually.
+        if len(self.splits) > 0:
+            split_dates = [x[0] for x in self.splits]
+            split_ratios = [x[1] for x in self.splits]
+            split_factor = 1.0
+            split_cnt = 0
+            for idx in range(len(self.dates) - 1, -1, -1):
+                d = self.dates[idx]
+                index = next((i for i, item in enumerate(split_dates) if item == d), None)
+                if index is not None:
+                    split_factor = split_factor * split_ratios[index]
+                    split_cnt = split_cnt + 1
+                self.values[idx] = self.values[idx] * split_factor
+            if split_cnt < len(split_dates):
+                raise RuntimeError("Not all splits were available in the provided dataset. File: " + self.fname)
+
 
 class MarketPrices:
     """Obtains online market data (through the dataprovider) and/or obtains the required prices from the
@@ -62,7 +98,7 @@ class MarketPrices:
 
         # Sanity-Checks:
         startdate_dt = self.analyzer.str2datetime(self.startdate)
-        stopdate_dt = self.analyzer.str2datetime(self.stopdate,)
+        stopdate_dt = self.analyzer.str2datetime(self.stopdate, )
         if startdate_dt > stopdate_dt:
             raise RuntimeError("Startdate cannot be after stopdate. Symbol: " + self.symbol + ", exchange: " +
                                self.exchange)

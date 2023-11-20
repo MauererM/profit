@@ -79,6 +79,9 @@ def get_file_list(folderpath, extension):
                                                       and f.endswith(extension) is True)]
     return [f for f in os.listdir(folderpath) if os.path.isfile(os.path.join(folderpath, f))]
 
+def get_filename_from_path(fname):
+    """Strip the folder-path from a file name"""
+    return os.path.basename(fname)
 
 """
     Stand-alone execution for testing:
