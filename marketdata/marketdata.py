@@ -10,9 +10,9 @@ import stringoperations
 import dateoperations
 import files
 import helper
-from forex import ForexData
-from stock import StockData
-from index import IndexData
+from marketdata.forex.forex import ForexData
+from marketdata.stock.stock import StockData
+from marketdata.index.index import IndexData
 
 # Layout/Todo:
 """
@@ -32,7 +32,7 @@ Good input sanitization
 """
 
 
-class MarketData:
+class MarketDataMain:
     """
     The content-format for forex- and stockmarket-index-files is as follows:
     Header;
@@ -73,8 +73,11 @@ class MarketData:
         self.forexobjects = []
         self.stockobjects = []
         self.indexobjects = []
+        self.dataobjects = []
 
+        print("Verifying all files in the marketstorage path")
         self.verify_and_read_storage()  # Reads _all_ stored files in the folder. For regular data-integrity checks.
+        self.dataobjects = self.forexobjects + self.stockobjects + self.indexobjects
 
     def __is_string_valid_format(self, s, pattern):
         return bool(re.match(pattern, s))
@@ -207,6 +210,16 @@ class MarketData:
 
         for file in self.filesdict["index"]:
             self.indexobjects.append(self.__parse_forex_index_file(file, is_index=True))
+
+
+    def get_marketdata_object(self, fname):
+        """Checks if a marketdata file is available for a given file name, and returns the related object if available.
+        Returns none, if the file/related data is not available.
+        It searches for file-names, not path-names.
+        """
+        for obj in self.dataobjects:
+            pass # Todo continue here
+
 
 
 def update_check_marketdata_in_file(filepath, dateformat_marketdata, dateformat, marketdata_delimiter,
@@ -404,4 +417,4 @@ if __name__ == '__main__':
     import analysis
 
     analyzer = analysis.AnalysisRange("01.01.2020", "01.01.2023", dateformat, dtconverter)
-    obj = MarketData(storage_path, dateformat, analyzer)
+    obj = MarketDataMain(storage_path, dateformat, analyzer)

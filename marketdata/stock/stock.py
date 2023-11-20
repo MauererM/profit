@@ -1,17 +1,18 @@
-"""Implements a class that stores market prices of traded assets
+"""Implements a class that stores market prices of stocks
 
 PROFIT - Python-Based Return on Investment and Financial Investigation Tool
 MIT License
-Copyright (c) 2018 Mario Mauerer
+Copyright (c) 2018-2023 Mario Mauerer
 """
 
 import re
 import files
 import stringoperations
 import dateoperations
+from marketdata.marketdata_abc import MarketDataStorage
 
 
-class StockData:
+class StockData(MarketDataStorage):
     """Represents data from a marketdata-csv.
     Stock files have this format:
     stock + Symbol + Exchange + Currency:
@@ -52,6 +53,9 @@ class StockData:
                 self.values[idx] = self.values[idx] * split_factor
             if split_cnt < len(split_dates):
                 raise RuntimeError("Not all splits were available in the provided dataset. File: " + self.fname)
+
+    def get_filename(self):
+        return self.fname
 
 
 class MarketPrices:

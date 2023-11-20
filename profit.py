@@ -15,6 +15,7 @@ import plotting
 import analysis
 import config
 from dataprovider.dataprovider import DataproviderMain
+from marketdata.marketdata import MarketDataMain
 
 # Todo: Move the configs here to config.py?
 
@@ -131,7 +132,8 @@ if __name__ == '__main__':
     provider = DataproviderMain(analyzer)
 
     # Initialize the market data system.
-    # Todo
+    marketdata = MarketDataMain("marketdata_storage", config.FORMAT_DATE, analyzer)
+    debug = marketdata.get_marketdata_object("testname")
 
     """
     Sanity checks:

@@ -1,17 +1,18 @@
-"""Implements a class that stores foreign exchange rates and provides conversion functions
+"""Implements a class that stores forex data
 
 PROFIT - Python-Based Return on Investment and Financial Investigation Tool
 MIT License
-Copyright (c) 2018 Mario Mauerer
+Copyright (c) 2018-2023 Mario Mauerer
 """
 
 import re
 import dateoperations
 import stringoperations
 import files
+from marketdata.marketdata_abc import MarketDataStorage
 
 
-class ForexData:
+class ForexData(MarketDataStorage):
     """Represents data from a marketdata-csv.
     Forex files have this format:
     forex + Symbol A + Symbol B:
@@ -32,6 +33,9 @@ class ForexData:
         groups = match.groups()
         self.symbol_a = groups[0]
         self.symbol_b = groups[1]
+
+    def get_filename(self):
+        return self.fname
 
 
 class ForexRates:
