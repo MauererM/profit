@@ -10,10 +10,9 @@ import matplotlib
 import matplotlib.pyplot as plt
 from matplotlib.ticker import FormatStrFormatter
 import pylab
-#import PROFIT_main as cfg # Todo: remove this
 import stringoperations
 import analysis
-import setup
+import config
 import plotting_aux
 import helper
 
@@ -31,7 +30,7 @@ def plot_currency_values(assetlist, fname, titlestring, analyzer, drawstackedplo
         return
 
     # Get the full path of the file:
-    fname = plotting_aux.modify_plot_path(setup.PLOTS_FOLDER, fname)
+    fname = plotting_aux.modify_plot_path(config.PLOTS_FOLDER, fname)
 
     # x-data for the plots:
     datelist = assetlist[0].get_analysis_datelist()  # Should be the same length everywhere -
@@ -56,7 +55,7 @@ def plot_currency_values(assetlist, fname, titlestring, analyzer, drawstackedplo
     colorlist = plotting_aux.create_colormap("rainbow", len(curset), False)
     xlabel = "Date"
     if drawstackedplot is True:
-        ylabel = "Value (" + cfg.BASECURRENCY + ")"
+        ylabel = "Value (" + config.BASECURRENCY + ")"
         alpha = 0.8
         plotting_aux.create_stackedplot(xlist, curvals, list(curset), colorlist, titlestring, xlabel, ylabel, alpha,
                                         fname)
@@ -111,7 +110,7 @@ def plot_currency_values(assetlist, fname, titlestring, analyzer, drawstackedplo
         # PDF Export:
         plt.savefig(fname)
 
-        if cfg.OPEN_PLOTS is True:
+        if config.OPEN_PLOTS is True:
             plotting_aux.open_plot(fname)
 
 
@@ -135,7 +134,7 @@ def plot_asset_groups(assets, grouplist, groupnames, fname, titlestring, analyze
         return
 
     # Get the full path of the file:
-    fname = plotting_aux.modify_plot_path(setup.PLOTS_FOLDER, fname)
+    fname = plotting_aux.modify_plot_path(config.PLOTS_FOLDER, fname)
 
     # Strip white spaces of group names, for better plotting/file names:
     groupnames = [stringoperations.strip_whitespaces(x) for x in groupnames]
@@ -196,7 +195,7 @@ def plot_asset_groups(assets, grouplist, groupnames, fname, titlestring, analyze
             plt.legend(fancybox=True, shadow=True, ncol=1, framealpha=1.0, loc='best')
 
             ax.set_xlabel("Dates")
-            ax.set_ylabel("Value " + "(" + cfg.BASECURRENCY + ")")
+            ax.set_ylabel("Value " + "(" + config.BASECURRENCY + ")")
             titlestr_mod = titlestring + ". Group: " + groupnames[purpidx]
             plt.title(titlestr_mod)
 
@@ -210,7 +209,7 @@ def plot_asset_groups(assets, grouplist, groupnames, fname, titlestring, analyze
             # PDF Export:
             plt.savefig(fname_cur)
 
-            if cfg.OPEN_PLOTS is True:
+            if config.OPEN_PLOTS is True:
                 plotting_aux.open_plot(fname_cur)
 
 
@@ -223,7 +222,7 @@ def plot_forex_rates(forexobjdict, fname, titlestr, analyzer):
     """
 
     # Get the full path of the file:
-    fname = plotting_aux.modify_plot_path(setup.PLOTS_FOLDER, fname)
+    fname = plotting_aux.modify_plot_path(config.PLOTS_FOLDER, fname)
 
     plotting_aux.configure_lineplot()
     fig = plt.figure()
@@ -234,7 +233,7 @@ def plot_forex_rates(forexobjdict, fname, titlestr, analyzer):
     # Iterate through the dictionary, only plot foreign currencies:
     for key, obj in forexobjdict.items():
         # Only plot foreign rates:
-        if key != cfg.BASECURRENCY:
+        if key != config.BASECURRENCY:
             date, rate = obj.get_dates_rates()
             xlist = [analyzer.str2datetime(x) for x in date]
             ax.plot(xlist, rate, alpha=1.0, zorder=3, clip_on=False, color=colorlist[i], marker='',
@@ -243,16 +242,16 @@ def plot_forex_rates(forexobjdict, fname, titlestr, analyzer):
             last_val = f"{rate[-1]:.2f}"
             ax.text(xlist[-1], rate[-1], last_val)
             # Also plot the moving average:
-            x_ma, y_ma = analysis.calc_moving_avg(xlist, rate, cfg.WINLEN_MA)
+            x_ma, y_ma = analysis.calc_moving_avg(xlist, rate, config.WINLEN_MA)
             linelabel = obj.get_currency() + ", Moving Avg"
             ax.plot(x_ma, y_ma, alpha=1.0, zorder=3, clip_on=False, color=colorlist[i], marker='',
-                    label=linelabel, dashes=setup.DASHES_MA)
+                    label=linelabel, dashes=config.DASHES_MA)
         i += 1
 
     plt.legend(fancybox=True, shadow=True, ncol=1, framealpha=1.0, loc='best')
 
     ax.set_xlabel("Dates")
-    ax.set_ylabel("Exchange Rates with " + cfg.BASECURRENCY)
+    ax.set_ylabel("Exchange Rates with " + config.BASECURRENCY)
     plt.title(titlestr)
 
     # Nicer date-plotting:
@@ -262,7 +261,7 @@ def plot_forex_rates(forexobjdict, fname, titlestr, analyzer):
     # PDF Export:
     plt.savefig(fname)
 
-    if cfg.OPEN_PLOTS is True:
+    if config.OPEN_PLOTS is True:
         plotting_aux.open_plot(fname)
 
 
@@ -276,13 +275,13 @@ def plot_assets_grouped(assetlist, fname, titlestr, plottype, analyzer):
     :return:
     """
     # Get the full path of the file:
-    fname = plotting_aux.modify_plot_path(setup.PLOTS_FOLDER, fname)
+    fname = plotting_aux.modify_plot_path(config.PLOTS_FOLDER, fname)
     # Sanity check:
     if len(assetlist) == 0:
         print("No assets given for plot: " + fname)
         return
 
-    if len(cfg.ASSET_GROUPNAMES) != len(cfg.ASSET_GROUPS):
+    if len(config.ASSET_GROUPNAMES) != len(config.ASSET_GROUPS):
         raise RuntimeError("The length of the asset-groups-list must be equal to the length of the list of the "
                            "asset-group names.")
 
@@ -293,14 +292,14 @@ def plot_assets_grouped(assetlist, fname, titlestr, plottype, analyzer):
 
     # If the configured asset-purposes are different from what is recorded from the actual assets: (at least, in length)
     purp_set = set(purplist)
-    if len(cfg.ASSET_PURPOSES) < len(purp_set):
+    if len(config.ASSET_PURPOSES) < len(purp_set):
         raise RuntimeError("Assets with differing purposes than what ASSET_PURPOSES defines are found. "
                            "This should not happen.")
 
     vals_groups = []
     labels_groups = []
     # Collect the assets of a group and sum up their value
-    for idx, group in enumerate(cfg.ASSET_GROUPS):
+    for idx, group in enumerate(config.ASSET_GROUPS):
         # Just to make sure there are no double entries in our group:
         group_set = set(group)
         # Determine all the assets that belong to the current group:
@@ -311,7 +310,7 @@ def plot_assets_grouped(assetlist, fname, titlestr, plottype, analyzer):
             assets_val = analysis.get_asset_values_summed(assets_cur)
             # Store the summed values of the group:
             vals_groups.append(assets_val)
-            labels_groups.append(cfg.ASSET_GROUPNAMES[idx])
+            labels_groups.append(config.ASSET_GROUPNAMES[idx])
 
     # Create a stacked plot:
     xlist = assetlist[0].get_analysis_datelist()
@@ -320,7 +319,7 @@ def plot_assets_grouped(assetlist, fname, titlestr, plottype, analyzer):
     colorlist = plotting_aux.create_colormap("rainbow", len(vals_groups), False)
 
     xlabel = "Date"
-    ylabel = "Value (" + cfg.BASECURRENCY + ")"
+    ylabel = "Value (" + config.BASECURRENCY + ")"
     alpha = 0.75  # Plot transparency
 
     # Plot:
@@ -334,9 +333,9 @@ def plot_assets_grouped(assetlist, fname, titlestr, plottype, analyzer):
         ax = fig.add_subplot(111)  # Only one plot
 
         for idx, val in enumerate(vals_groups):
-            if idx > len(setup.PLOTS_COLORS) - 1:
+            if idx > len(config.PLOTS_COLORS) - 1:
                 raise RuntimeError("Not enough colors in PLOTS_COLORS (in config-file) given...")
-            ax.plot(xlist, val, alpha=1.0, zorder=3, clip_on=False, color=setup.PLOTS_COLORS[idx], marker='',
+            ax.plot(xlist, val, alpha=1.0, zorder=3, clip_on=False, color=config.PLOTS_COLORS[idx], marker='',
                     label=labels_groups[idx])
             # Label the last value:
             last_val = f"{val[-1]:.2f}"
@@ -349,7 +348,7 @@ def plot_assets_grouped(assetlist, fname, titlestr, plottype, analyzer):
             pylab.matplotlib.ticker.FuncFormatter(lambda x, p: format(int(x), ',')))
 
         ax.set_xlabel("Dates")
-        ax.set_ylabel("Values (" + cfg.BASECURRENCY + ")")
+        ax.set_ylabel("Values (" + config.BASECURRENCY + ")")
         plt.title(titlestr)
 
         # Nicer date-plotting:
@@ -359,7 +358,7 @@ def plot_assets_grouped(assetlist, fname, titlestr, plottype, analyzer):
         # PDF Export:
         plt.savefig(fname)
 
-        if cfg.OPEN_PLOTS is True:
+        if config.OPEN_PLOTS is True:
             plotting_aux.open_plot(fname)
 
     else:
@@ -375,14 +374,14 @@ def plot_asset_purposes(assetlist, fname, titlestr, analyzer):
     :param titlestr: String of plot-title
     """
     # Get the full path of the file:
-    fname = plotting_aux.modify_plot_path(setup.PLOTS_FOLDER, fname)
+    fname = plotting_aux.modify_plot_path(config.PLOTS_FOLDER, fname)
     # Sanity Check:
     if len(assetlist) == 0:
         print("No assets given for plot: " + fname)
         return
 
     # Nr. of different purposes:
-    num_purp_tot = len(cfg.ASSET_PURPOSES)
+    num_purp_tot = len(config.ASSET_PURPOSES)
 
     # Collect all purposes and compare:
     purplist = []
@@ -459,7 +458,7 @@ def plot_asset_purposes(assetlist, fname, titlestr, analyzer):
         pylab.matplotlib.ticker.FuncFormatter(lambda x, p: format(int(x), ',')))
 
     ax.set_xlabel("Dates")
-    ax.set_ylabel("Values (" + cfg.BASECURRENCY + ")")
+    ax.set_ylabel("Values (" + config.BASECURRENCY + ")")
     plt.title(titlestr)
 
     # Nicer date-plotting:
@@ -469,7 +468,7 @@ def plot_asset_purposes(assetlist, fname, titlestr, analyzer):
     # PDF Export:
     plt.savefig(fname)
 
-    if cfg.OPEN_PLOTS is True:
+    if config.OPEN_PLOTS is True:
         plotting_aux.open_plot(fname)
 
 
@@ -481,7 +480,7 @@ def plot_asset_values_indices(assetlist, indexlist, fname, titlestr, analyzer):
     :param titlestr: String of plot-title
     """
     # Get the full path of the file:
-    fname = plotting_aux.modify_plot_path(setup.PLOTS_FOLDER, fname)
+    fname = plotting_aux.modify_plot_path(config.PLOTS_FOLDER, fname)
     # Sanity Check:
     if len(assetlist) == 0:
         print("No assets given for plot: " + fname)
@@ -549,33 +548,33 @@ def plot_asset_values_indices(assetlist, indexlist, fname, titlestr, analyzer):
     ax = fig.add_subplot(111)  # Only one plot
 
     x = [analyzer.str2datetime(x) for x in datelist]
-    ax.plot(x, sumlist_corr, alpha=1.0, zorder=3, clip_on=False, color=setup.PLOTS_COLORS[0], marker='',
+    ax.plot(x, sumlist_corr, alpha=1.0, zorder=3, clip_on=False, color=config.PLOTS_COLORS[0], marker='',
             label="Asset Value",
             linewidth=1.6)
     # Label the last value:
     last_val = f"{sumlist_corr[-1]:.2f}"
     ax.text(x[-1], sumlist_corr[-1], last_val)
     # Also plot the moving average:
-    x_ma, y_ma = analysis.calc_moving_avg(x, sumlist_corr, cfg.WINLEN_MA)
-    ax.plot(x_ma, y_ma, alpha=1.0, zorder=3, clip_on=False, color=setup.PLOTS_COLORS[0], marker='',
-            label="Asset Value, Moving Avg", dashes=setup.DASHES_MA, linewidth=1.6)
+    x_ma, y_ma = analysis.calc_moving_avg(x, sumlist_corr, config.WINLEN_MA)
+    ax.plot(x_ma, y_ma, alpha=1.0, zorder=3, clip_on=False, color=config.PLOTS_COLORS[0], marker='',
+            label="Asset Value, Moving Avg", dashes=config.DASHES_MA, linewidth=1.6)
 
     # Plot the indexes:
     # Obtain some colors for the indexes:
     # colors = create_colormap('rainbow', len(indexvals_rs), invert_colorrange=False)
     for i, val in enumerate(indexvals_rs):
-        if i > len(setup.PLOTS_COLORS) - 1:
+        if i > len(config.PLOTS_COLORS) - 1:
             raise RuntimeError("Ran out of colors. Supply more in PLOTS_COLORS (configuration-file)")
-        ax.plot(x, val, alpha=1.0, zorder=3, clip_on=False, color=setup.PLOTS_COLORS[i + 1], marker='',
+        ax.plot(x, val, alpha=1.0, zorder=3, clip_on=False, color=config.PLOTS_COLORS[i + 1], marker='',
                 label=indexname[i])
         # Label the last value:
         last_val = f"{val[-1]:.2f}"
         ax.text(x[-1], val[-1], last_val)
         # Also plot the moving average:
-        x_ma, y_ma = analysis.calc_moving_avg(x, val, cfg.WINLEN_MA)
+        x_ma, y_ma = analysis.calc_moving_avg(x, val, config.WINLEN_MA)
         label_ma = indexname[i] + ", Moving Avg"
-        ax.plot(x_ma, y_ma, alpha=1.0, zorder=3, clip_on=False, color=setup.PLOTS_COLORS[i + 1], marker='',
-                label=label_ma, dashes=setup.DASHES_MA)
+        ax.plot(x_ma, y_ma, alpha=1.0, zorder=3, clip_on=False, color=config.PLOTS_COLORS[i + 1], marker='',
+                label=label_ma, dashes=config.DASHES_MA)
 
     plt.legend(fancybox=True, shadow=True, ncol=1, framealpha=1.0, loc='upper left',
                bbox_to_anchor=(0.01, 0.99))
@@ -595,7 +594,7 @@ def plot_asset_values_indices(assetlist, indexlist, fname, titlestr, analyzer):
     # PDF Export:
     plt.savefig(fname)
 
-    if cfg.OPEN_PLOTS is True:
+    if config.OPEN_PLOTS is True:
         plotting_aux.open_plot(fname)
 
 
@@ -609,7 +608,7 @@ def plot_asset_projections(assetlist, interest, num_years, fname, titlestr, anal
     :param titlestr: String of plot-title
     """
     # Get the full path of the file:
-    fname = plotting_aux.modify_plot_path(setup.PLOTS_FOLDER, fname)
+    fname = plotting_aux.modify_plot_path(config.PLOTS_FOLDER, fname)
     # Sanity Check:
     if len(assetlist) == 0:
         print("No assets given for plot: " + fname)
@@ -631,13 +630,14 @@ def plot_asset_projections(assetlist, interest, num_years, fname, titlestr, anal
         print("All summed asset values are zero. Not plotting. File: " + fname)
         return
 
-    datelist_fut, vallist_fut_base = analysis.project_values(datelist, sumlist, num_years, interest, setup.FORMAT_DATE)
+    datelist_fut, vallist_fut_base = analysis.project_values(datelist, sumlist, num_years, interest, config.FORMAT_DATE)
     # Vary interest rates by +/- 10% and also show these values:
     tolband = 10.0
     fact_up = (tolband / 100.0) + 1.0
     fact_low = 1.0 - (tolband / 100.0)
-    _, vallist_fut_upper = analysis.project_values(datelist, sumlist, num_years, interest * fact_up, setup.FORMAT_DATE)
-    _, vallist_fut_lower = analysis.project_values(datelist, sumlist, num_years, interest * fact_low, setup.FORMAT_DATE)
+    _, vallist_fut_upper = analysis.project_values(datelist, sumlist, num_years, interest * fact_up, config.FORMAT_DATE)
+    _, vallist_fut_lower = analysis.project_values(datelist, sumlist, num_years, interest * fact_low,
+                                                   config.FORMAT_DATE)
 
     # Plot:
     plotting_aux.configure_lineplot()
@@ -647,21 +647,21 @@ def plot_asset_projections(assetlist, interest, num_years, fname, titlestr, anal
     x = [analyzer.str2datetime(x) for x in datelist_fut]
 
     labelstr = f"{(interest * fact_up):.2f} %"
-    ax.plot(x, vallist_fut_upper, alpha=1.0, zorder=3, clip_on=False, color=setup.PLOTS_COLORS[0], marker='',
+    ax.plot(x, vallist_fut_upper, alpha=1.0, zorder=3, clip_on=False, color=config.PLOTS_COLORS[0], marker='',
             label=labelstr, linewidth=1.6)
     # Label the last value:
     last_val = f"{vallist_fut_upper[-1]:.2f}"
     ax.text(x[-1], vallist_fut_upper[-1], last_val)
 
     labelstr = f"{interest:.2f} %"
-    ax.plot(x, vallist_fut_base, alpha=1.0, zorder=3, clip_on=False, color=setup.PLOTS_COLORS[1], marker='',
+    ax.plot(x, vallist_fut_base, alpha=1.0, zorder=3, clip_on=False, color=config.PLOTS_COLORS[1], marker='',
             label=labelstr, linewidth=1.6)
     # Label the last value:
     last_val = f"{vallist_fut_base[-1]:.2f}"
     ax.text(x[-1], vallist_fut_base[-1], last_val)
 
     labelstr = f"{(interest * fact_low):.2f} %"
-    ax.plot(x, vallist_fut_lower, alpha=1.0, zorder=3, clip_on=False, color=setup.PLOTS_COLORS[2], marker='',
+    ax.plot(x, vallist_fut_lower, alpha=1.0, zorder=3, clip_on=False, color=config.PLOTS_COLORS[2], marker='',
             label=labelstr, linewidth=1.6)
     # Label the last value:
     last_val = f"{vallist_fut_lower[-1]:.2f}"
@@ -675,7 +675,7 @@ def plot_asset_projections(assetlist, interest, num_years, fname, titlestr, anal
         pylab.matplotlib.ticker.FuncFormatter(lambda x, p: format(int(x), ',')))
 
     ax.set_xlabel("Dates")
-    ax.set_ylabel("Values (" + cfg.BASECURRENCY + ")")
+    ax.set_ylabel("Values (" + config.BASECURRENCY + ")")
     ax.set_ylim(ymin=0)  # Looks better
     plt.title(titlestr)
 
@@ -686,7 +686,7 @@ def plot_asset_projections(assetlist, interest, num_years, fname, titlestr, anal
     # PDF Export:
     plt.savefig(fname)
 
-    if cfg.OPEN_PLOTS is True:
+    if config.OPEN_PLOTS is True:
         plotting_aux.open_plot(fname)
 
 
@@ -696,7 +696,7 @@ def plot_asset_total_absolute_returns_accumulated(dates, returns, fname, analyze
     :param returns: List of day-wise, summed returns of all investments
     """
     # Get the full path of the file:
-    fname = plotting_aux.modify_plot_path(setup.PLOTS_FOLDER, fname)
+    fname = plotting_aux.modify_plot_path(config.PLOTS_FOLDER, fname)
     # Sanity Check:
     if len(returns) == 0:
         print("No assets given for plot: " + fname)
@@ -716,7 +716,7 @@ def plot_asset_total_absolute_returns_accumulated(dates, returns, fname, analyze
 
     x = [analyzer.str2datetime(x) for x in dates]
 
-    ax.plot(x, returns, alpha=1.0, zorder=3, clip_on=False, color=setup.PLOTS_COLORS[0], marker='', linewidth=1.6)
+    ax.plot(x, returns, alpha=1.0, zorder=3, clip_on=False, color=config.PLOTS_COLORS[0], marker='', linewidth=1.6)
     # Label the last value:
     last_val = f"{returns[-1]:.2f}"
     ax.text(x[-1], returns[-1], last_val)
@@ -726,7 +726,7 @@ def plot_asset_total_absolute_returns_accumulated(dates, returns, fname, analyze
         pylab.matplotlib.ticker.FuncFormatter(lambda x, p: format(int(x), ',')))
 
     ax.set_xlabel("Dates")
-    ax.set_ylabel("Absolute Returns (" + cfg.BASECURRENCY + ")")
+    ax.set_ylabel("Absolute Returns (" + config.BASECURRENCY + ")")
     plt.title(
         "Summed absolute returns of all investments in analysis period")
 
@@ -737,7 +737,7 @@ def plot_asset_total_absolute_returns_accumulated(dates, returns, fname, analyze
     # PDF Export:
     plt.savefig(fname)
 
-    if cfg.OPEN_PLOTS is True:
+    if config.OPEN_PLOTS is True:
         plotting_aux.open_plot(fname)
 
 
@@ -748,7 +748,7 @@ def plot_assets_returns_total(assetlist, fname, titlestr, analyzer):
     :param titlestr: String of plot-title
     """
     # Get the full path of the file:
-    fname = plotting_aux.modify_plot_path(setup.PLOTS_FOLDER, fname)
+    fname = plotting_aux.modify_plot_path(config.PLOTS_FOLDER, fname)
     # Sanity Check:
     if len(assetlist) == 0:
         print("No assets given for plot: " + fname)
@@ -771,7 +771,7 @@ def plot_assets_returns_total(assetlist, fname, titlestr, analyzer):
     # Only plot if there is something to plot:
     if helper.list_all_zero(returns) is False:
         x = [analyzer.str2datetime(x) for x in dates]
-        ax.plot(x, returns, alpha=1.0, zorder=3, clip_on=False, color=setup.PLOTS_COLORS[0], marker='o',
+        ax.plot(x, returns, alpha=1.0, zorder=3, clip_on=False, color=config.PLOTS_COLORS[0], marker='o',
                 label="2-day return")
         plotted = True
 
@@ -779,7 +779,7 @@ def plot_assets_returns_total(assetlist, fname, titlestr, analyzer):
     # Only plot if there is something to plot:
     if helper.list_all_zero(returns) is False:
         x = [analyzer.str2datetime(x) for x in dates]
-        ax.plot(x, returns, alpha=1.0, zorder=3, clip_on=False, color=setup.PLOTS_COLORS[1], marker='x',
+        ax.plot(x, returns, alpha=1.0, zorder=3, clip_on=False, color=config.PLOTS_COLORS[1], marker='x',
                 label="7-day return",
                 markersize=5)
         plotted = True
@@ -788,7 +788,7 @@ def plot_assets_returns_total(assetlist, fname, titlestr, analyzer):
     # Only plot if there is something to plot:
     if helper.list_all_zero(returns) is False:
         x = [analyzer.str2datetime(x) for x in dates]
-        ax.plot(x, returns, alpha=1.0, zorder=3, clip_on=False, color=setup.PLOTS_COLORS[2], marker='d',
+        ax.plot(x, returns, alpha=1.0, zorder=3, clip_on=False, color=config.PLOTS_COLORS[2], marker='d',
                 label="30-day return",
                 markersize=4)
         plotted = True
@@ -797,7 +797,7 @@ def plot_assets_returns_total(assetlist, fname, titlestr, analyzer):
     # Only plot if there is something to plot:
     if helper.list_all_zero(returns) is False:
         x = [analyzer.str2datetime(x) for x in dates]
-        ax.plot(x, returns, alpha=1.0, zorder=3, clip_on=False, color=setup.PLOTS_COLORS[3], marker='s',
+        ax.plot(x, returns, alpha=1.0, zorder=3, clip_on=False, color=config.PLOTS_COLORS[3], marker='s',
                 label="100-day return")
         plotted = True
 
@@ -805,7 +805,7 @@ def plot_assets_returns_total(assetlist, fname, titlestr, analyzer):
     # Only plot if there is something to plot:
     if helper.list_all_zero(returns) is False:
         x = [analyzer.str2datetime(x) for x in dates]
-        ax.plot(x, returns, alpha=1.0, zorder=3, clip_on=False, color=setup.PLOTS_COLORS[4], marker='+',
+        ax.plot(x, returns, alpha=1.0, zorder=3, clip_on=False, color=config.PLOTS_COLORS[4], marker='+',
                 label="365-day return",
                 markersize=5)
         plotted = True
@@ -831,7 +831,7 @@ def plot_assets_returns_total(assetlist, fname, titlestr, analyzer):
     # PDF Export:
     plt.savefig(fname)
 
-    if cfg.OPEN_PLOTS is True:
+    if config.OPEN_PLOTS is True:
         plotting_aux.open_plot(fname)
 
 
@@ -842,7 +842,7 @@ def plot_asset_values_cost_payout_individual(assetlist, fname, analyzer):
     :param fname: String for desired filename
     """
     # Get the full path of the file:
-    fname = plotting_aux.modify_plot_path(setup.PLOTS_FOLDER, fname)
+    fname = plotting_aux.modify_plot_path(config.PLOTS_FOLDER, fname)
     # Sanity Check:
     if len(assetlist) == 0:
         print("No assets given for plot: " + fname)
@@ -870,7 +870,7 @@ def plot_asset_values_cost_payout_individual(assetlist, fname, analyzer):
     print("Plotting the asset-values with {:d} figure-sheet(s). Filename: ".format(num_sheets) + fname)
 
     xlabel = "Date"
-    ylabel = "Value (" + cfg.BASECURRENCY + ")"
+    ylabel = "Value (" + config.BASECURRENCY + ")"
 
     for sheet_num, assets in enumerate(assetlists_sheet):
 
@@ -897,17 +897,17 @@ def plot_asset_values_cost_payout_individual(assetlist, fname, analyzer):
                 marker_div = int(len(dates) / 40.0)
 
             # Plot the asset's total value:
-            ax.plot(x, values, alpha=1.0, zorder=3, clip_on=False, color=setup.PLOTS_COLORS[0], marker='o',
+            ax.plot(x, values, alpha=1.0, zorder=3, clip_on=False, color=config.PLOTS_COLORS[0], marker='o',
                     label="Asset Value",
                     markevery=marker_div)
             # Also plot the moving average:
-            x_ma, y_ma = analysis.calc_moving_avg(x, values, cfg.WINLEN_MA)
+            x_ma, y_ma = analysis.calc_moving_avg(x, values, config.WINLEN_MA)
             ax.plot(x_ma, y_ma, alpha=1.0, zorder=3, clip_on=False, color='k', marker='',
-                    label="Asset Value, Moving Avg", dashes=setup.DASHES_MA)
+                    label="Asset Value, Moving Avg", dashes=config.DASHES_MA)
 
             if helper.list_all_zero(payouts_accu) is False:
                 values_payouts = helper.sum_lists(values, payouts_accu)
-                ax.plot(x, values_payouts, alpha=1.0, zorder=3, clip_on=False, color=setup.PLOTS_COLORS[1], marker='x',
+                ax.plot(x, values_payouts, alpha=1.0, zorder=3, clip_on=False, color=config.PLOTS_COLORS[1], marker='x',
                         label="Asset Value, with Payouts", markevery=marker_div)
             else:
                 values_payouts = list(values)
@@ -915,7 +915,7 @@ def plot_asset_values_cost_payout_individual(assetlist, fname, analyzer):
             # Only plot cost, payouts, if there is actually some cost or payout:
             if helper.list_all_zero(costs_accu) is False:
                 values_payouts_cost = helper.diff_lists(values_payouts, costs_accu)
-                ax.plot(x, values_payouts_cost, alpha=1.0, zorder=3, clip_on=False, color=setup.PLOTS_COLORS[2],
+                ax.plot(x, values_payouts_cost, alpha=1.0, zorder=3, clip_on=False, color=config.PLOTS_COLORS[2],
                         marker='d', label="Asset Value, with Payouts and Costs", markevery=marker_div)
 
             plt.legend(fancybox=True, shadow=True, ncol=1, framealpha=1.0, loc='best')
@@ -925,7 +925,7 @@ def plot_asset_values_cost_payout_individual(assetlist, fname, analyzer):
             assetname = asset.get_filename()
             assetname = stringoperations.get_filename(assetname, keep_type=False)
             assettype = asset.get_type()
-            titlestr = "Values: " + assetname + " (in " + cfg.BASECURRENCY + ", " + assettype + ")"
+            titlestr = "Values: " + assetname + " (in " + config.BASECURRENCY + ", " + assettype + ")"
             plt.title(titlestr)
 
             # Add a comma to separate thousands:
@@ -957,7 +957,7 @@ def plot_asset_values_cost_payout_individual(assetlist, fname, analyzer):
         # PDF Export:
         plt.savefig(fname_ext)
 
-        if cfg.OPEN_PLOTS is True:
+        if config.OPEN_PLOTS is True:
             plotting_aux.open_plot(fname_ext)
 
 
@@ -967,7 +967,7 @@ def plot_asset_returns_individual(assetlist, fname, analyzer):
     :param assetlist: List of asset-objects
     :param fname: String of desired plot filename
     """
-    fname = plotting_aux.modify_plot_path(setup.PLOTS_FOLDER, fname)
+    fname = plotting_aux.modify_plot_path(config.PLOTS_FOLDER, fname)
     # Sanity Check:
     if len(assetlist) == 0:
         print("No assets given for plot: " + fname)
@@ -1013,7 +1013,7 @@ def plot_asset_returns_individual(assetlist, fname, analyzer):
             dates, returns = analysis.get_returns_asset(asset, 7, analyzer)
             if helper.list_all_zero(returns) is False:
                 x = [analyzer.str2datetime(i) for i in dates]
-                ax.plot(x, returns, alpha=1.0, zorder=3, clip_on=False, color=setup.PLOTS_COLORS[0], marker='o',
+                ax.plot(x, returns, alpha=1.0, zorder=3, clip_on=False, color=config.PLOTS_COLORS[0], marker='o',
                         label="7-day return")
                 plotted = True
 
@@ -1021,7 +1021,7 @@ def plot_asset_returns_individual(assetlist, fname, analyzer):
             dates, returns = analysis.get_returns_asset(asset, 30, analyzer)
             if helper.list_all_zero(returns) is False:
                 x = [analyzer.str2datetime(i) for i in dates]
-                ax.plot(x, returns, alpha=1.0, zorder=3, clip_on=False, color=setup.PLOTS_COLORS[1], marker='d',
+                ax.plot(x, returns, alpha=1.0, zorder=3, clip_on=False, color=config.PLOTS_COLORS[1], marker='d',
                         label="30-day return")
                 plotted = True
 
@@ -1029,7 +1029,7 @@ def plot_asset_returns_individual(assetlist, fname, analyzer):
             dates, returns = analysis.get_returns_asset(asset, 365, analyzer)
             if helper.list_all_zero(returns) is False:
                 x = [analyzer.str2datetime(i) for i in dates]
-                ax.plot(x, returns, alpha=1.0, zorder=3, clip_on=False, color=setup.PLOTS_COLORS[2], marker='x',
+                ax.plot(x, returns, alpha=1.0, zorder=3, clip_on=False, color=config.PLOTS_COLORS[2], marker='x',
                         label="365-day return")
                 plotted = True
 
@@ -1089,7 +1089,7 @@ def plot_asset_returns_individual(assetlist, fname, analyzer):
         # PDF Export:
         plt.savefig(fname_ext)
 
-        if cfg.OPEN_PLOTS is True:
+        if config.OPEN_PLOTS is True:
             plotting_aux.open_plot(fname_ext)
 
 
@@ -1099,7 +1099,7 @@ def plot_asset_returns_individual_absolute(assetlist, fname, analyzer):
     :param assetlist: List of asset-objects
     :param fname: String of desired plot filename
     """
-    fname = plotting_aux.modify_plot_path(setup.PLOTS_FOLDER, fname)
+    fname = plotting_aux.modify_plot_path(config.PLOTS_FOLDER, fname)
     # Sanity Check:
     if len(assetlist) == 0:
         print("No assets given for plot: " + fname)
@@ -1146,7 +1146,7 @@ def plot_asset_returns_individual_absolute(assetlist, fname, analyzer):
                 returns_total = [a + b for a, b in zip(returns, returns_total)]
                 if helper.list_all_zero(returns) is False:
                     x = [analyzer.str2datetime(i) for i in dates]
-                    ax.plot(x, returns, alpha=1.0, zorder=3, clip_on=False, color=setup.PLOTS_COLORS[0], marker='',
+                    ax.plot(x, returns, alpha=1.0, zorder=3, clip_on=False, color=config.PLOTS_COLORS[0], marker='',
                             label="Absolute Returns")
                 else:
                     # Skip the plotting; no date of today available.
@@ -1191,7 +1191,7 @@ def plot_asset_returns_individual_absolute(assetlist, fname, analyzer):
         # PDF Export:
         plt.savefig(fname_ext)
 
-        if cfg.OPEN_PLOTS is True:
+        if config.OPEN_PLOTS is True:
             plotting_aux.open_plot(fname_ext)
 
     return dates, returns_total
@@ -1204,7 +1204,7 @@ def plot_asset_values_stacked(assetlist, fname, title, analyzer):
     :param title: String of plot title
     """
     # Get the full path of the file:
-    fname = plotting_aux.modify_plot_path(setup.PLOTS_FOLDER, fname)
+    fname = plotting_aux.modify_plot_path(config.PLOTS_FOLDER, fname)
     # Sanity Check:
     if len(assetlist) == 0:
         print("No assets given for plot: " + fname)
@@ -1248,9 +1248,9 @@ def plot_asset_values_stacked(assetlist, fname, title, analyzer):
 
     colorlist = plotting_aux.create_colormap("rainbow", len(ylists), False)
 
-    titlestring = title + ". Currency: " + cfg.BASECURRENCY
+    titlestring = title + ". Currency: " + config.BASECURRENCY
     xlabel = "Date"
-    ylabel = "Value (" + cfg.BASECURRENCY + ")"
+    ylabel = "Value (" + config.BASECURRENCY + ")"
     alpha = 0.75  # Plot transparency
     # Plot:
     plotting_aux.create_stackedplot(xlist, ylists, legendlist, colorlist, titlestring, xlabel, ylabel, alpha, fname)

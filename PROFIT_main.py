@@ -15,8 +15,10 @@ import dateoperations
 import plotting
 import analysis
 import prices
-import setup
+import config
 from dataprovider.dataprovider import DataproviderMain
+
+# Todo: Move the configs here to config.py?
 
 """
 These strings specify the folders from which the account and investment files
@@ -26,31 +28,9 @@ ACCOUNT_FOLDER = "accounts_examples"
 INVESTMENT_FOLDER = "investments_examples"
 
 """
-All asset values are calculated in the base currency.
-Provide a string like "CHF", "USD", "HKD" etc.
-"""
-BASECURRENCY = "CHF"
-
-"""
 Data is analyzed a certain number of days into the past, from today
 """
 DAYS_ANALYSIS = 3500
-
-"""
-This switch determines whether the plots are opened directly after creation or not.
-If it is set to True, many PDFs will be opened
-"""
-OPEN_PLOTS = False
-
-"""
-Select, if existing plots are deleted before new ones are created. Might prevent confusion/mixups with old/new plots
-"""
-PURGE_OLD_PLOTS = True
-
-"""
-Window length (in days) of moving average filter. Some plots contain filtered data.
-"""
-WINLEN_MA = 30
 
 """
 Number of years to project the values of the investments into the future. The interest rate is given below.
@@ -103,31 +83,6 @@ FILENAME_CURRENCIES_LINE = "Asset_Values_Currencies_Line"
 FILENAME_INVESTMENT_PROJECTIONS = "Investments_Values_Projected"
 
 """
-Purposes of the Assets
-Each asset has a designated purpose. The following list of strings names them all.
-The asset purpose must be a member of this list, as otherwise an error is thrown.
-Don't use whitespaces in the strings - they are stripped when parsing the asset-files.
-"""
-ASSET_PURPOSES = ["Liquidity", "Cash", "Retirement_Open", "Retirement_Closed", "Safety_Reserve",
-                  "Savings_Car", "Savings_House", "Other"]
-
-"""
-Asset Purpose-Groups
-The different assets can be grouped according to their purpose, which is used for some plots and provides some insight
-into the distribution of asset values.
-The groups are given below as list of strings (with arbitrary names).
-However, the overall list of lists that collects the groups must be named "ASSET_GROUPS".
-"""
-ASSET_GROUP_1 = [ASSET_PURPOSES[0], ASSET_PURPOSES[1], ASSET_PURPOSES[7]]
-ASSET_GROUP_2 = [ASSET_PURPOSES[2], ASSET_PURPOSES[3]]
-ASSET_GROUP_3 = [ASSET_PURPOSES[4]]
-ASSET_GROUP_4 = [ASSET_PURPOSES[5], ASSET_PURPOSES[6]]
-# This list collects all asset groups. Its name must be ASSET_GROUPS!
-ASSET_GROUPS = [ASSET_GROUP_1, ASSET_GROUP_2, ASSET_GROUP_3, ASSET_GROUP_4]
-# Corresponding user-defined names can be given for the groups, which will be used in the plots.
-ASSET_GROUPNAMES = ["Freely Available Money", "Retirement", "Safety", "Savings"]
-
-"""
 Stockmarket-Indices. These are used in certain plots. They are also obtained from the dataprovider.
 They are given in the following as dicts, with a Name, Symbol and Exchange, whereas the latter two are required by the
 data-provider tool.
@@ -157,7 +112,7 @@ In the following, the main script begins
 if __name__ == '__main__':
 
     # Print the current version of the tool
-    print("PROFIT V{:.1f} starting".format(setup.PROFIT_VERSION))
+    print("PROFIT V{:.1f} starting".format(config.PROFIT_VERSION))
 
     # Initialize classes:
     datetimeconverter = stringoperations.DateTimeConversion()
@@ -166,13 +121,13 @@ if __name__ == '__main__':
     Define Analysis-Range:
     The analysis range always spans DAYS_ANALYSIS backwards from today.
     """
-    date_today = dateoperations.get_date_today(setup.FORMAT_DATE, datetime_obj=True)
-    date_today_str = dateoperations.get_date_today(setup.FORMAT_DATE, datetime_obj=False)
+    date_today = dateoperations.get_date_today(config.FORMAT_DATE, datetime_obj=True)
+    date_today_str = dateoperations.get_date_today(config.FORMAT_DATE, datetime_obj=False)
     date_analysis_start = date_today - datetime.timedelta(days=DAYS_ANALYSIS)
-    date_analysis_start_str = stringoperations.datetime2str(date_analysis_start, setup.FORMAT_DATE)
+    date_analysis_start_str = stringoperations.datetime2str(date_analysis_start, config.FORMAT_DATE)
     print("\nData will be analyzed from the " + date_analysis_start_str + " to the " + date_today_str)
     # Create the analysis-instance that tracks some analysis-range-related data:
-    analyzer = analysis.AnalysisRange(date_analysis_start_str, date_today_str, setup.FORMAT_DATE, datetimeconverter)
+    analyzer = analysis.AnalysisRange(date_analysis_start_str, date_today_str, config.FORMAT_DATE, datetimeconverter)
 
     # Initialize the data provider. If none can be initialized, an empty fallback provider will be selected.
     provider = DataproviderMain(analyzer)
@@ -180,7 +135,7 @@ if __name__ == '__main__':
     """
     Sanity checks:
     """
-    if len(ASSET_GROUPNAMES) != len(ASSET_GROUPS):
+    if len(config.ASSET_GROUPNAMES) != len(config.ASSET_GROUPS):
         raise RuntimeError("ASSET_GROUPNAMES and ASSET_GROUPS (in the user configuration section of PROFIT_main) must "
                            "be lists with identical length.")
 
@@ -196,7 +151,10 @@ if __name__ == '__main__':
     investments = []
     for file in invstmtfiles:
         filepath = files.create_path(INVESTMENT_FOLDER, file)  # Get path of file, including its folder
-        investments.append(investmentparser.parse_investment_file(filepath, setup.FORMAT_DATE, provider, analyzer, BASECURRENCY, ASSET_PURPOSES))
+        investments.append(
+            investmentparser.parse_investment_file(filepath, config.FORMAT_DATE, provider, analyzer,
+                                                   config.BASECURRENCY,
+                                                   config.ASSET_PURPOSES))
     if len(investments) > 0:
         print("Successfully parsed " + str(len(investments)) + " investments.")
 
@@ -212,7 +170,9 @@ if __name__ == '__main__':
     accounts = []
     for file in accountfiles:
         filepath = files.create_path(ACCOUNT_FOLDER, file)  # Get path of file, including its folder
-        accounts.append(accountparser.parse_account_file(filepath, setup.FORMAT_DATE, analyzer, BASECURRENCY, ASSET_PURPOSES))
+        accounts.append(
+            accountparser.parse_account_file(filepath, config.FORMAT_DATE, analyzer, config.BASECURRENCY,
+                                             config.ASSET_PURPOSES))
     if len(accounts) > 0:
         print("Successfully parsed " + str(len(accounts)) + " accounts.")
 
@@ -231,18 +191,18 @@ if __name__ == '__main__':
     # Remove duplicates:
     currencies = list(set(currencies))
     # Determine the foreign currencies:
-    forex_currencies = [x for x in currencies if x != BASECURRENCY]
+    forex_currencies = [x for x in currencies if x != config.BASECURRENCY]
 
     print("\nFound " + repr(len(forex_currencies)) + " foreign currencies")
 
     # The full forex-data for all investment-transactions is required for the holding-period return:
     # Determine the earliest transaction of a foreign-currency investment:
-    earliest_forex = dateoperations.asset_get_earliest_forex_trans_date(investments, setup.FORMAT_DATE)
+    earliest_forex = dateoperations.asset_get_earliest_forex_trans_date(investments, config.FORMAT_DATE)
     # If the analysis-data-range goes further back than the earliest forex-transaction: adapt accordingly.
-    if date_analysis_start < stringoperations.str2datetime(earliest_forex, setup.FORMAT_DATE):
+    if date_analysis_start < stringoperations.str2datetime(earliest_forex, config.FORMAT_DATE):
         earliest_forex = date_analysis_start_str
 
-    print("Basecurrency is " + BASECURRENCY)
+    print("Basecurrency is " + config.BASECURRENCY)
     # Dictionary for the forex-objects. The key is the corresponding currency.
     forexdict = {}
     if len(forex_currencies) > 0:
@@ -256,13 +216,13 @@ if __name__ == '__main__':
 
         for forexstring in forex_currencies:
             print("Getting forex-rates for " + forexstring)
-            forexdict[forexstring] = forex.ForexRates(forexstring, BASECURRENCY, setup.MARKETDATA_FOLDER,
-                                                      setup.MARKETDATA_FORMAT_DATE, setup.MARKETDATA_DELIMITER,
+            forexdict[forexstring] = forex.ForexRates(forexstring, config.BASECURRENCY, config.MARKETDATA_FOLDER,
+                                                      config.MARKETDATA_FORMAT_DATE, config.MARKETDATA_DELIMITER,
                                                       earliest_forex,
-                                                      date_today_str, setup.FORMAT_DATE, provider, analyzer)
+                                                      date_today_str, config.FORMAT_DATE, provider, analyzer)
 
     # Store an empty object in the basecurrency-key of the forex-dict:
-    forexdict[BASECURRENCY] = None
+    forexdict[config.BASECURRENCY] = None
 
     """
     Write the forex-objects into the assets:
@@ -290,25 +250,25 @@ if __name__ == '__main__':
             ex = stockidx["Exchange"]
             currency = stockidx["Name"]  # The name of the stock-index is stored as the currency
             # Obtain the prices
-            obj = prices.MarketPrices(sym, ex, currency, setup.MARKETDATA_FOLDER, setup.MARKETDATA_FORMAT_DATE,
-                                      setup.MARKETDATA_DELIMITER, date_analysis_start_str, date_today_str,
-                                      setup.FORMAT_DATE, provider, analyzer)
+            obj = prices.MarketPrices(sym, ex, currency, config.MARKETDATA_FOLDER, config.MARKETDATA_FORMAT_DATE,
+                                      config.MARKETDATA_DELIMITER, date_analysis_start_str, date_today_str,
+                                      config.FORMAT_DATE, provider, analyzer)
             obj.extrapolate_market_data_to_full_range()  # If not all data obtained: Extrapolate.
             indexprices.append(obj)
 
     """
     Create the plots:
     """
-    if OPEN_PLOTS is True:
+    if config.OPEN_PLOTS is True:
         print("\nAnalyzing and plotting... Plots will be opened after creation.")
     else:
         print("\nAnalyzing and plotting... Plots will not be opened after creation.")
 
-    if PURGE_OLD_PLOTS is True:
+    if config.PURGE_OLD_PLOTS is True:
         print("Deleting existing plots.")
-        fileslist = files.get_file_list(setup.PLOTS_FOLDER, None)  # Get all files
+        fileslist = files.get_file_list(config.PLOTS_FOLDER, None)  # Get all files
         for f in fileslist:
-            fname = files.create_path(setup.PLOTS_FOLDER, f)
+            fname = files.create_path(config.PLOTS_FOLDER, f)
             files.delete_file(fname)
     else:
         print("Existing plots are not deleted.")
@@ -360,9 +320,9 @@ if __name__ == '__main__':
         plotting.plot_asset_values_stacked(assets, FILENAME_STACKPLOT_ASSET_VALUES, "Value: All Assets", analyzer)
 
         # Plot the values of each group:
-        if len(ASSET_GROUPS) > 0:
-            plotting.plot_asset_groups(assets, ASSET_GROUPS, ASSET_GROUPNAMES, FILENAME_PLOT_GROUP,
-                                       "Group Value (" + BASECURRENCY + ")", analyzer)
+        if len(config.ASSET_GROUPS) > 0:
+            plotting.plot_asset_groups(assets, config.ASSET_GROUPS, config.ASSET_GROUPNAMES, FILENAME_PLOT_GROUP,
+                                       "Group Value (" + config.BASECURRENCY + ")", analyzer)
 
         # Plot the values grouped according to currency:
         plotting.plot_currency_values(assets, FILENAME_CURRENCIES_STACKED, "Asset Values According to Currencies "
@@ -374,6 +334,6 @@ if __name__ == '__main__':
     # Plot the forex-rates. Note: one element of the forex-dict is the basecurrency, hence >1 and not >= 1
     if len(forexdict) > 1:
         plotting.plot_forex_rates(forexdict, FILENAME_FOREX_RATES,
-                                  "Forex Rates with the Basecurrency (" + BASECURRENCY + ")", analyzer)
+                                  "Forex Rates with the Basecurrency (" + config.BASECURRENCY + ")", analyzer)
 
     print("\nPROFIT is done.")

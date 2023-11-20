@@ -9,19 +9,14 @@ import time
 import pkgutil
 import inspect
 import importlib
-from stringoperations import *
-from dateoperations import *
+import dateoperations
 from .provider_abc import DataProvider
 
 
-# Todo: Have each provider as subpackage in the dataprovider package, and discover them automatically?
-# Todo: Is it still sensible to have the EmptyProvider? Solve this differently?
-# Todo: Is it possible/sensible to import date/stringoperations from the high-level package (PROFIT)?
-# Todo: Rather use pkgutil and importlib, or setuptools?
-
 class DataproviderMain:
     """The main data-provider class that wraps different data-providers.
-    It imports dataproviders from the respective subpackages.
+    It imports dataproviders from the respective subpackages and initializes them.
+    The first functioning data provider will be selected.
     """
 
     def __init__(self, analyzer):
@@ -40,19 +35,22 @@ class DataproviderMain:
                 module = importlib.import_module(full_module_name)
                 loaded_modules.append(module)
 
-        classes = []
+        classes = []  # Find the classes in the discovered modules that inherit the ABC for the dataprovider.
         for module in loaded_modules:
             for name, obj in inspect.getmembers(module):
                 if inspect.isclass(obj):
                     if issubclass(obj, DataProvider):
                         if obj is not DataProvider:
-                            classes.append[obj]
+                            classes.append(obj)
 
+        if len(loaded_modules) != len(classes):
+            raise RuntimeError("There seem to be multiple or not enough classes in the loaded modules that "
+                               "inherit from the dataprovider ABC")
 
-
+        print(f"Discovered {len(classes):d} data providers.")
 
         # The list of available/feasible data providers. The last provider here should be DataproviderEmpty
-        self.providers = [DataproviderYahoo, EmptyProvider]
+        self.providers = classes
 
         self.active_provider = None
 
@@ -61,11 +59,13 @@ class DataproviderMain:
             p = provider(self.dateformat)
             if p.initialize() is True:
                 self.active_provider = p
-                print("Dataprovider " + p.get_name() + " successfully initialized")
+                print("Data provider " + p.get_name() + " successfully initialized")
                 break
-            print("Failed to initialize provider " + p.get_name() + ". Attempting next provider")
+            print("Failed to initialize provider " + p.get_name())
         # Now, we either have a functioning provider initialized, or the Empty-provider (which will trigger
         # the falling functions to fall back to alternative means, making the data-source selection somewhat automatic)
+        if self.active_provider is None:
+            print("Failed to initialize any data provider. Will rely on transactions-data or stored market data.")
 
     def get_stock_data(self, sym_stock, sym_exchange, startdate, stopdate):
         """Provides stock-prices (values at closing-time of given days; historic data).
@@ -83,18 +83,19 @@ class DataproviderMain:
         always return data for consecutive days (public holidays, weekends etc.) # Todo: Instead of two lists, rather return/use a dict throughout PROFIT? Worth the effort?
         """
         if self.active_provider is None:
-            return RuntimeError("Initialize a data provider first")
+            return RuntimeError(
+                "No data provider initialized.")  # This is usually caugth by a try-block in the calling function.
 
-        p1, p2, _, stopdate_dt = self.__perform_date_sanity_check(startdate, stopdate)
+        self.__perform_date_sanity_check(startdate, stopdate)
 
-        res = self.active_provider.retrieve_stock_data(p1, p2, sym_stock, sym_exchange)
+        res = self.active_provider.retrieve_stock_data(sym_stock, startdate, stopdate, sym_exchange)
         if res is not None:
             pricedates, stockprices = res  # List of strings and floats
         else:
             print("Failed to obtain data for stock symbol: " + sym_stock)
             return None
 
-        res = self.__post_process_dataprovider_data(pricedates, stockprices, startdate, stopdate, stopdate_dt)
+        res = self.__post_process_dataprovider_data(pricedates, stockprices, startdate, stopdate)
         if res is not None:
             pricedates_full, stockprices_full = res
             return pricedates_full, stockprices_full
@@ -112,18 +113,19 @@ class DataproviderMain:
         always return data for consecutive days (public holidays etc...)
         """
         if self.active_provider is None:
-            return RuntimeError("Initialize a data provider first")
+            return RuntimeError(
+                "No data provider initialized.")  # This is usually caugth by a try-block in the calling function.
 
-        p1, p2, _, stopdate_dt = self.__perform_date_sanity_check(startdate, stopdate)
+        self.__perform_date_sanity_check(startdate, stopdate)
 
-        res = self.active_provider.retrieve_forex_data(sym_a, sym_b, p1, p2)
+        res = self.active_provider.retrieve_forex_data(sym_a, sym_b, startdate, stopdate)
         if res is not None:
             forexdates, forexrates = res  # List of strings and floats
         else:
             print("Failed to obtain exchange rates for: " + sym_a + " and " + sym_b)
             return None
 
-        res = self.__post_process_dataprovider_data(forexdates, forexrates, startdate, stopdate, stopdate_dt)
+        res = self.__post_process_dataprovider_data(forexdates, forexrates, startdate, stopdate)
         if res is not None:
             forexdates_full, forexrates_full = res
             return forexdates_full, forexrates_full
@@ -137,20 +139,15 @@ class DataproviderMain:
         :return: The epoch values p1, p2 that correspond to start- and stopdate, adn the datetime-objects of start- and stopdate.
         """
         # Use datetime, and sanity check:
-        startdate_dt = stringoperations.str2datetime(startdate, self.dateformat)
-        stopdate_dt = stringoperations.str2datetime(stopdate, self.dateformat)
+        startdate_dt = self.analyzer.str2datetime(startdate)
+        stopdate_dt = self.analyzer.str2datetime(stopdate)
         today = dateoperations.get_date_today(self.dateformat, datetime_obj=True)
         if startdate_dt > stopdate_dt:
             raise RuntimeError("Startdate has to be before stopdate")
         if stopdate_dt > today:
             raise RuntimeError("Cannot (unfortunately) obtain data from the future.")
 
-        # Convert the start, stop dates to epoch:
-        p1 = int(time.mktime(startdate_dt.timetuple()))
-        p2 = int(time.mktime(stopdate_dt.timetuple()))
-        return p1, p2, startdate_dt, stopdate_dt
-
-    def __post_process_dataprovider_data(self, dates, values, startdate, stopdate, stopdate_dt):
+    def __post_process_dataprovider_data(self, dates, values, startdate, stopdate):
         """
         Post-processes the data provided by the dataprovider.
         This is identical for both stocks and forex-data (as they are the same: Time-series values).
@@ -168,6 +165,8 @@ class DataproviderMain:
         if len(dates) != len(values):
             print("Returned time- and value-data is of unequal length. Will not use provided data.")
             return None
+
+        stopdate_dt = self.analyzer.str2datetime(stopdate)
 
         # Don't accept entries with (near-) zero value: Two new lists that still correspond.
         dates_red = [date for i, date in enumerate(dates) if values[i] > 1e-6]
