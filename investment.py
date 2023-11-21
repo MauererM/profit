@@ -9,6 +9,7 @@ import dateoperations
 import stringoperations
 import config
 import helper
+from timedomaindata import StockData
 
 
 class Investment:
@@ -455,135 +456,14 @@ class Investment:
                 raise RuntimeError(f"Startdate cannot be after stopdate. Symbol: {self.symbol}. "
                                    f"Exchange: {self.exchange}")  # Todo: Is this f-string correct?
 
-            # Check, if the data is existing in the market data storage already:
-            storageobj = self.storage.is_storage_data_existing("stock", [self.symbol, self.exchange, self.currency])
-            if storageobj is not None:
-                startdate_storage, stopdate_storage = self.storage.get_start_stopdate(storageobj)
-            # We only have valid data if the storage object exists, and if it actually already contains data:
-            if (storageobj is not None) and (startdate_storage is not None) and (stopdate_storage is not None):
-                startdate_storage_dt = self.analyzer.str2datetime(startdate_storage)
-                stopdate_storage_dt = self.analyzer.str2datetime(stopdate_storage)
-
-                # The storage-interval can not, partially, or over-overlap the analysis interval (and vice versa).
-                # Depending on this, different data should be obtained by the data provider.
-
-                # The analysis-interval is fully contained in the market-data: No online retrieval necessary.
-                if startdate_storage_dt <= startdate_analysis_dt and stopdate_analysis_dt <= stopdate_storage_dt:
-                    startdate_dataprovider = None
-                    stopdate_dataprovider = None
-                    startdate_from_storage = self.analyzer.datetime2str(startdate_analysis_dt)
-                    stopdate_from_storage = self.analyzer.datetime2str(stopdate_analysis_dt)
-                # The analysis-interval is larger on both ends than the stored data:
-                elif startdate_analysis_dt < startdate_storage_dt and stopdate_analysis_dt > stopdate_storage_dt:
-                    startdate_dataprovider = self.analyzer.datetime2str(startdate_analysis_dt)  # Pull the full data
-                    stopdate_dataprovider = self.analyzer.datetime2str(stopdate_analysis_dt)
-                    startdate_from_storage = self.analyzer.datetime2str(startdate_storage_dt)
-                    stopdate_from_storage = self.analyzer.datetime2str(stopdate_storage_dt)
-                # The analysis interval is fully before the storage interval:
-                elif startdate_analysis_dt < startdate_storage_dt and stopdate_analysis_dt < startdate_storage_dt:
-                    startdate_dataprovider = self.analyzer.datetime2str(startdate_analysis_dt)
-                    # We pull the full data up until the storage interval, to fill missing data in storage
-                    stopdate_dataprovider = self.analyzer.datetime2str(startdate_storage_dt)
-                    startdate_from_storage = None
-                    stopdate_from_storage = None
-                # The analysis interval is fully after the storage interval:
-                elif startdate_analysis_dt > stopdate_storage_dt and stopdate_analysis_dt > stopdate_storage_dt:
-                    # We pull the full data up until the analysis interval, to fill missing data in storage
-                    startdate_dataprovider = self.analyzer.datetime2str(stopdate_storage_dt)
-                    stopdate_dataprovider = self.analyzer.datetime2str(stopdate_analysis_dt)
-                    startdate_from_storage = None
-                    stopdate_from_storage = None
-                # The analysis interval is partially overlapping at the beginning of the storage interval:
-                elif startdate_analysis_dt < startdate_storage_dt and stopdate_analysis_dt <= stopdate_storage_dt:
-                    startdate_dataprovider = self.analyzer.datetime2str(startdate_analysis_dt)
-                    stopdate_dataprovider = self.analyzer.datetime2str(
-                        startdate_storage_dt)  # Only obtain remaining data
-                    startdate_from_storage = self.analyzer.datetime2str(startdate_storage_dt)
-                    stopdate_from_storage = self.analyzer.datetime2str(stopdate_analysis_dt)
-                # The analysis interval is partially overlapping at the end of the storage interval:
-                elif startdate_analysis_dt <= stopdate_storage_dt and stopdate_analysis_dt > stopdate_storage_dt:
-                    startdate_dataprovider = self.analyzer.datetime2str(
-                        stopdate_storage_dt)  # Only obtain remaining data
-                    stopdate_dataprovider = self.analyzer.datetime2str(stopdate_analysis_dt)
-                    startdate_from_storage = self.analyzer.datetime2str(startdate_analysis_dt)
-                    stopdate_from_storage = self.analyzer.datetime2str(stopdate_storage_dt)
-                else:
-                    raise RuntimeError("This should not have happened - not all cases covered?")
-
-            else:  # Data storage file is not existing: Create a new file.
-                self.storage.create_new_storage_file("stock", [self.symbol, self.exchange, self.currency])
-                startdate_dataprovider = self.analyzer.datetime2str(startdate_analysis_dt)
-                stopdate_dataprovider = self.analyzer.datetime2str(stopdate_analysis_dt)
-                startdate_from_storage = None
-                stopdate_from_storage = None
-
-            storagedates = None
-            storageprices = None
-            providerdates = None
-            providerprices = None
-            if startdate_from_storage is not None and stopdate_from_storage is not None:
-                # Storage-data retrieval necessary
-                try:
-                    ret = self.storage.get_stored_data(storageobj, (startdate_from_storage, stopdate_from_storage))
-                    if ret is not None:
-                        storagedates, storageprices = ret
-                        if len(storagedates) != len(storageprices):
-                            raise RuntimeError("Lists should be of identical length")
-                except:
-                    raise RuntimeError("Failed to retrieve stored data. This should work at this point.")
-
-            if startdate_dataprovider is not None and stopdate_dataprovider is not None:
-                # Online data retrieval necessary
-                try:
-                    ret = self.provider.get_stock_data(self.symbol, self.exchange, startdate_dataprovider,
-                                                       stopdate_dataprovider)
-                    if ret is not None:
-                        providerdates, providerprices = ret
-                        if len(providerdates) != len(providerprices):
-                            raise RuntimeError("Lists should be of identical length")
-                        print(f"Obtained some provider data for {self.symbol}")
-                except:
-                    print(f"Failed to obtain provider data for {self.symbol}")
-
-            # Merge the dataprovider and storage data if necessary:
-            full_dates = None
-            full_prices = None
-            write_to_file = False
-            if storagedates is None and providerdates is None:
-                # Neither online nor storage data is available. Transactions must be used. # Todo test this case, too
-                full_dates = None
-                full_prices = None
-                write_to_file = False
-            elif storagedates is None and providerdates is not None:
-                # Only online data available. We still merge with the storage-data (whicht might cover a different
-                # range, but that is OK; we do this to be able to write back to file below).
-                full_dates, full_prices = self.storage.fuse_storage_and_provider_data(storageobj,
-                                                                                      (providerdates, providerprices),
-                                                                                      tolerance_percent=3.0,
-                                                                                      storage_is_groundtruth=True)
-                write_to_file = True
-            elif storagedates is not None and providerdates is None:
-                # Only storage data available
-                full_dates = storagedates
-                full_prices = storageprices
-                write_to_file = False
-            elif storagedates is not None and providerdates is not None:
-                # Both provider and storage data available: Merging needed.
-                full_dates, full_prices = self.storage.fuse_storage_and_provider_data(storageobj,
-                                                                                      (providerdates, providerprices),
-                                                                                      tolerance_percent=3.0,
-                                                                                      storage_is_groundtruth=True)
-                write_to_file = True
-            else:
-                raise RuntimeError("All cases should have been covered. Missing elif-statement?")
-
-            if full_dates is not None:
-                if dateoperations.check_dates_consecutive(full_dates, self.analyzer) is False:
-                    raise RuntimeError(f"The obtained market-price-dates are not consecutive. File: {self.filename}")
+            stockdata = StockData(self.symbol, self.exchange, self.currency, (startdate_prices, date_stop),
+                                  self.analyzer, self.storage)
+            full_dates, full_prices = stockdata.get_price_data()
+            write_to_file = stockdata.storage_to_update()
 
             # Write the fused provider- and storge-data back to file:
             if write_to_file is True:
-                self.storage.write_data_to_storage(storageobj, (full_dates, full_prices))
+                self.storage.write_data_to_storage(stockdata.get_storageobj(), (full_dates, full_prices))
 
             if full_dates is not None:
                 # If only 3 days are missing until "today", then extrapolate forward
@@ -598,7 +478,8 @@ class Investment:
                                                                                 zero_padding=False)
 
                 # Store the latest available price and date, for the holding-period return analysis
-                self.latestpricedata = (full_dates[-1], full_prices[-1]) # Todo: Who needs this? What if this is None? Is this caught?
+                self.latestpricedata = (
+                full_dates[-1], full_prices[-1])  # Todo: Who needs this? What if this is None? Is this caught?
 
                 # Interpolate the data to get a consecutive list (this only fills holes, and does not
                 # extrapolate over the given date-range):
@@ -667,10 +548,7 @@ class Investment:
                     else:
                         self.analysis_values.append(0.0)
 
-
-
-
-            if full_dates is None: # Transactions-data needed!
+            if full_dates is None:  # Transactions-data needed!
                 print(f"No financial data available for {self.symbol}")
                 print(f"Provide an update-transaction to deliver the most recent price of the asset. "
                       "Otherwise, the holding period returns cannot be calculated.")
