@@ -87,6 +87,17 @@ def diff_lists(lista, listb):
     return [x - y for x, y in zip(lista, listb)]
 
 
+def create_dict_from_list(string_list):
+    """Creates and returns a dictionary from a list of strings, where the values are the list indices.
+    Note: If there are duplicate entries in the string_list, the previous entries will be overwritten by the latter ones
+    :param string_list: List of strings
+    :return: Dict with the strings as keys and values as list indices"""
+    # Todo: Sanitize input? Check for strings? Check if no duplicates?
+    d = {}
+    for i, txt in enumerate(string_list):
+        d[txt] = i
+    return d
+
 """
     Stand-alone execution for testing:
 """

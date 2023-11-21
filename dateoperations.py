@@ -328,7 +328,7 @@ def create_datelist(startdate, stopdate, analyzer, dateformat=None):
     return datelist
 
 
-def check_date_order(datelist, analyzer, allow_ident_days):
+def check_date_order(datelist, analyzer, allow_ident_days=False):
     """Checks if a list of dates/times is in order.
     Returns false, if an empty list is supplied.
     :param datelist: list of strings of dates
@@ -373,10 +373,9 @@ def check_dates_consecutive(datelist, analyzer):
 
 
 def fuse_two_value_lists(datelist_full, dates_1_partial, vals_1_partial_groundtruth, dates_2_partial, vals_2_partial,
-                         analyzer, zero_padding_past, zero_padding_future):
+                         analyzer, zero_padding_past, zero_padding_future, discard_zeroes=True):
     """Fuses two lists of values together, e.g., combines transactions-prices with market-prices.
     Applies extrapolation, too, to cover the full date-list.
-    Note that zero-values are discarded!
     First, the two lists are merged fully, and then cropped/extended to datelist_full
     :param datelist_full: The final list of dates that the merged list will cover.
     :param dates_1_partial: Dates of first partial list
@@ -384,6 +383,8 @@ def fuse_two_value_lists(datelist_full, dates_1_partial, vals_1_partial_groundtr
     this value is taken.
     :param dates_2_partial: Dates of second partial list
     :param vals_2_partial: Values of second partial list
+    :param discard_zeroes: If True, there will be zeroes inserted when the partial lists are merged! Otherwise,
+    data will be interpolated.
     :return: A single list with interpolated and extrapolated values that corresponds to datelist_full
     """
     # Create a dictionary of the lists. Note: This will always store the most recent index, if there are duplicates.
@@ -413,11 +414,14 @@ def fuse_two_value_lists(datelist_full, dates_1_partial, vals_1_partial_groundtr
             val = vals_1_partial_groundtruth[dates_1_dict[date]]
         elif date in dates_2_dict:  # If no entry in list 1, check list 2
             val = vals_2_partial[dates_2_dict[date]]
-        if val > 1e-6:  # The transactions-data also contains zero-values for price. Ignore those.
+        if discard_zeroes is True and val > 1e-6:
+            output.append(val)
+            date_output.append(date)
+        else:
             output.append(val)
             date_output.append(date)
 
-    # Interpolate the given range to ensure there are no holes:
+    # Interpolate the given range to ensure there are no holes (e.g., if no zeroes were inserted above):
     date_out, out = interpolate_data(date_output, output, analyzer)
     # Now, date_output and output need to be extrapolated (or cropped) to cover the range of datelist_full.
     _, values_final = format_datelist(date_out, out, datelist_full[0], datelist_full[-1], analyzer,

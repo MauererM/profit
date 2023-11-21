@@ -15,7 +15,7 @@ import plotting
 import analysis
 import config
 from dataprovider.dataprovider import DataproviderMain
-from marketdata.marketdata import MarketDataMain
+from storage.storage import MarketDataMain
 
 # Todo: Move the configs here to config.py?
 
@@ -132,7 +132,7 @@ if __name__ == '__main__':
     provider = DataproviderMain(analyzer)
 
     # Initialize the market data system.
-    marketdata = MarketDataMain("marketdata_storage", config.FORMAT_DATE, analyzer)
+    storage = MarketDataMain("marketdata_storage", config.FORMAT_DATE, analyzer)
 
     """
     Sanity checks:
@@ -156,7 +156,7 @@ if __name__ == '__main__':
         investments.append(
             investmentparser.parse_investment_file(filepath, config.FORMAT_DATE, provider, analyzer,
                                                    config.BASECURRENCY,
-                                                   config.ASSET_PURPOSES))
+                                                   config.ASSET_PURPOSES, storage))
     if len(investments) > 0:
         print("Successfully parsed " + str(len(investments)) + " investments.")
 
@@ -255,7 +255,7 @@ if __name__ == '__main__':
             obj = prices.MarketPrices(sym, ex, currency, config.MARKETDATA_FOLDER, config.MARKETDATA_FORMAT_DATE,
                                       config.MARKETDATA_DELIMITER, date_analysis_start_str, date_today_str,
                                       config.FORMAT_DATE, provider, analyzer)
-            obj.extrapolate_market_data_to_full_range()  # If not all data obtained: Extrapolate.
+            obj.extrapolate_market_data_to_full_range()  # If not all data obtained: Extrapolate. # Todo: Replace with extrapolate_data_to_desired_range from storage-obj
             indexprices.append(obj)
 
     """

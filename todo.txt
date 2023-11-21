@@ -9,4 +9,16 @@ Separate data and packages. Provide a search-path for the data (input and output
 
 Investment, account also as plugin...? Subpackage? Sensible? 
 
+Check out the logging module for debug-outputs
+
+Make all imports absolute: import profit.stringoperations etc.
+Migrate to pathlib for path-string operations
+
+Convert to f-strings, get rid of the plus-signs
+
+Do a def main if name == main in the main-script
+
+Is if name == main the right thing for module-level debugging?
+
+
 

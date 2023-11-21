@@ -9,7 +9,8 @@ import re
 import dateoperations
 import stringoperations
 import files
-from marketdata.marketdata_abc import MarketDataStorage
+from storage.storage_abc import MarketDataStorage
+from helper import create_dict_from_list
 
 
 class ForexData(MarketDataStorage):
@@ -24,8 +25,17 @@ class ForexData(MarketDataStorage):
     def __init__(self, pathname, interpol_days, data):
         self.pname = pathname
         self.interpol_days = interpol_days
-        self.dates = data[0]
-        self.values = data[1]
+
+        dates = data[0]
+        values = data[1]
+        # Crop the last entry out of the list; it might change after a day, due to end-of-day data and/or
+        # potential extrapolation.
+        if len(dates) > 1:
+            self.dates = dates[0:-1]
+            self.values = values[0:-1]
+        else:
+            self.dates = dates
+            self.values = values
 
         # From the pathname, extract the name of the file and its constituents.
         self.fname = files.get_filename_from_path(self.pname)
@@ -34,10 +44,39 @@ class ForexData(MarketDataStorage):
         self.symbol_a = groups[0]
         self.symbol_b = groups[1]
 
+        self.dates_dict = create_dict_from_list(self.dates)
+
     def get_filename(self):
         return self.fname # Don't return the path-name
 
+    def get_dates_dict(self):
+        return self.dates_dict
 
+    def get_dates_list(self):
+        return self.dates
+
+    def get_values(self):
+        return self.values
+
+    def get_startdate(self):
+        return self.dates[0]
+
+    def get_stopdate(self):
+        return self.dates[-1]
+
+    def get_interpol_days(self):
+        return self.interpol_days
+
+    def get_pathname(self):
+        return self.pname
+
+    def extrapolate_data_to_desired_range(self, startdate, stopdate, analyzer):
+        """Some callers need the full/extrapolated data. Create it here.
+        """
+        return dateoperations.format_datelist(self.dates, self.values, startdate, stopdate, analyzer,
+                                              zero_padding_past=False, zero_padding_future=False)
+
+# Todo: This needs to go/be re-implemented
 class ForexRates:
     """Obtains online forex data (through the dataprovider) and/or obtains the required prices from the
     marketdata-folder
