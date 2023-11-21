@@ -7,7 +7,7 @@ Copyright (c) 2018 Mario Mauerer
 """
 
 import datetime
-import stringoperations
+from . import stringoperations
 
 
 def add_years(date, num_years, dateformat):

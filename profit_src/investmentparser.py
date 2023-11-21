@@ -5,9 +5,9 @@ MIT License
 Copyright (c) 2018 Mario Mauerer
 """
 
-import stringoperations
-import investment
-import config
+from . import stringoperations
+from . import investment
+from . import config
 
 
 def parse_investment_file(filepath, dateformat, dataprovider, analyzer, basecurrency, assetpurposes, storage):

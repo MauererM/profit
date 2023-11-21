@@ -10,11 +10,11 @@ import matplotlib
 import matplotlib.pyplot as plt
 from matplotlib.ticker import FormatStrFormatter
 import pylab
-import stringoperations
-import analysis
-import config
-import plotting_aux
-import helper
+from . import stringoperations
+from . import analysis
+from . import config
+from . import plotting_aux
+from . import helper
 
 # Todo clean up this massive file
 

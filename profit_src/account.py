@@ -5,9 +5,9 @@ MIT License
 Copyright (c) 2018 Mario Mauerer
 """
 
-import config
-import stringoperations
-import dateoperations
+from . import config
+from . import stringoperations
+from . import dateoperations
 
 
 class Account:

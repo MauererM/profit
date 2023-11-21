@@ -6,18 +6,18 @@ MIT License
 Copyright (c) 2018 Mario Mauerer
 """
 import datetime
-import accountparser
-import investmentparser
-import files
-import stringoperations
-import dateoperations
-import plotting
-import analysis
-import config
-from dataprovider.dataprovider import DataproviderMain
-from storage.storage import MarketDataMain
-from timedomaindata import ForexTimeDomainData
-from timedomaindata import StockMarketIndicesData
+from . import accountparser
+from . import investmentparser
+from . import files
+from . import stringoperations
+from . import dateoperations
+from . import plotting
+from . import analysis
+from . import config
+from .dataprovider.dataprovider import DataproviderMain
+from .storage.storage import MarketDataMain
+from .timedomaindata import ForexTimeDomainData
+from .timedomaindata import StockMarketIndicesData
 
 # Todo: Move the configs here to config.py?
 
@@ -110,7 +110,7 @@ In the following, the main script begins
 ########################################################################################################################
 ########################################################################################################################
 """
-if __name__ == '__main__':
+def main():
 
     # Print the current version of the tool
     print("PROFIT V{:.1f} starting".format(config.PROFIT_VERSION))

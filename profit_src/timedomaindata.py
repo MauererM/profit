@@ -5,11 +5,11 @@ MIT License
 Copyright (c) 2018-2023 Mario Mauerer
 """
 
-import dateoperations
-import helper
-from storage.stock.stock import StockData
-from storage.forex.forex import ForexData
-from storage.index.index import IndexData
+from . import dateoperations
+from . import helper
+from .storage.stock.stock import StockData
+from .storage.forex.forex import ForexData
+from .storage.index.index import IndexData
 
 
 class StockMarketIndicesData:

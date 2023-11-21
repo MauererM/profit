@@ -6,13 +6,13 @@ Copyright (c) 2018-2023 Mario Mauerer
 """
 
 import re
-import stringoperations
-import dateoperations
-import files
-import helper
-from storage.forex.forex import ForexData
-from storage.stock.stock import StockData
-from storage.index.index import IndexData
+from .. import stringoperations
+from .. import dateoperations
+from .. import files
+from .. import helper
+from ..storage.forex.forex import ForexData
+from ..storage.stock.stock import StockData
+from ..storage.index.index import IndexData
 
 # Layout/Todo:
 """

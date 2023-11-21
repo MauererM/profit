@@ -6,9 +6,9 @@ Copyright (c) 2023 Mario Mauerer
 """
 
 import re
-import files
-from storage.storage_abc import MarketDataStorage
-from helper import create_dict_from_list
+from ... import files
+from ...storage.storage_abc import MarketDataStorage
+from ...helper import create_dict_from_list
 
 class IndexData(MarketDataStorage):
     """Represents data from a marketdata-csv.

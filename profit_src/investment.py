@@ -5,11 +5,11 @@ MIT License
 Copyright (c) 2018 Mario Mauerer
 """
 
-import dateoperations
-import stringoperations
-import config
-import helper
-from timedomaindata import StockTimeDomainData
+from . import dateoperations
+from . import stringoperations
+from . import config
+from . import helper
+from .timedomaindata import StockTimeDomainData
 
 
 class Investment:

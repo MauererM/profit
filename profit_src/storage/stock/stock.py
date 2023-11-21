@@ -6,10 +6,9 @@ Copyright (c) 2018-2023 Mario Mauerer
 """
 
 import re
-import files
-import dateoperations
-from storage.storage_abc import MarketDataStorage
-from helper import create_dict_from_list
+from ...import files
+from ...storage.storage_abc import MarketDataStorage
+from ...helper import create_dict_from_list
 
 
 class StockData(MarketDataStorage):

@@ -9,8 +9,8 @@ import os
 import matplotlib
 import matplotlib.pyplot as plt
 import pylab
-import files
-import config
+from . import files
+from . import config
 
 
 def configure_plot_common():

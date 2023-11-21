@@ -5,9 +5,9 @@ MIT License
 Copyright (c) 2018 Mario Mauerer
 """
 
-import stringoperations as stringops
-import account
-import config
+from . import stringoperations as stringops
+from . import account
+from . import config
 
 
 def parse_account_file(filepath, dateformat, analyzer, basecurrency, assetpurposes):

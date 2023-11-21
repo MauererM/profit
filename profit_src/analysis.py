@@ -4,9 +4,9 @@ PROFIT - Python-Based Return on Investment and Financial Investigation Tool
 MIT License
 Copyright (c) 2018 Mario Mauerer
 """
-import dateoperations
-import stringoperations
-import helper
+from . import dateoperations
+from . import stringoperations
+from . import helper
 
 
 class AnalysisRange:

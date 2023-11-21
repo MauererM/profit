@@ -8,7 +8,7 @@ Copyright (c) 2020-2023 Mario Mauerer
 import pkgutil
 import inspect
 import importlib
-import dateoperations
+from .. import dateoperations
 from .provider_abc import DataProvider
 
 
