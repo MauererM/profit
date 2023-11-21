@@ -29,10 +29,10 @@ class MarketDataStorage(ABC):
         pass
 
     @abstractmethod
-    def get_interpol_days(self):
+    def get_pathname(self):
         pass
 
     @abstractmethod
-    def get_pathname(self):
+    def get_id(self):
         pass
 

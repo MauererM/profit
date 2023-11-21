@@ -110,7 +110,9 @@ In the following, the main script begins
 ########################################################################################################################
 ########################################################################################################################
 """
-def main():
+def main(marketdata_storage_path):
+
+    # Todo Get the proper path, e.g. the marketdata_storage_path is one level up! Get the full path? Use that path-lib?!
 
     # Print the current version of the tool
     print("PROFIT V{:.1f} starting".format(config.PROFIT_VERSION))

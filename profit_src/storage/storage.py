@@ -42,14 +42,14 @@ class MarketDataMain:
     """
     The content-format for forex- and stockmarket-index-files is as follows:
     Header;
-    MAX_INTERPOLATION_DAYS;<N>
+    Id;<Name>
     Data;
     08.03.2020;1.434
     ...
 
     The content-format for stock price-files is as follows:
     Header;
-    MAX_INTERPOLATION_DAYS;<N>
+    Id;<Name>
     Split;<date>;<float>
     Data;
     03.02.2020;134.30
@@ -63,8 +63,7 @@ class MarketDataMain:
     HEADER_STRING = "Header"
     DATA_STRING = "Data"
     SPLIT_STRING = "Split"
-    INTERPOLATION_HEADER_STRING = "MAX_INTERPOLATION_DAYS"
-    DEFAULT_INTERPOLATION_DAYS = 5
+    ID_STRING = "Id"
     # forex + Symbol A + Symbol B:
     FORMAT_FOREX = r'^forex_[a-zA-Z0-9]{1,5}_[a-zA-Z0-9]{1,5}\.csv$'
     # stock + Symbol + Exchange + Currency:
@@ -86,7 +85,7 @@ class MarketDataMain:
         return bool(re.match(pattern, s))
 
     def __check_filenames(self, flist):
-        if isinstance(flist, list) is False: # Allows passing single strings
+        if isinstance(flist, list) is False:  # Allows passing single strings
             flist = [flist]
         for f in flist:
             if f[0:5] == "forex":
@@ -105,11 +104,10 @@ class MarketDataMain:
                 raise RuntimeError("Detected faulty file name in marketdata storage: " + f +
                                    ". File names must start with forex, stock or index")
 
-    def __parse_forex_index_file(self, symbol_id, fname, is_index=False):
+    def __parse_forex_index_file(self, fname, is_index=False):
         lines = files.get_file_lines(fname)
-
         # Read the header:
-        d_interp = None
+        id = None
         dates = []
         vals = []
         for line_nr, line in enumerate(lines):
@@ -117,20 +115,16 @@ class MarketDataMain:
             if line_nr == 0:
                 txt, _ = stringoperations.read_crop_string_delimited(stripline, self.DELIMITER)
                 if txt != self.HEADER_STRING:
-                    raise RuntimeError("File must start with Header-string. File: " + fname)
+                    raise RuntimeError(f"File must start with Header-string. File: {fname}")
             elif line_nr == 1:
                 txt, val = stringoperations.read_crop_string_delimited(stripline, self.DELIMITER)
-                if txt != self.INTERPOLATION_HEADER_STRING:
-                    raise RuntimeError("After Header, the value for max. "
-                                       "interpolation days must follow. File: " + fname)
-                try:
-                    d_interp = int(val)
-                except:
-                    raise RuntimeError("Could not convert interpolation-days string to integer.")
+                if txt != self.ID_STRING:
+                    raise RuntimeError(f"After Header, the Id-string must follow. File: {fname}")
+                id = val
             elif line_nr == 2:
                 txt, _ = stringoperations.read_crop_string_delimited(stripline, self.DELIMITER)
                 if txt != self.DATA_STRING:
-                    raise RuntimeError("After max. interpolation days must follow data-string. File: " + fname)
+                    raise RuntimeError(f"After Id-string must follow data-string. File: {fname}")
             else:
                 ret = self.__read_data_line_from_storage_file(stripline)
                 if ret is None:
@@ -140,24 +134,24 @@ class MarketDataMain:
                 vals.append(v)
 
         if len(dates) != len(vals):
-            raise RuntimeError("Dates and values must have same length. File: " + fname)
+            raise RuntimeError(f"Dates and values must have same length. File: {fname}")
         if dateoperations.check_date_order(dates, self.analyzer, allow_ident_days=False) is False and len(dates) > 0:
             raise RuntimeError(f"The dates in a forex-storage file must be in order! File: {fname}")
         if is_index is False:
-            f = ForexData(fname, d_interp, (dates, vals))
+            f = ForexData(fname, id, (dates, vals))
         else:
-            f = IndexData(symbol_id, fname, d_interp, (dates, vals))
+            f = IndexData(symbol_id, fname, id, (dates, vals))
         return f
 
     # Todo/To continue: In stocks and index-files, we must store the ID/symbol inside the data-file. Otherwise,
     # purely from the file name, we can't have characters like ^ (needed for indices, maybe also stocks).
     # This  is not needed for forex, though... ==> Implement this, and pass the symbol-ID all the way through, also
     # into the header-creation.
-    def __parse_stock_file(self, symbol_id, fname):
+    def __parse_stock_file(self, fname):
         lines = files.get_file_lines(fname)
 
         # Read the header:
-        d_interp = None
+        id = None
         splits = []
         dates = []
         vals = []
@@ -167,16 +161,12 @@ class MarketDataMain:
             if line_nr == 0:
                 txt, _ = stringoperations.read_crop_string_delimited(stripline, self.DELIMITER)
                 if txt != self.HEADER_STRING:
-                    raise RuntimeError("File must start with Header-string. File: " + fname)
+                    raise RuntimeError(f"File must start with Header-string. File: {fname}")
             elif line_nr == 1:
                 txt, val = stringoperations.read_crop_string_delimited(stripline, self.DELIMITER)
-                if txt != self.INTERPOLATION_HEADER_STRING:
-                    raise RuntimeError("After Header, the value for max. "
-                                       "interpolation days must follow. File: " + fname)
-                try:
-                    d_interp = int(val)
-                except:
-                    raise RuntimeError("Could not convert interpolation-days string to integer.")
+                if txt != self.ID_STRING:
+                    raise RuntimeError(f"After Header, the Id-string must follow. File: {fname}")
+                    id = val
             elif line_nr >= 2 and data_reached is False:  # Can be "SPLIT" or "Data"
                 begin, rest = stringoperations.read_crop_string_delimited(stripline, self.DELIMITER)
                 if begin == self.SPLIT_STRING:
@@ -202,7 +192,7 @@ class MarketDataMain:
             raise RuntimeError("Dates and values must have same length. File: " + fname)
         if dateoperations.check_date_order(dates, self.analyzer, allow_ident_days=False) is False and len(dates) > 0:
             raise RuntimeError(f"The dates in a stock-storage file must be in order! File: {fname}")
-        f = StockData(symbol_id, fname, d_interp, (dates, vals), splits)
+        f = StockData(symbol_id, fname, id, (dates, vals), splits)
         return f
 
     def __read_data_line_from_storage_file(self, line):
@@ -298,48 +288,48 @@ class MarketDataMain:
 
     def is_storage_data_existing(self, obj_type, symbols):
         """Checks, if a market-data storage file/object is existing. If yes, it returns it. Else: None.
+        Existence is checked via the ID-string within the files.
         :param obj_type: String of the desired object-type. stock, forex or index
         :param symbols: List of object-dependent strings to characterize it
         :return storage-object if existing, else, None"""
         if obj_type == "stock":
-            symbol = symbols[0]
-            exchange = symbols[1]
-            currency = symbols[2]
-            fn = self.__build_stock_filename(symbol, exchange, currency)
+            id = symbols[0]
         elif obj_type == "forex":
             symbol_a = symbols[0]
             symbol_b = symbols[1]
-            fn = self.__build_forex_filename(symbol_a, symbol_b)
+            id = f"{symbol_a}_{symbol_b}"
         elif obj_type == "index":
-            indexname = symbols
-            fn = self.__build_index_filename(indexname)
+            id = symbols
         else:
             return RuntimeError("Object type not known. Must be stock, forex or index")
 
         for obj in self.dataobjects:
-            if obj.get_filename() == fn:
+            if obj.get_id() == id:
                 return obj
         return None
 
     def __create_storage_file_header(self, obj_type, symbols):
         """Create the appropriate file header. Populate with default values. Returns the filename, too."""
         if obj_type == "stock":
-            symbol = symbols[0]
+            id = symbols[0] # Todo: Does this ID-thing work? Test weird IDs, and check if the file is correctly re-found when run a 2nd time.
+            symbol_clean = files.clean_string(id)
             exchange = symbols[1]
             currency = symbols[2]
-            fn = self.__build_stock_filename(symbol, exchange, currency)
+            fn = self.__build_stock_filename(symbol_clean, exchange, currency)
         elif obj_type == "forex":
             symbol_a = symbols[0]
             symbol_b = symbols[1]
+            id = f"{symbol_a}_{symbol_b}"
             fn = self.__build_forex_filename(symbol_a, symbol_b)
         elif obj_type == "index":
-            indexname = symbols
+            id = symbols
+            indexname = files.clean_string(id)
             fn = self.__build_index_filename(indexname)
         else:
             return RuntimeError("Object type not known. Must be stock, forex or index")
         lines = []
         lines.append(f"{self.HEADER_STRING}{self.DELIMITER}")
-        lines.append(f"{self.INTERPOLATION_HEADER_STRING}{self.DELIMITER}{self.DEFAULT_INTERPOLATION_DAYS:d}")
+        lines.append(f"{self.ID_STRING}{self.DELIMITER}{id}")
         lines.append(f"{self.DATA_STRING}{self.DELIMITER}")
         return fn, lines
 
@@ -353,7 +343,7 @@ class MarketDataMain:
         except Exception:
             raise RuntimeError(f"Could not create/write new marketdata-file. Path: {fp}")
 
-        self.__check_filenames(fn) # adds it also to the dict. Don't pass the path
+        self.__check_filenames(fn)  # adds it also to the dict. Don't pass the path
         if obj_type == "stock":
             obj = self.__parse_stock_file(fp)
         elif obj_type == "forex":
@@ -364,8 +354,6 @@ class MarketDataMain:
             return RuntimeError("Object type not known. Must be stock, forex or index")
         self.dataobjects.append(obj)
         return obj
-
-
 
     def fuse_storage_and_provider_data(self, storage_obj, new_data, tolerance_percent=3.0, storage_is_groundtruth=True):
         """Take data from the provider. Merge/match it with the available data from storage. Return the fused
@@ -399,7 +387,7 @@ class MarketDataMain:
                     if storage_is_groundtruth is True:
                         new_values[idx_new] = price_csv  # Adjust provider data to existing data
                     else:
-                        values_merged[idx] = price_new # Take the new/provider-data
+                        values_merged[idx] = price_new  # Take the new/provider-data
                     # Record a string for later output:
                     discrepancy_entries.append(f"{date_cur};\t{price_csv:.3f};\t{price_new:.3f}")
 
@@ -420,7 +408,7 @@ class MarketDataMain:
 
         # Iterate over all new provider-data and sort it into the merged list:
         for idx, newdate in enumerate(new_dates):
-            if newdate not in csv_dates_dict: # The current new date is not in the market-data-list: it can be inserted!
+            if newdate not in csv_dates_dict:  # The current new date is not in the market-data-list: it can be inserted!
                 newdate_dt = self.analyzer.str2datetime(newdate)
                 # Find the index, where it has to go:
                 inserted = False
@@ -443,7 +431,6 @@ class MarketDataMain:
             raise RuntimeError(f"Something went wrong when fusing the data. Path: {storage_obj.get_filename()}")
         return dates_merged, values_merged
 
-
     def write_data_to_storage(self, storage_obj, data):
         """New (and existing) data is written to storage, i.e., the data is extended with the new data that was
         obtained by the data provider."""
@@ -461,7 +448,7 @@ class MarketDataMain:
             if txt == self.DATA_STRING:
                 lines_to_write.append(stripline)
                 break
-            lines_to_write.append(stripline) # Todo: Check if this works
+            lines_to_write.append(stripline)  # Todo: Check if this works
 
         dates, values = data
         if len(dates) != len(values):

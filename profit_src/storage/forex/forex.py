@@ -20,9 +20,9 @@ class ForexData(MarketDataStorage):
 
     FORMAT_FNAME_GROUPS = r'forex_([a-zA-Z0-9]{1,5})_([a-zA-Z0-9]{1,5})\.csv'
 
-    def __init__(self, pathname, interpol_days, data):
+    def __init__(self, pathname, id, data):
         self.pname = pathname
-        self.interpol_days = interpol_days
+        self.id = id
 
         dates = data[0]
         values = data[1]
@@ -68,9 +68,6 @@ class ForexData(MarketDataStorage):
         except IndexError:
             return None
 
-    def get_interpol_days(self):
-        return self.interpol_days
-
     def get_pathname(self):
         return self.pname
 
@@ -79,3 +76,6 @@ class ForexData(MarketDataStorage):
 
     def get_symbol_b(self):
         return self.symbol_b
+
+    def get_id(self):
+        return self.id

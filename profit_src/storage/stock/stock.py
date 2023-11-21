@@ -19,11 +19,11 @@ class StockData(MarketDataStorage):
     """
     FORMAT_FNAME_GROUPS = r'stock_([a-zA-Z0-9.]{1,15})_([a-zA-Z0-9.]{1,15})_([a-zA-Z0-9]{1,5})\.csv'
 
-    def __init__(self, symbol_id, pathname, interpol_days, data, splits):
+    def __init__(self, symbol_id, pathname, id, data, splits):
         # Give the symbol/id explicitly (don't derive it from the file name) -
         # this allows weird characters like ^ in the symbol, too
         self.pname = pathname
-        self.interpol_days = interpol_days
+        self.id = id
 
         dates = data[0]
         values = data[1]
@@ -91,9 +91,6 @@ class StockData(MarketDataStorage):
         except IndexError:
             return None
 
-    def get_interpol_days(self):
-        return self.interpol_days
-
     def get_pathname(self):
         return self.pname
 
@@ -105,3 +102,6 @@ class StockData(MarketDataStorage):
 
     def get_currency(self):
         return self.currency
+
+    def get_id(self):
+        return self.id

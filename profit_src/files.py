@@ -28,6 +28,11 @@ def write_file_lines(filepath, lines, overwrite=False):
                 string = line + '\n'
                 f.write(string)
 
+def clean_string(s):
+    """Remove non-alphanumeric characters from a string such that it
+    can be used for a filename.
+    """
+    return re.sub(r'[^a-zA-Z0-9]', '', s)
 
 def get_file_lines(filepath):
     """Returns all lines of a file as a list of strings
