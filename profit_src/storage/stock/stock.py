@@ -19,7 +19,7 @@ class StockData(MarketDataStorage):
     """
     FORMAT_FNAME_GROUPS = r'stock_([a-zA-Z0-9.]{1,15})_([a-zA-Z0-9.]{1,15})_([a-zA-Z0-9]{1,5})\.csv'
 
-    def __init__(self, symbol_id, pathname, id, data, splits):
+    def __init__(self, pathname, id, data, splits):
         # Give the symbol/id explicitly (don't derive it from the file name) -
         # this allows weird characters like ^ in the symbol, too
         self.pname = pathname
@@ -42,7 +42,7 @@ class StockData(MarketDataStorage):
         self.fname = files.get_filename_from_path(self.pname)
         match = re.match(self.FORMAT_FNAME_GROUPS, self.fname)
         groups = match.groups()
-        self.symbol = symbol_id
+        self.symbol = groups[0]
         self.exchange = groups[1]
         self.currency = groups[2]
 

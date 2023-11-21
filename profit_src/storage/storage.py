@@ -91,21 +91,21 @@ class MarketDataMain:
             if f[0:5] == "forex":
                 if self.__is_string_valid_format(f, self.FORMAT_FOREX) is False:
                     raise RuntimeError("Misformatted string for " + f)
-                self.filesdict["forex"].append(files.create_path(self.storage_folder_path, f))
+                self.filesdict["forex"].append(self.storage_folder_path.joinpath(f))
             elif f[0:5] == "stock":
                 if self.__is_string_valid_format(f, self.FORMAT_STOCK) is False:
                     raise RuntimeError("Misformatted string for " + f)
-                self.filesdict["stock"].append(files.create_path(self.storage_folder_path, f))
+                self.filesdict["stock"].append(self.storage_folder_path.joinpath(f))
             elif f[0:5] == "index":
                 if self.__is_string_valid_format(f, self.FORMAT_INDEX) is False:
                     raise RuntimeError("Misformatted string for " + f)
-                self.filesdict["index"].append(files.create_path(self.storage_folder_path, f))
+                self.filesdict["index"].append(self.storage_folder_path.joinpath(f))
             else:
-                raise RuntimeError("Detected faulty file name in marketdata storage: " + f +
-                                   ". File names must start with forex, stock or index")
+                raise RuntimeError(f"Detected faulty file name in marketdata storage: {f}."
+                                   f"File names must start with forex, stock or index.")
 
     def __parse_forex_index_file(self, fname, is_index=False):
-        lines = files.get_file_lines(fname)
+        lines = files.get_file_lines(fname) # Todo: Use pathlib for this
         # Read the header:
         id = None
         dates = []
@@ -140,15 +140,11 @@ class MarketDataMain:
         if is_index is False:
             f = ForexData(fname, id, (dates, vals))
         else:
-            f = IndexData(symbol_id, fname, id, (dates, vals))
+            f = IndexData(fname, id, (dates, vals))
         return f
 
-    # Todo/To continue: In stocks and index-files, we must store the ID/symbol inside the data-file. Otherwise,
-    # purely from the file name, we can't have characters like ^ (needed for indices, maybe also stocks).
-    # This  is not needed for forex, though... ==> Implement this, and pass the symbol-ID all the way through, also
-    # into the header-creation.
     def __parse_stock_file(self, fname):
-        lines = files.get_file_lines(fname)
+        lines = files.get_file_lines(fname) # Todo: Use pathlib for this
 
         # Read the header:
         id = None
@@ -192,7 +188,7 @@ class MarketDataMain:
             raise RuntimeError("Dates and values must have same length. File: " + fname)
         if dateoperations.check_date_order(dates, self.analyzer, allow_ident_days=False) is False and len(dates) > 0:
             raise RuntimeError(f"The dates in a stock-storage file must be in order! File: {fname}")
-        f = StockData(symbol_id, fname, id, (dates, vals), splits)
+        f = StockData(fname, id, (dates, vals), splits)
         return f
 
     def __read_data_line_from_storage_file(self, line):
@@ -215,7 +211,7 @@ class MarketDataMain:
         """ Check _all_ files in the storage folder for validity. Do this regularly to make sure the database
         is not getting corrupted.
         """
-        f = files.get_file_list(self.storage_folder_path, self.EXTENSION)
+        f = files.get_file_list(self.storage_folder_path, self.EXTENSION) # Todo: Use pathlib for this
         self.__check_filenames(f)  # This also fills the dictionary according to what they represent
 
         for file in self.filesdict["stock"]:
@@ -312,7 +308,7 @@ class MarketDataMain:
         """Create the appropriate file header. Populate with default values. Returns the filename, too."""
         if obj_type == "stock":
             id = symbols[0] # Todo: Does this ID-thing work? Test weird IDs, and check if the file is correctly re-found when run a 2nd time.
-            symbol_clean = files.clean_string(id)
+            symbol_clean = files.clean_string(id) # Todo: Use pathlib for this
             exchange = symbols[1]
             currency = symbols[2]
             fn = self.__build_stock_filename(symbol_clean, exchange, currency)
@@ -323,7 +319,7 @@ class MarketDataMain:
             fn = self.__build_forex_filename(symbol_a, symbol_b)
         elif obj_type == "index":
             id = symbols
-            indexname = files.clean_string(id)
+            indexname = files.clean_string(id) # Todo: Use pathlib for this
             fn = self.__build_index_filename(indexname)
         else:
             return RuntimeError("Object type not known. Must be stock, forex or index")
@@ -335,21 +331,21 @@ class MarketDataMain:
 
     def create_new_storage_file(self, obj_type, symbols):
         fn, lines = self.__create_storage_file_header(obj_type, symbols)
-        fp = files.create_path(self.storage_folder_path, fn)
-        if files.file_exists(fp) is True:
+        fp = self.storage_folder_path.joinpath(fn)
+        if files.file_exists(fp) is True: # Todo: Use pathlib for this
             raise RuntimeError("File already exists! This should not happen at this point.")
         try:
-            files.write_file_lines(fp, lines, overwrite=True)
+            files.write_file_lines(fp, lines, overwrite=True) # Todo: Use pathlib for this
         except Exception:
-            raise RuntimeError(f"Could not create/write new marketdata-file. Path: {fp}")
+            raise RuntimeError(f"Could not create/write new marketdata-file. Path: {fp}") # Todo: Use pathlib for this
 
         self.__check_filenames(fn)  # adds it also to the dict. Don't pass the path
         if obj_type == "stock":
-            obj = self.__parse_stock_file(fp)
+            obj = self.__parse_stock_file(fp) # Todo: Use pathlib for this
         elif obj_type == "forex":
-            obj = self.__parse_forex_index_file(fp, is_index=False)
+            obj = self.__parse_forex_index_file(fp, is_index=False) # Todo: Use pathlib for this
         elif obj_type == "index":
-            obj = self.__parse_forex_index_file(fp, is_index=True)
+            obj = self.__parse_forex_index_file(fp, is_index=True) # Todo: Use pathlib for this
         else:
             return RuntimeError("Object type not known. Must be stock, forex or index")
         self.dataobjects.append(obj)
@@ -435,12 +431,12 @@ class MarketDataMain:
         """New (and existing) data is written to storage, i.e., the data is extended with the new data that was
         obtained by the data provider."""
 
-        if files.file_exists(storage_obj.get_pathname()) is False:
+        if files.file_exists(storage_obj.get_pathname()) is False: # Todo: Use pathlib for this
             raise RuntimeError("File must already exist!")
 
         # Read the existing file's header into memory.
         lines_to_write = []
-        lines_csv = files.get_file_lines(storage_obj.get_pathname())
+        lines_csv = files.get_file_lines(storage_obj.get_pathname()) # Todo: Use pathlib for this
         # Copy the header. The header stops at self.DATA_STRING
         for line_nr, line in enumerate(lines_csv):
             stripline = stringoperations.strip_whitespaces(line)
@@ -461,6 +457,6 @@ class MarketDataMain:
 
         # Write the file:
         try:
-            files.write_file_lines(storage_obj.get_pathname(), lines_to_write, overwrite=True)
+            files.write_file_lines(storage_obj.get_pathname(), lines_to_write, overwrite=True) # Todo: Use pathlib for this
         except:
-            raise RuntimeError(f"Could not overwrite storage-file. Path: {storage_obj.get_pathname()}")
+            raise RuntimeError(f"Could not overwrite storage-file. Path: {storage_obj.get_pathname()}") # Todo: Use pathlib for this

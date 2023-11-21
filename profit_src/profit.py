@@ -6,6 +6,7 @@ MIT License
 Copyright (c) 2018 Mario Mauerer
 """
 import datetime
+from pathlib import Path
 from . import accountparser
 from . import investmentparser
 from . import files
@@ -113,6 +114,8 @@ In the following, the main script begins
 def main(marketdata_storage_path):
 
     # Todo Get the proper path, e.g. the marketdata_storage_path is one level up! Get the full path? Use that path-lib?!
+    marketdata_storage_path = Path(marketdata_storage_path)
+    marketdata_storage_path = marketdata_storage_path.resolve()
 
     # Print the current version of the tool
     print("PROFIT V{:.1f} starting".format(config.PROFIT_VERSION))
@@ -137,7 +140,7 @@ def main(marketdata_storage_path):
 
     # Initialize the market data system.
     # Todo use the path from config. Clean up old config entries.
-    storage = MarketDataMain("marketdata_storage", config.FORMAT_DATE, analyzer)
+    storage = MarketDataMain(marketdata_storage_path, config.FORMAT_DATE, analyzer)
 
     """
     Sanity checks:

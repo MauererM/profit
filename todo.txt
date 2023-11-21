@@ -18,7 +18,8 @@ Is if name == main the right thing for module-level debugging? How to do better 
 
 
 Continue in marketdata: 
-- Allow weird IDs like ^Gdaxi or so (maybe also update the regex-check... maybe not needed for file names?). What does the asset-parsers do with weird characters in the assets (try out !AAPL or so as symbol...!)
+- Introduce Pathlib to storage.py and/or files.py. See all the todos. 
+- Test if the IDs work, with weird symbols. Fix it for the indexes. 
 - It's almost working. Test these cases:
 - Marketdata with empty/full folders at startup
 - Is the correct data being pulled from data providers?

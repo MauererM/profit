@@ -19,7 +19,7 @@ class IndexData(MarketDataStorage):
 
     FORMAT_FNAME_GROUPS = r'index_([a-zA-Z0-9.\^]{1,10})\.csv' # Todo: Some stock-indices have weird names with ^in the name. Is this working?
 
-    def __init__(self, symbol_id, pathname, id, data):
+    def __init__(self, pathname, id, data):
         # Give the symbol/id explicitly (don't derive it from the file name) -
         # this allows weird characters like ^ in the symbol, too
         self.pname = pathname
@@ -40,7 +40,7 @@ class IndexData(MarketDataStorage):
         self.fname = files.get_filename_from_path(self.pname)
         match = re.match(self.FORMAT_FNAME_GROUPS, self.fname)
         groups = match.groups()
-        self.index = symbol_id
+        self.index = groups[0]
 
         self.dates_dict = create_dict_from_list(self.dates)
 
