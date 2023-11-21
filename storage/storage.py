@@ -68,28 +68,26 @@ class MarketDataMain:
     # forex + Symbol A + Symbol B:
     FORMAT_FOREX = r'^forex_[a-zA-Z0-9]{1,5}_[a-zA-Z0-9]{1,5}\.csv$'
     # stock + Symbol + Exchange + Currency:
-    FORMAT_STOCK = r'^stock_[a-zA-Z0-9.]{1,10}_[a-zA-Z0-9.]{1,10}_[a-zA-Z0-9]{1,5}\.csv$'
+    FORMAT_STOCK = r'^stock_[a-zA-Z0-9.]{1,15}_[a-zA-Z0-9.]{1,15}_[a-zA-Z0-9]{1,5}\.csv$'
     # index + Symbol:
-    FORMAT_INDEX = r'^index_[a-zA-Z0-9.]{1,10}\.csv$'
+    FORMAT_INDEX = r'^index_[a-zA-Z0-9.\^]{1,10}\.csv$'
 
     def __init__(self, path_to_storage_folder, dateformat, analyzer):
         self.storage_folder_path = path_to_storage_folder
         self.dateformat = dateformat
         self.analyzer = analyzer
         self.filesdict = {"stock": [], "index": [], "forex": []}
-        self.forexobjects = []  # Todo are these needed, or is dataobjects sufficient?
-        self.stockobjects = []
-        self.indexobjects = []
         self.dataobjects = []
 
         print("Verifying all files in the marketstorage path")
         self.verify_and_read_storage()  # Reads _all_ stored files in the folder. For regular data-integrity checks.
-        self.dataobjects = self.forexobjects + self.stockobjects + self.indexobjects
 
     def __is_string_valid_format(self, s, pattern):
         return bool(re.match(pattern, s))
 
     def __check_filenames(self, flist):
+        if isinstance(flist, list) is False: # Allows passing single strings
+            flist = [flist]
         for f in flist:
             if f[0:5] == "forex":
                 if self.__is_string_valid_format(f, self.FORMAT_FOREX) is False:
@@ -107,7 +105,7 @@ class MarketDataMain:
                 raise RuntimeError("Detected faulty file name in marketdata storage: " + f +
                                    ". File names must start with forex, stock or index")
 
-    def __parse_forex_index_file(self, fname, is_index=False):
+    def __parse_forex_index_file(self, symbol_id, fname, is_index=False):
         lines = files.get_file_lines(fname)
 
         # Read the header:
@@ -143,15 +141,19 @@ class MarketDataMain:
 
         if len(dates) != len(vals):
             raise RuntimeError("Dates and values must have same length. File: " + fname)
-        if dateoperations.check_dates_order(dates, self.analyzer, allow_ident_days=False) is False and len(dates) > 0:
+        if dateoperations.check_date_order(dates, self.analyzer, allow_ident_days=False) is False and len(dates) > 0:
             raise RuntimeError(f"The dates in a forex-storage file must be in order! File: {fname}")
         if is_index is False:
             f = ForexData(fname, d_interp, (dates, vals))
         else:
-            f = IndexData(fname, d_interp, (dates, vals))
+            f = IndexData(symbol_id, fname, d_interp, (dates, vals))
         return f
 
-    def __parse_stock_file(self, fname):
+    # Todo/To continue: In stocks and index-files, we must store the ID/symbol inside the data-file. Otherwise,
+    # purely from the file name, we can't have characters like ^ (needed for indices, maybe also stocks).
+    # This  is not needed for forex, though... ==> Implement this, and pass the symbol-ID all the way through, also
+    # into the header-creation.
+    def __parse_stock_file(self, symbol_id, fname):
         lines = files.get_file_lines(fname)
 
         # Read the header:
@@ -198,9 +200,9 @@ class MarketDataMain:
 
         if len(dates) != len(vals):
             raise RuntimeError("Dates and values must have same length. File: " + fname)
-        if dateoperations.check_dates_order(dates, self.analyzer, allow_ident_days=False) is False and len(dates) > 0:
+        if dateoperations.check_date_order(dates, self.analyzer, allow_ident_days=False) is False and len(dates) > 0:
             raise RuntimeError(f"The dates in a stock-storage file must be in order! File: {fname}")
-        f = StockData(fname, d_interp, (dates, vals), splits)
+        f = StockData(symbol_id, fname, d_interp, (dates, vals), splits)
         return f
 
     def __read_data_line_from_storage_file(self, line):
@@ -227,13 +229,13 @@ class MarketDataMain:
         self.__check_filenames(f)  # This also fills the dictionary according to what they represent
 
         for file in self.filesdict["stock"]:
-            self.stockobjects.append(self.__parse_stock_file(file))
+            self.dataobjects.append(self.__parse_stock_file(file))
 
         for file in self.filesdict["forex"]:
-            self.forexobjects.append(self.__parse_forex_index_file(file, is_index=False))
+            self.dataobjects.append(self.__parse_forex_index_file(file, is_index=False))
 
         for file in self.filesdict["index"]:
-            self.indexobjects.append(self.__parse_forex_index_file(file, is_index=True))
+            self.dataobjects.append(self.__parse_forex_index_file(file, is_index=True))
 
     def __get_marketdata_object(self, fname):
         """Checks if a marketdata file is available for a given file name, and returns the related object if available.
@@ -265,7 +267,7 @@ class MarketDataMain:
             symbol_b = symbols[1]
             return self.__get_marketdata_object(self.__build_forex_filename(symbol_a, symbol_b))
         elif obj_type == "index":
-            indexname = symbols[0]
+            indexname = symbols
             return self.get_marketdata_object(self.__build_index_filename(indexname))
         else:
             return RuntimeError("Object type not known. Must be stock, forex or index")
@@ -292,7 +294,7 @@ class MarketDataMain:
         return (dates_list[startidx:stopidx + 1], values[startidx:stopidx + 1])
 
     def get_start_stopdate(self, storage_obj):
-        return (storage_obj.get_startdate, storage_obj.get_stopdate)
+        return (storage_obj.get_startdate(), storage_obj.get_stopdate())
 
     def is_storage_data_existing(self, obj_type, symbols):
         """Checks, if a market-data storage file/object is existing. If yes, it returns it. Else: None.
@@ -309,7 +311,7 @@ class MarketDataMain:
             symbol_b = symbols[1]
             fn = self.__build_forex_filename(symbol_a, symbol_b)
         elif obj_type == "index":
-            indexname = symbols[0]
+            indexname = symbols
             fn = self.__build_index_filename(indexname)
         else:
             return RuntimeError("Object type not known. Must be stock, forex or index")
@@ -331,14 +333,14 @@ class MarketDataMain:
             symbol_b = symbols[1]
             fn = self.__build_forex_filename(symbol_a, symbol_b)
         elif obj_type == "index":
-            indexname = symbols[0]
+            indexname = symbols
             fn = self.__build_index_filename(indexname)
         else:
             return RuntimeError("Object type not known. Must be stock, forex or index")
         lines = []
         lines.append(f"{self.HEADER_STRING}{self.DELIMITER}")
         lines.append(f"{self.INTERPOLATION_HEADER_STRING}{self.DELIMITER}{self.DEFAULT_INTERPOLATION_DAYS:d}")
-        lines.append(f"{self.DATA_STRING}")
+        lines.append(f"{self.DATA_STRING}{self.DELIMITER}")
         return fn, lines
 
     def create_new_storage_file(self, obj_type, symbols):
@@ -350,6 +352,20 @@ class MarketDataMain:
             files.write_file_lines(fp, lines, overwrite=True)
         except Exception:
             raise RuntimeError(f"Could not create/write new marketdata-file. Path: {fp}")
+
+        self.__check_filenames(fn) # adds it also to the dict. Don't pass the path
+        if obj_type == "stock":
+            obj = self.__parse_stock_file(fp)
+        elif obj_type == "forex":
+            obj = self.__parse_forex_index_file(fp, is_index=False)
+        elif obj_type == "index":
+            obj = self.__parse_forex_index_file(fp, is_index=True)
+        else:
+            return RuntimeError("Object type not known. Must be stock, forex or index")
+        self.dataobjects.append(obj)
+        return obj
+
+
 
     def fuse_storage_and_provider_data(self, storage_obj, new_data, tolerance_percent=3.0, storage_is_groundtruth=True):
         """Take data from the provider. Merge/match it with the available data from storage. Return the fused
@@ -385,7 +401,7 @@ class MarketDataMain:
                     else:
                         values_merged[idx] = price_new # Take the new/provider-data
                     # Record a string for later output:
-                    discrepancy_entries.append(f"{date_cur};\t{price_cur:.3f};\t{price_new:.3f}")
+                    discrepancy_entries.append(f"{date_cur};\t{price_csv:.3f};\t{price_new:.3f}")
 
         # Output the mismatching entries of the market data file:
         numentry = min(len(discrepancy_entries), 20)

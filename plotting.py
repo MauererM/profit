@@ -16,6 +16,7 @@ import config
 import plotting_aux
 import helper
 
+# Todo clean up this massive file
 
 def plot_currency_values(assetlist, fname, titlestring, analyzer, drawstackedplot=True):
     """Plots the values of the assets grouped according to their currencies
@@ -475,7 +476,7 @@ def plot_asset_purposes(assetlist, fname, titlestr, analyzer):
 def plot_asset_values_indices(assetlist, indexlist, fname, titlestr, analyzer):
     """Plots the summed values of the given assets, together with some stock-market indices
     :param assetlist: List of asset-objects
-    :param indexlist: List of MarketPrices-objects that contain the index-data
+    :param indexlist: List of Index-objects that contain the index-data
     :param fname: String of filename of plot
     :param titlestr: String of plot-title
     """
@@ -523,11 +524,11 @@ def plot_asset_values_indices(assetlist, indexlist, fname, titlestr, analyzer):
     for stockidx in indexlist:
         # Check if the object actually contains data:
         if stockidx.is_price_avail() is True:
-            dat = stockidx.get_price_values()
+            dat = stockidx.get_values()
             if len(dat) != len(datelist):
                 raise RuntimeError("The stockmarket-index-data must be of equal length than the asset values.")
             indexvals.append(dat)
-            indexname.append(stockidx.get_currency())  # The name of the index is stored as currency
+            indexname.append(stockidx.get_name())  # The name of the index is stored as currency
 
     # Rescale the summed values such that the first entry is "100":
     startidx = [i for i, x in enumerate(sumlist_corr) if x > 1e-9 or x < -1e-9][0]

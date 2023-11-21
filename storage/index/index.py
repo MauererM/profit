@@ -17,9 +17,11 @@ class IndexData(MarketDataStorage):
     "index_[a-zA-Z0-9.]{1,10}\.csv"
     """
 
-    FORMAT_FNAME_GROUPS = r'index_([a-zA-Z0-9.]{1,10})\.csv'
+    FORMAT_FNAME_GROUPS = r'index_([a-zA-Z0-9.\^]{1,10})\.csv' # Todo: Some stock-indices have weird names with ^in the name. Is this working?
 
-    def __init__(self, pathname, interpol_days, data):
+    def __init__(self, symbol_id, pathname, interpol_days, data):
+        # Give the symbol/id explicitly (don't derive it from the file name) -
+        # this allows weird characters like ^ in the symbol, too
         self.pname = pathname
         self.interpol_days = interpol_days
 
@@ -38,7 +40,7 @@ class IndexData(MarketDataStorage):
         self.fname = files.get_filename_from_path(self.pname)
         match = re.match(self.FORMAT_FNAME_GROUPS, self.fname)
         groups = match.groups()
-        self.index = groups[0]
+        self.index = symbol_id
 
         self.dates_dict = create_dict_from_list(self.dates)
 
@@ -72,8 +74,5 @@ class IndexData(MarketDataStorage):
     def get_pathname(self):
         return self.pname
 
-    def extrapolate_data_to_desired_range(self, startdate, stopdate, analyzer):
-        """Some callers need the full/extrapolated data. Create it here.
-        """
-        return dateoperations.format_datelist(self.dates, self.values, startdate, stopdate, analyzer,
-                                              zero_padding_past=False, zero_padding_future=False)
+    def get_index(self):
+        return self.index

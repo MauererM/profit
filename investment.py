@@ -9,7 +9,7 @@ import dateoperations
 import stringoperations
 import config
 import helper
-from timedomaindata import StockData
+from timedomaindata import StockTimeDomainData
 
 
 class Investment:
@@ -456,11 +456,13 @@ class Investment:
                 raise RuntimeError(f"Startdate cannot be after stopdate. Symbol: {self.symbol}. "
                                    f"Exchange: {self.exchange}")  # Todo: Is this f-string correct?
 
-            stockdata = StockData(self.symbol, self.exchange, self.currency, (startdate_prices, date_stop),
-                                  self.analyzer, self.storage)
+            # Check if data is available from storage and/or obtain data via data provider:
+            stockdata = StockTimeDomainData(self.symbol, self.exchange, self.currency, (startdate_prices, date_stop),
+                                  self.analyzer, self.storage, self.provider)
             full_dates, full_prices = stockdata.get_price_data()
             write_to_file = stockdata.storage_to_update()
 
+            # Todo: Put this also into timedomaindata, like it is done for forex, and merge with the forex-code?
             # Write the fused provider- and storge-data back to file:
             if write_to_file is True:
                 self.storage.write_data_to_storage(stockdata.get_storageobj(), (full_dates, full_prices))

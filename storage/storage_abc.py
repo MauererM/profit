@@ -36,7 +36,3 @@ class MarketDataStorage(ABC):
     def get_pathname(self):
         pass
 
-    @abstractmethod
-    def extrapolate_data_to_desired_range(self, startdate, stopdate, analyzer):
-        pass
-

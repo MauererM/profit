@@ -95,7 +95,10 @@ def create_dict_from_list(string_list):
     # Todo: Sanitize input? Check for strings? Check if no duplicates?
     d = {}
     for i, txt in enumerate(string_list):
-        d[txt] = i
+        if txt not in d:
+            d[txt] = i
+        else:
+            raise RuntimeError("Received duplicate date when trying to create date-dict. This is likely not OK.")
     return d
 
 """

@@ -56,7 +56,7 @@ def create_path(foldername, filename):
     """
     # Strip "^" and ":", which are sometimes used in stock market index symbols, from the path:
     p =  os.path.join(foldername, filename)  # Get path of file, including its folder
-    p = re.sub('\^|\:', '', p)
+    p = re.sub('\^|\:', '', p) # Remove all "^" and ":" characters.
     return p
 
 

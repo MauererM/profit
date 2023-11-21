@@ -3,7 +3,6 @@ Check the "todo" strings in the code
 
 Use the ZKB API as plugin? Swissquote? CS?
 
-Organize marketdata also as better plugin. Initialize + verify the storage. Add a header. Download less data if marketdata is there. Include splits (in header)? Create a more complex header? Allow a little bit of interpolation to reduce frequent retrievals? Sanitize input well. CSV is OK. Verify content often. Cleaner plugin/sub-package interface. Modularity. 
 
 Separate data and packages. Provide a search-path for the data (input and output). Same as for the marketdata.
 
@@ -12,6 +11,7 @@ Investment, account also as plugin...? Subpackage? Sensible?
 Check out the logging module for debug-outputs
 
 Make all imports absolute: import profit.stringoperations etc.
+
 Migrate to pathlib for path-string operations
 
 Convert to f-strings, get rid of the plus-signs
@@ -21,4 +21,12 @@ Do a def main if name == main in the main-script
 Is if name == main the right thing for module-level debugging?
 
 
-
+Continue in marketdata: 
+- Allow weird IDs like ^Gdaxi or so (maybe also update the regex-check... maybe not needed for file names?). What does the asset-parsers do with weird characters in the assets (try out !AAPL or so as symbol...!)
+- It's almost working. Test these cases:
+- Marketdata with empty/full folders at startup
+- Is the correct data being pulled from data providers?
+- Is sometimes data _not_ pulled?
+- Is the data correctly merged?
+- Is the storage-data being overwritten (or not)? 
+- Check the todos. 

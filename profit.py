@@ -16,6 +16,8 @@ import analysis
 import config
 from dataprovider.dataprovider import DataproviderMain
 from storage.storage import MarketDataMain
+from timedomaindata import ForexTimeDomainData
+from timedomaindata import StockMarketIndicesData
 
 # Todo: Move the configs here to config.py?
 
@@ -132,6 +134,7 @@ if __name__ == '__main__':
     provider = DataproviderMain(analyzer)
 
     # Initialize the market data system.
+    # Todo use the path from config. Clean up old config entries.
     storage = MarketDataMain("marketdata_storage", config.FORMAT_DATE, analyzer)
 
     """
@@ -209,19 +212,14 @@ if __name__ == '__main__':
     forexdict = {}
     if len(forex_currencies) > 0:
         if len(investments) > 0:
-            print(
-                "Will obtain forex-data back to the " + earliest_forex +
-                " (needed for holding period return calculation)")
+            print(f"Will obtain forex-data back to the {earliest_forex} "
+                  f"(needed for holding period return calculation).")
         else:
-            print(
-                "Will obtain forex-data back to the " + earliest_forex)
+            print(f"Will obtain forex-data back to the {earliest_forex}")
 
         for forexstring in forex_currencies:
-            print("Getting forex-rates for " + forexstring)
-            forexdict[forexstring] = forex.ForexRates(forexstring, config.BASECURRENCY, config.MARKETDATA_FOLDER,
-                                                      config.MARKETDATA_FORMAT_DATE, config.MARKETDATA_DELIMITER,
-                                                      earliest_forex,
-                                                      date_today_str, config.FORMAT_DATE, provider, analyzer)
+            print(f"Getting forex-rates for {forexstring}")
+            forexdict[forexstring] = ForexTimeDomainData(forexstring, config.BASECURRENCY, storage, earliest_forex, date_today_str, provider, analyzer)
 
     # Store an empty object in the basecurrency-key of the forex-dict:
     forexdict[config.BASECURRENCY] = None
@@ -249,13 +247,10 @@ if __name__ == '__main__':
         indexprices = []
         for stockidx in INDICES:
             sym = stockidx["Symbol"]
-            ex = stockidx["Exchange"]
+            ex = stockidx["Exchange"] # Todo Get rid of this hack, we now have the proper class for this
             currency = stockidx["Name"]  # The name of the stock-index is stored as the currency
             # Obtain the prices
-            obj = prices.MarketPrices(sym, ex, currency, config.MARKETDATA_FOLDER, config.MARKETDATA_FORMAT_DATE,
-                                      config.MARKETDATA_DELIMITER, date_analysis_start_str, date_today_str,
-                                      config.FORMAT_DATE, provider, analyzer)
-            obj.extrapolate_market_data_to_full_range()  # If not all data obtained: Extrapolate. # Todo: Replace with extrapolate_data_to_desired_range from storage-obj
+            obj = StockMarketIndicesData(sym, currency, storage, date_analysis_start_str, date_today_str, provider, analyzer)
             indexprices.append(obj)
 
     """

@@ -18,9 +18,11 @@ class StockData(MarketDataStorage):
     stock + Symbol + Exchange + Currency:
     "stock_[a-zA-Z0-9.]{1,10}_[a-zA-Z0-9.]{1,10}_[a-zA-Z0-9]{1,5}\.csv"
     """
-    FORMAT_FNAME_GROUPS = r'stock_([a-zA-Z0-9.]{1,10})_([a-zA-Z0-9.]{1,10})_([a-zA-Z0-9]{1,5})\.csv'
+    FORMAT_FNAME_GROUPS = r'stock_([a-zA-Z0-9.]{1,15})_([a-zA-Z0-9.]{1,15})_([a-zA-Z0-9]{1,5})\.csv'
 
-    def __init__(self, pathname, interpol_days, data, splits):
+    def __init__(self, symbol_id, pathname, interpol_days, data, splits):
+        # Give the symbol/id explicitly (don't derive it from the file name) -
+        # this allows weird characters like ^ in the symbol, too
         self.pname = pathname
         self.interpol_days = interpol_days
 
@@ -41,7 +43,7 @@ class StockData(MarketDataStorage):
         self.fname = files.get_filename_from_path(self.pname)
         match = re.match(self.FORMAT_FNAME_GROUPS, self.fname)
         groups = match.groups()
-        self.symbol = groups[0]
+        self.symbol = symbol_id
         self.exchange = groups[1]
         self.currency = groups[2]
 
@@ -79,10 +81,16 @@ class StockData(MarketDataStorage):
         return self.values
 
     def get_startdate(self):
-        return self.dates[0]
+        try:
+            return self.dates[0]
+        except IndexError:
+            return None
 
     def get_stopdate(self):
-        return self.dates[-1]
+        try:
+            return self.dates[-1]
+        except IndexError:
+            return None
 
     def get_interpol_days(self):
         return self.interpol_days
@@ -90,8 +98,11 @@ class StockData(MarketDataStorage):
     def get_pathname(self):
         return self.pname
 
-    def extrapolate_data_to_desired_range(self, startdate, stopdate, analyzer):
-        """Some callers need the full/extrapolated data. Create it here.
-        """
-        return dateoperations.format_datelist(self.dates, self.values, startdate, stopdate, analyzer,
-                                              zero_padding_past=False, zero_padding_future=False)
+    def get_symbol(self):
+        return self.symbol
+
+    def get_exchange(self):
+        return self.exchange
+
+    def get_currency(self):
+        return self.currency
