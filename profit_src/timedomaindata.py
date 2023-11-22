@@ -5,6 +5,7 @@ MIT License
 Copyright (c) 2018-2023 Mario Mauerer
 """
 
+import logging
 from . import dateoperations
 from . import helper
 from .storage.stock.stock import StockData
@@ -56,15 +57,17 @@ class StockMarketIndicesData:
                                                                                                    self.storage,
                                                                                                    self.storageobj,
                                                                                                    self.analyzer)
+        if isinstance(self.full_dates, list) and len(self.full_dates) > 0:
+            # The index-data must be fully extrapolated:
+            self.full_dates, self.full_values = dateoperations.format_datelist(self.full_dates, self.full_values,
+                                                                               self.analysis_startdate,
+                                                                               self.analysis_stopdate, self.analyzer,
+                                                                               zero_padding_past=False,
+                                                                               zero_padding_future=False)
 
-        # The index-data must be fully extrapolated:
-        self.full_dates, self.full_values = dateoperations.format_datelist(self.full_dates, self.full_values,
-                                                                           self.analysis_startdate,
-                                                                           self.analysis_stopdate, self.analyzer,
-                                                                           zero_padding_past=False,
-                                                                           zero_padding_future=False)
-
-        self.price_avail = True
+            self.price_avail = True
+        else:
+            self.price_avail = False # Something failed, e.g., no provider-data, no market-data available.
 
     def __get_index_storage_object(self):
         return self.storage.is_storage_data_existing("index", (self.symbol))
@@ -333,6 +336,9 @@ def get_provider_storage_ranges(storageobj, storage, analyzer, analysis_startdat
         startdate_from_storage = None
         stopdate_from_storage = None
 
+    logging.debug("Will (try to) obtain these dates from provider and marketdata-storage:")
+    logging.debug(f"Provider:\tStartdate: {startdate_dataprovider}\tStopdate: {stopdate_dataprovider}")
+    logging.debug(f"Storage:\t\tStartdate: {startdate_storage}\tStopdate: {stopdate_storage}")
     return startdate_dataprovider, stopdate_dataprovider, startdate_from_storage, stopdate_from_storage
 
 
@@ -352,6 +358,13 @@ def obtain_data_from_storage_and_provider(startdate_dataprovider, stopdate_datap
                 storagedates, storageprices = ret
                 if len(storagedates) != len(storageprices):
                     raise RuntimeError("Lists should be of identical length")
+                print("Obtained data from storage.")
+                debuglen = min(len(storagedates), 5)
+                logging.debug("Obtained data from storage. First few entries:")
+                for i in range(debuglen):
+                    logging.debug(f"Date: {storagedates[i]}\tValue: {storageprices[i]:.3f}")
+            else:
+                logging.debug("Did not obtain storage-data")
         except:
             raise RuntimeError("Failed to retrieve stored data. This should work at this point.")
 
@@ -381,6 +394,12 @@ def obtain_data_from_storage_and_provider(startdate_dataprovider, stopdate_datap
                 providerdates, providerprices = ret
                 if len(providerdates) != len(providerprices):
                     raise RuntimeError("Lists should be of identical length")
+                logging.debug("Obtained data from an online provider. First few data-points:")
+                debuglen = min(len(providerdates), 5)
+                for i in range(debuglen):
+                    logging.debug(f"Date: {providerdates[i]}\t Value: {providerprices[i]:.3f}")
+            else:
+                logging.debug("Did not obtain provider-data")
         except:
             print(f"Failed to obtain provider data.")
     return storagedates, storageprices, providerdates, providerprices

@@ -927,7 +927,7 @@ def plot_asset_values_cost_payout_individual(assetlist, fname, analyzer):
             assetname = asset.get_filename()
             assetname = files.get_filename(assetname, keep_suffix=False)
             assettype = asset.get_type()
-            titlestr = "Values: " + assetname + " (in " + config.BASECURRENCY + ", " + assettype + ")"
+            titlestr = f"Values: {assetname.name} (in {config.BASECURRENCY}, {assettype})"
             plt.title(titlestr)
 
             # Add a comma to separate thousands:
@@ -1067,7 +1067,7 @@ def plot_asset_returns_individual(assetlist, fname, analyzer):
             ax.set_ylabel(ylabel)
             assetname = asset.get_filename()
             assetname = files.get_filename(assetname, keep_suffix=False)
-            titlestr = "Return: " + assetname
+            titlestr = f"Return: {assetname.name}"
             plt.title(titlestr)
 
             # Only use autofmt_xdate, if there are actually 6 plots on the sheet. Otherwise, the axis-labels of the
@@ -1104,7 +1104,7 @@ def plot_asset_returns_individual_absolute(assetlist, fname, analyzer):
     fname = plotting_aux.modify_plot_path(config.PLOTS_FOLDER, fname)
     # Sanity Check:
     if len(assetlist) == 0:
-        print("No assets given for plot: " + fname)
+        print(f"No assets given for plot: {fname.name}")
         return [0], [0]
 
     # Only plot assets with some value during the analysis period:
@@ -1114,7 +1114,7 @@ def plot_asset_returns_individual_absolute(assetlist, fname, analyzer):
             assetlist_plot.append(asset)
 
     if len(assetlist_plot) == 0:
-        print("No assets of value given at the end of the analysis-period. Not plotting. File: " + fname)
+        print(f"No assets of value given at the end of the analysis-period. Not plotting. File: {fname.name}")
         return [0], [0]
 
     dateformat = assetlist_plot[0].get_dateformat()
@@ -1169,7 +1169,7 @@ def plot_asset_returns_individual_absolute(assetlist, fname, analyzer):
             ax.set_ylabel(ylabel)
             assetname = asset.get_filename()
             assetname = files.get_filename(assetname, keep_suffix=False)
-            titlestr = "Abs. Return/Gain: " + assetname
+            titlestr = f"Abs. Return/Gain: {assetname.name}"
             plt.title(titlestr)
 
             # Only use autofmt_xdate, if there are actually 6 plots on the sheet. Otherwise, the axis-labels of the

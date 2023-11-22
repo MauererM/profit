@@ -63,8 +63,8 @@ def get_filename(fpath, keep_suffix=False):
     if not isinstance(fpath, Path):
         fpath = Path(fpath)
     if keep_suffix:
-        return fpath.name
-    return fpath.stem
+        return Path(fpath.name)
+    return Path(fpath.stem)
 
 
 def write_file_lines(filepath, lines, overwrite=False):

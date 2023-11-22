@@ -6,6 +6,7 @@ Copyright (c) 2018-2023 Mario Mauerer
 """
 
 import re
+import logging
 from pathlib import Path
 from .. import stringoperations
 from .. import dateoperations
@@ -331,7 +332,9 @@ class MarketDataMain:
         fn, lines = self.__create_storage_file_header(obj_type, symbols)
         fp = self.storage_folder_path.joinpath(fn)
         if files.file_exists(fp) is True:
-            raise RuntimeError("File already exists! This should not happen at this point.")
+            raise RuntimeError(f"File already exists! This should not happen at this point. Path: {fp}. Note: "
+                               f"filenames are derived from the symbols, but stripped of special characters. Could"
+                               f"this lead to the creation of identical filenames from assets with differing IDs?")
         try:
             files.write_file_lines(fp, lines, overwrite=True)
         except Exception:
@@ -358,7 +361,6 @@ class MarketDataMain:
         csv_values = storage_obj.get_values()
         if len(new_dates) != len(new_values):
             raise RuntimeError("Dates and values must be of identical length.")
-        # Todo: What happens if we have empty lists? Is it robust?
 
         # Create a dictionary of the new dates to enable faster lookup. Note: Should the new dates contain duplicates,
         # it will only store the most recent/latest value in the dict. This is fine.
@@ -380,8 +382,15 @@ class MarketDataMain:
                 if helper.within_tol(price_csv, price_new, tolerance_percent / 100.0) is False:
                     if storage_is_groundtruth is True:
                         new_values[idx_new] = price_csv  # Adjust provider data to existing data
+                        logging.info("Found a mismatch between provider- and market data. Will prioritize market-data")
+                        logging.info(f"Date: {date_cur}\tStorage Value: {price_csv:.2f}\t"
+                                      f"Provider Value: {price_new:.2f}")
                     else:
-                        values_merged[idx] = price_new  # Take the new/provider-data
+                        values_merged[idx] = price_new  # Take the new/provider-data to write back to file
+                        logging.info("Found a mismatch between provider- and market data. "
+                                      "Will prioritize provider-data")
+                        logging.info(f"Date: {date_cur}\tStorage Value: {price_csv:.2f}\t"
+                                      f"Provider Value: {price_new:.2f}")
                     # Record a string for later output:
                     discrepancy_entries.append(f"{date_cur};\t{price_csv:.3f};\t{price_new:.3f}")
 

@@ -111,8 +111,7 @@ class DataproviderMain:
         always return data for consecutive days (public holidays, weekends etc.) # Todo: Instead of two lists, rather return/use a dict throughout PROFIT? Worth the effort?
         """
         if self.active_provider is None:
-            return RuntimeError(
-                "No data provider initialized.")  # This is usually caugth by a try-block in the calling function.
+            return None
 
         self.__perform_date_sanity_check(startdate, stopdate)
 
@@ -141,8 +140,7 @@ class DataproviderMain:
         always return data for consecutive days (public holidays etc...)
         """
         if self.active_provider is None:
-            return RuntimeError(
-                "No data provider initialized.")  # This is usually caugth by a try-block in the calling function.
+            return None
 
         self.__perform_date_sanity_check(startdate, stopdate)
 

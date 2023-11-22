@@ -419,7 +419,7 @@ def fuse_two_value_lists(datelist_full, dates_1_partial, vals_1_partial_groundtr
         if discard_zeroes is True and val > 1e-6:
             output.append(val)
             date_output.append(date)
-        else:
+        elif discard_zeroes is False:
             output.append(val)
             date_output.append(date)
 

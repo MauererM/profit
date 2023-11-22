@@ -6,6 +6,7 @@ MIT License
 Copyright (c) 2018 Mario Mauerer
 """
 import datetime
+import logging
 from pathlib import Path
 from . import accountparser
 from . import investmentparser
@@ -109,11 +110,16 @@ In the following, the main script begins
 """
 def main():
 
-    # Todo Get the proper path, e.g. the marketdata_storage_path is one level up! Get the full path? Use that path-lib?!
+    # Folder-paths for the outputs of PROFIT:
     storage_path = Path(config.STORAGE_FOLDER).resolve()
     plot_path = Path(config.PLOTS_FOLDER).resolve()
     account_path = Path(config.ACCOUNT_FOLDER).resolve()
     investment_path = Path(config.INVESTMENT_FOLDER).resolve()
+
+    # Set logging:
+    logging.basicConfig(level=logging.WARNING)
+    matplotlib_logger = logging.getLogger('matplotlib')
+    matplotlib_logger.setLevel(logging.INFO) # Exclude matplotlib's debug-messages, as they otherwise spam a lot.
 
     # Print the current version of the tool
     print("PROFIT V{:.1f} starting".format(config.PROFIT_VERSION))

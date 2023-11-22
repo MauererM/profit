@@ -522,7 +522,7 @@ def get_returns_asset_daily_absolute_analysisperiod(asset, dateformat, analyzer)
 
     # If there is an asset-price available, get the latest possible one that is recorded:
     today_price_avail = False
-    ret = asset.get_get_latest_price_date()
+    ret = asset.get_latest_price_date()
     if ret is not None:
         latest_date, _ = ret
         latest_date_dt = analyzer.str2datetime(latest_date)
