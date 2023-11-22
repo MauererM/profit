@@ -15,15 +15,15 @@ class StockData(MarketDataStorage):
     """Represents data from a marketdata-csv.
     Stock files have this format:
     stock + Symbol + Exchange + Currency:
-    "stock_[a-zA-Z0-9.]{1,10}_[a-zA-Z0-9.]{1,10}_[a-zA-Z0-9]{1,5}\.csv"
+    stock_[a-zA-Z0-9.]{1,10}_[a-zA-Z0-9.]{1,10}_[a-zA-Z0-9]{1,5}\.csv
     """
     FORMAT_FNAME_GROUPS = r'stock_([a-zA-Z0-9.]{1,15})_([a-zA-Z0-9.]{1,15})_([a-zA-Z0-9]{1,5})\.csv'
 
-    def __init__(self, pathname, id, data, splits):
+    def __init__(self, pathname, id_, data, splits):
         # Give the symbol/id explicitly (don't derive it from the file name) -
         # this allows weird characters like ^ in the symbol, too
         self.pname = pathname
-        self.id = id
+        self.id_ = id_
 
         dates = data[0]
         values = data[1]
@@ -104,4 +104,4 @@ class StockData(MarketDataStorage):
         return self.currency
 
     def get_id(self):
-        return self.id
+        return self.id_

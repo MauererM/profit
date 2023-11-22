@@ -218,10 +218,9 @@ class Investment:
             elif trans_actions[idx] == config.STRING_INVSTMT_ACTION_SELL:
                 if idx == 0:
                     raise RuntimeError("First investment-transaction cannot be a sell.")
-                else:
-                    if helper.isclose(trans_balance[idx], (trans_balance[idx - 1] - trans_quantity[idx])) is False:
-                        raise RuntimeError("Transactions not in order (balance not correct). "
-                                           "Transaction-Nr: " + repr(idx + 1))
+                if helper.isclose(trans_balance[idx], (trans_balance[idx - 1] - trans_quantity[idx])) is False:
+                    raise RuntimeError(f"Transactions not in order (balance not correct). "
+                                       f"Transaction-Nr: {(idx + 1):d}")
             elif trans_actions[idx] == config.STRING_INVSTMT_ACTION_SPLIT:
                 if idx == 0:
                     raise RuntimeError("First investment-transcation cannot be a split.")
@@ -361,8 +360,9 @@ class Investment:
         # Check the individual transactions for updates in price, and update the value according to the balance.
         # If no price-updates are given, the last value is used.
         trans_value = []
+        valid_actions = {str_action_buy, str_action_sell, str_action_update}
         for idx, action in enumerate(trans_actions):
-            if action == str_action_buy or action == str_action_sell or action == str_action_update:
+            if action in valid_actions:
                 trans_value.append(trans_balance[idx] * trans_price[idx])
             else:
                 trans_value.append(trans_value[-1])
@@ -454,11 +454,11 @@ class Investment:
             stopdate_analysis_dt = self.analyzer.str2datetime(date_stop)
             if startdate_analysis_dt > stopdate_analysis_dt:
                 raise RuntimeError(f"Startdate cannot be after stopdate. Symbol: {self.symbol}. "
-                                   f"Exchange: {self.exchange}")  # Todo: Is this f-string correct?
+                                   f"Exchange: {self.exchange}")
 
             # Check if data is available from storage and/or obtain data via data provider:
             stockdata = StockTimeDomainData(self.symbol, self.exchange, self.currency, (startdate_prices, date_stop),
-                                  self.analyzer, self.storage, self.provider)
+                                            self.analyzer, self.storage, self.provider)
             full_dates, full_prices = stockdata.get_price_data()
             write_to_file = stockdata.storage_to_update()
 
@@ -533,10 +533,7 @@ class Investment:
                     print("Some obtained or stored prices deviate by >5% from the recorded transactions:")
                     print("Date;\t\t\tRecorded Price;\tObtained Price")
                     for i, entry in enumerate(mismatches):
-                        str1 = entry[0]
-                        str2 = "{:.2f}".format(entry[1])
-                        str3 = "{:.2f}".format(entry[2])
-                        print(str1 + ";\t\t" + str2 + ";\t\t\t" + str3 + ";")
+                        print(f"{entry[0]};\t\t{entry[1]:.2f};\t\t\t{entry[2]:.2f};")
 
                 # Calculate the values of the investment:
                 self.analysis_values = []
@@ -588,7 +585,7 @@ class Investment:
                                ". Investment-file is: " + self.filename)
 
         # Forex conversion required:
-        elif self.currency != self.basecurrency and self.forex_data_given is True:
+        if self.currency != self.basecurrency and self.forex_data_given is True:
             # Convert the recorded values, cost and payouts:
             self.analysis_values = self.forex_obj.perform_conversion(self.analysis_dates, self.analysis_values)
             self.analysis_payouts = self.forex_obj.perform_conversion(self.analysis_dates, self.analysis_payouts)
@@ -673,43 +670,37 @@ class Investment:
         """Return the list of dates of the analysis-data (dates as strings)"""
         if self.analysis_data_done is False:
             raise RuntimeError("Cannot return analysis datelist. Set analysis data first. Account ID: " + self.id)
-        else:
-            return list(self.analysis_dates)
+        return list(self.analysis_dates)
 
     def get_analysis_valuelist(self):
         """Return the list of values of the analysis-data (floats)"""
         if self.analysis_data_done is False:
             raise RuntimeError("Cannot return analysis valuelist. Set analysis data first. Account ID: " + self.id)
-        else:
-            return list(self.analysis_values)
+        return list(self.analysis_values)
 
     def get_analysis_costlist(self):
         """Return the list of costs of the analysis-data (floats)"""
         if self.analysis_data_done is False:
             raise RuntimeError("Cannot return analysis costlist. Set analysis data first. Account ID: " + self.id)
-        else:
-            return list(self.analysis_costs)
+        return list(self.analysis_costs)
 
     def get_analysis_payoutlist(self):
         """Return the list of payouts of the analysis-data (floats)"""
         if self.analysis_data_done is False:
             raise RuntimeError("Cannot return analysis payoutlist. Set analysis data first. Account ID: " + self.id)
-        else:
-            return list(self.analysis_payouts)
+        return list(self.analysis_payouts)
 
     def get_analysis_inflowlist(self):
         """Return the list of inflows of the analysis-data (floats)"""
         if self.analysis_data_done is False:
             raise RuntimeError("Cannot return analysis inflowlist. Set analysis data first. Account ID: " + self.id)
-        else:
-            return list(self.analysis_inflows)
+        return list(self.analysis_inflows)
 
     def get_analysis_outflowlist(self):
         """Return the list of outflows of the analysis-data (floats)"""
         if self.analysis_data_done is False:
             raise RuntimeError("Cannot return analysis outflowlist. Set analysis data first. Account ID: " + self.id)
-        else:
-            return list(self.analysis_outflows)
+        return list(self.analysis_outflows)
 
     def get_dateformat(self):
         """Return the dateformat"""

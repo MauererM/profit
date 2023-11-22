@@ -38,6 +38,7 @@ def filename_append_string(fpath, separator, addstring):
     newname = f"{stem}{separator}{addstring}{suffix}"
     return fpath.with_name(newname)
 
+
 def filename_add_extension(fpath, extension):
     """Adds an extension to a file name.
     """
@@ -78,17 +79,19 @@ def write_file_lines(filepath, lines, overwrite=False):
     if not isinstance(filepath, Path):
         filepath = Path(filepath)
     if overwrite is True:
-        filepath.write_text('\n'.join(lines), encoding='utf8') # Todo: Does this work?
+        filepath.write_text('\n'.join(lines), encoding='utf8')
     else:
-        with filepath.open('a', encoding='utf8') as f: # Todo Does this work, too?
+        with filepath.open('a', encoding='utf8') as f:
             for line in lines:
                 f.write(f"{line}\n")
+
 
 def clean_string(s):
     """Remove non-alphanumeric characters from a string such that it
     can be used for a filename. The dot (".") is allowed.
     """
     return re.sub(r'[^a-zA-Z0-9.]', '', s)
+
 
 def get_file_lines(filepath):
     """Returns all lines of a file as a list of strings
@@ -98,7 +101,8 @@ def get_file_lines(filepath):
     if not isinstance(filepath, Path):
         filepath = Path(filepath)
     # Read all lines in the file:
-    lines = filepath.read_text().splitlines()
+    with filepath.open(encoding='utf8') as file:
+        lines = file.read().splitlines()
     return lines
 
 
@@ -164,6 +168,7 @@ def get_file_list(folderpath, extension):
         return list(files)
     files = [item for item in folderpath.iterdir() if item.is_file()]
     return files
+
 
 def get_filename_from_path(fname):
     """Strip the folder-path from a file name"""

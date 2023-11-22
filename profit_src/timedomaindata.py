@@ -14,6 +14,7 @@ from .storage.index.index import IndexData
 
 
 class StockMarketIndicesData:
+    """Manages time-domain data for stock market indices from the data provider and/or storage-system."""
 
     def __init__(self, symbol, name, storage, startdate_str, stopdate_str, provider, analyzer):
         """Obtains the required data for stock market indices from the dataprovider or storage.
@@ -67,7 +68,7 @@ class StockMarketIndicesData:
 
             self.price_avail = True
         else:
-            self.price_avail = False # Something failed, e.g., no provider-data, no market-data available.
+            self.price_avail = False  # Something failed, e.g., no provider-data, no market-data available.
 
     def __get_index_storage_object(self):
         return self.storage.is_storage_data_existing("index", (self.symbol))
@@ -85,10 +86,9 @@ class StockMarketIndicesData:
         return self.name
 
 
-
 class ForexTimeDomainData:
     """Obtains online forex data (through the dataprovider) and/or obtains the required prices from the
-    marketdata-folder
+    storage-folder
     """
 
     def __init__(self, currency_str, basecurrency_str, storage, startdate_str, stopdate_str, provider, analyzer):
@@ -136,13 +136,12 @@ class ForexTimeDomainData:
                                                                                                    self.storage,
                                                                                                    self.storageobj,
                                                                                                    self.analyzer)
-        # No forex data available: # Todo disable data provider and see if this still works
+        # No forex data available:
         if self.full_dates is None or len(self.full_dates) < 2:
             # We cannot continue, forex-data is a must, as otherwise the asset values are not known.
             raise RuntimeError("No forex data available for " +
                                self.currency + " and " + self.basecurrency +
                                ". Provide the data in a marketdata-file.")
-
 
         # Write the fused provider- and storge-data back to file:
         if self.write_to_file is True:
@@ -195,9 +194,7 @@ class ForexTimeDomainData:
     def get_price_data(self):
         if self.full_dates is not None:
             return self.full_dates, self.full_prices
-        else:
-            raise RuntimeError(f"No forex rates available. Currency: {self.currency}. "
-                               f"Basecurrency: {self.basecurrency}")
+        raise RuntimeError(f"No forex rates available. Currency: {self.currency}. Basecurrency: {self.basecurrency}")
 
     def perform_conversion(self, datelist, vallist):
         """Perform a forex-conversion.
@@ -231,6 +228,7 @@ class ForexTimeDomainData:
 
 
 class StockTimeDomainData:
+    """Manages time-domain data for stocks from the data provider and/or storage-system."""
 
     def __init__(self, symbol, exchange, currency, analysis_interval, analyzer, storage, provider):
         self.symbol = symbol
@@ -288,6 +286,7 @@ def get_provider_storage_ranges(storageobj, storage, analyzer, analysis_startdat
 
         # The storage-interval can not, partially, or over-overlap the analysis interval (and vice versa).
         # Depending on this, different data should be obtained by the data provider.
+        # Todo: This assumes that the storage-data is a continuous set of dates! This is currently not the case... How to solve this? Ensure no holes in storage data? What is a smart approach?
 
         # The analysis-interval is fully contained in the market-data: No online retrieval necessary.
         if startdate_storage_dt <= startdate_analysis_dt and stopdate_analysis_dt <= stopdate_storage_dt:
@@ -322,7 +321,7 @@ def get_provider_storage_ranges(storageobj, storage, analyzer, analysis_startdat
             startdate_from_storage = analyzer.datetime2str(startdate_storage_dt)
             stopdate_from_storage = analyzer.datetime2str(stopdate_analysis_dt)
         # The analysis interval is partially overlapping at the end of the storage interval:
-        elif startdate_analysis_dt <= stopdate_storage_dt and stopdate_analysis_dt > stopdate_storage_dt:
+        elif startdate_analysis_dt <= stopdate_storage_dt < stopdate_analysis_dt:
             startdate_dataprovider = analyzer.datetime2str(stopdate_storage_dt)  # Only obtain remaining data
             stopdate_dataprovider = analyzer.datetime2str(stopdate_analysis_dt)
             startdate_from_storage = analyzer.datetime2str(startdate_analysis_dt)
@@ -372,7 +371,7 @@ def obtain_data_from_storage_and_provider(startdate_dataprovider, stopdate_datap
         # Online data retrieval necessary
         try:
             if isinstance(storageobj, StockData):
-                symbol = storageobj.get_id() # We use the id as symbol, as this can contain non-alphanumeric chars.
+                symbol = storageobj.get_id()  # We use the id as symbol, as this can contain non-alphanumeric chars.
                 exchange = storageobj.get_exchange()
                 ret = provider.get_stock_data(symbol, exchange, startdate_dataprovider, stopdate_dataprovider)
                 if ret is not None:
@@ -384,7 +383,7 @@ def obtain_data_from_storage_and_provider(startdate_dataprovider, stopdate_datap
                 if ret is not None:
                     print(f"Obtained some provider data for the currencies {symbol_a} and {symbol_b}")
             elif isinstance(storageobj, IndexData):
-                symbol = storageobj.get_id() # We use the id as symbol, as this can contain non-alphanumeric chars.
+                symbol = storageobj.get_id()  # We use the id as symbol, as this can contain non-alphanumeric chars.
                 ret = provider.get_stock_data(symbol, "", startdate_dataprovider, stopdate_dataprovider)
                 if ret is not None:
                     print(f"Obtained some provider data for the stock market index {symbol}")
@@ -401,7 +400,7 @@ def obtain_data_from_storage_and_provider(startdate_dataprovider, stopdate_datap
             else:
                 logging.debug("Did not obtain provider-data")
         except:
-            print(f"Failed to obtain provider data.")
+            print("Failed to obtain provider data.")
     return storagedates, storageprices, providerdates, providerprices
 
 
@@ -412,7 +411,7 @@ def post_process_provider_storage_data(storagedates, storageprices, providerdate
     full_prices = None
     write_to_file = False
     if storagedates is None and providerdates is None:
-        # Neither online nor storage data is available. Transactions must be used. # Todo test this case, too
+        # Neither online nor storage data is available. Transactions must be used.
         full_dates = None
         full_prices = None
         write_to_file = False
@@ -443,6 +442,6 @@ def post_process_provider_storage_data(storagedates, storageprices, providerdate
 
     if full_dates is not None:
         if dateoperations.check_dates_consecutive(full_dates, analyzer) is False:
-            raise RuntimeError(f"The obtained market-price-dates are not consecutive.")
+            raise RuntimeError("The obtained market-price-dates are not consecutive.")
 
     return full_dates, full_prices, write_to_file

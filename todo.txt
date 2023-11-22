@@ -1,22 +1,19 @@
 Check the "todo" strings in the code
 
-
 Use the ZKB API as plugin? Swissquote? CS?
-
 
 Separate data and packages. Provide a search-path for the data (input and output). Same as for the marketdata.
 
-Investment, account also as plugin...? Subpackage? Sensible? 
+Investment, account also as plugin...? Subpackage? Sensible?  Might depend on the API?
 
+Clean up the account and investment-parsers?
 
-Convert to f-strings, get rid of the plus-signs
+Convert to f-strings, get rid of the plus-signs. Use the linter? Use grep?
 
 Is if name == main the right thing for module-level debugging? How to do better testing?
 
+Finalize the marketdata-branch:
+- Problem! Since storage-data can contain holes: How to determine what data to retrieve from online-provider?! This is currently not implemented/buggy... The determination of what data to pull from storage and from the provider assumes there are no holes in the storage-data... 
+- Test if the splits work, e.g., with AAPL or AUUSI (use your data, though)
+- Compare your data with what the newest branch outputs - are the plots the same?
 
-
-Continue in marketdata: 
-- Check the todos. 
-- Lint it. 
-
-Problem! Since storage-data can contain holes: How to determine what data to retrieve from online-provider?! This is currently not implemented/buggy... The determination of what data to pull from storage and from the provider assumes there are no holes in the storage-data...

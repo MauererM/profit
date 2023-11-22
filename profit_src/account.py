@@ -182,11 +182,11 @@ class Account:
         # Check, if a forex-object is given (only required if the account holds foreign currencies)
         if self.currency != self.basecurrency and self.forex_data_given is False:
             raise RuntimeError(
-                "Account holds foreign currency. Forex-object is required. Account-currency is: " + self.currency +
-                ". Basecurrency is: " + self.basecurrency + ". Account-file is: " + self.filename)
+                f"Account holds foreign currency. Forex-object is required. Account-currency is: {self.currency}. "
+                f"Basecurrency is: {self.basecurrency}. Account-file is: {self.filename}")
 
         # Forex conversion required:
-        elif self.currency != self.basecurrency and self.forex_data_given is True:
+        if self.currency != self.basecurrency and self.forex_data_given is True:
             # Do the currency-conversion:
             self.analysis_balances = self.forex_obj.perform_conversion(self.analysis_dates, self.analysis_balances)
             self.analysis_costs = self.forex_obj.perform_conversion(self.analysis_dates, self.analysis_costs)
@@ -205,30 +205,26 @@ class Account:
     def get_analysis_datelist(self):
         """Return the list of dates of the analysis-data (dates as strings)"""
         if self.analysis_data_done is False:
-            raise RuntimeError("Cannot return analysis datelist. Set analysis data first. Account ID: " + self.id)
-        else:
-            return list(self.analysis_dates)
+            raise RuntimeError(f"Cannot return analysis datelist. Set analysis data first. Account ID: {self.id}")
+        return list(self.analysis_dates)
 
     def get_analysis_valuelist(self):
         """Return the list of values of the analysis-data (floats)"""
         if self.analysis_data_done is False:
-            raise RuntimeError("Cannot return analysis datelist. Set analysis data first. Account ID: " + self.id)
-        else:
-            return list(self.analysis_balances)
+            raise RuntimeError(f"Cannot return analysis datelist. Set analysis data first. Account ID: {self.id}")
+        return list(self.analysis_balances)
 
     def get_analysis_costlist(self):
         """Return the list of costs of the analysis-data (floats)"""
         if self.analysis_data_done is False:
-            raise RuntimeError("Cannot return analysis costlist. Set analysis data first. Account ID: " + self.id)
-        else:
-            return list(self.analysis_costs)
+            raise RuntimeError(f"Cannot return analysis costlist. Set analysis data first. Account ID: {self.id}")
+        return list(self.analysis_costs)
 
     def get_analysis_payoutlist(self):
         """Return the list of payouts/interest of the analysis-data (floats)"""
         if self.analysis_data_done is False:
-            raise RuntimeError("Cannot return analysis payoutlist. Set analysis data first. Account ID: " + self.id)
-        else:
-            return list(self.analysis_interests)
+            raise RuntimeError(f"Cannot return analysis payoutlist. Set analysis data first. Account ID: {self.id}")
+        return list(self.analysis_interests)
 
     def get_filename(self):
         """Returns the filename (as string) of the corresponding account-file"""

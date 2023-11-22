@@ -32,7 +32,7 @@ class DataproviderMain:
         # Find all subpackages:
         submodules = pkgutil.walk_packages(providerpackage.__path__, providerpackage.__name__ + '.')
         loaded_modules = []
-        for finder, name, is_pkg in submodules:
+        for _, name, is_pkg in submodules:
             if is_pkg:
                 try:
                     submodule = importlib.import_module(name)
@@ -75,19 +75,19 @@ class DataproviderMain:
         if self.active_provider is None:
             print("Failed to initialize any data provider. Will rely on transactions-data or stored market data.")
 
-    def __find_package(self, package_name, path=None, parent_name = ''):
+    def __find_package(self, package_name, path=None, parent_name=''):
         """
         Find a package or subpackage by name.
         :param package_name: Name of the package to find.
         :param path: List of paths where to start the search or None for all paths.
         :return: The module object if found, None otherwise.
         """
-        for finder, name, ispkg in pkgutil.iter_modules(path):
+        for _, name, ispkg in pkgutil.iter_modules(path):
             full_name = f"{parent_name}.{name}" if parent_name else name
             if name == package_name:
                 mod = importlib.import_module(full_name)
                 return mod
-            elif ispkg:
+            if ispkg:
                 # Recursively search in subpackages
                 package = importlib.import_module(full_name)
                 found_package = self.__find_package(package_name, package.__path__, full_name)
@@ -223,7 +223,8 @@ class DataproviderMain:
             return None
 
         # Fill in missing data in the vector
-        dates_full, values_full = dateoperations.interpolate_data(dates, values, self.analyzer) # Todo: Introduce a check here that prevents massive interpolation. Use the interpolation-setting from the storage-system?
+        dates_full, values_full = dateoperations.interpolate_data(dates, values,
+                                                                  self.analyzer)  # Todo: Introduce a check here that prevents massive interpolation. Use the interpolation-setting from the storage-system?
         return dates_full, values_full
 
 

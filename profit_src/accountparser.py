@@ -4,7 +4,6 @@ PROFIT - Python-Based Return on Investment and Financial Investigation Tool
 MIT License
 Copyright (c) 2018 Mario Mauerer
 """
-
 from . import stringoperations as stringops
 from . import account
 from . import config

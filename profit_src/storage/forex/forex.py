@@ -15,14 +15,14 @@ class ForexData(MarketDataStorage):
     """Represents data from a marketdata-csv.
     Forex files have this format:
     forex + Symbol A + Symbol B:
-    "forex_[a-zA-Z0-9]{1,5}_[a-zA-Z0-9]{1,5}\.csv"
+    forex_[a-zA-Z0-9]{1,5}_[a-zA-Z0-9]{1,5}\.csv
     """
 
     FORMAT_FNAME_GROUPS = r'forex_([a-zA-Z0-9]{1,5})_([a-zA-Z0-9]{1,5})\.csv'
 
-    def __init__(self, pathname, id, data):
+    def __init__(self, pathname, id_, data):
         self.pname = pathname
-        self.id = id
+        self.id_ = id_
 
         dates = data[0]
         values = data[1]
@@ -78,4 +78,4 @@ class ForexData(MarketDataStorage):
         return self.symbol_b
 
     def get_id(self):
-        return self.id
+        return self.id_

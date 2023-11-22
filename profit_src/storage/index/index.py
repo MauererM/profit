@@ -10,20 +10,21 @@ from ... import files
 from ...storage.storage_abc import MarketDataStorage
 from ...helper import create_dict_from_list
 
+
 class IndexData(MarketDataStorage):
     """Represents data from a marketdata-csv.
     Index files have this format:
     index + Symbol:
-    "index_[a-zA-Z0-9.]{1,10}\.csv"
+    index_[a-zA-Z0-9.]{1,10}\.csv
     """
 
-    FORMAT_FNAME_GROUPS = r'index_([a-zA-Z0-9.\^]{1,10})\.csv' # Todo: Some stock-indices have weird names with ^in the name. Is this working?
+    FORMAT_FNAME_GROUPS = r'index_([a-zA-Z0-9.\^]{1,10})\.csv'
 
-    def __init__(self, pathname, id, data):
+    def __init__(self, pathname, id_, data):
         # Give the symbol/id explicitly (don't derive it from the file name) -
         # this allows weird characters like ^ in the symbol, too
         self.pname = pathname
-        self.id = id
+        self.id_ = id_
 
         dates = data[0]
         values = data[1]
@@ -45,7 +46,7 @@ class IndexData(MarketDataStorage):
         self.dates_dict = create_dict_from_list(self.dates)
 
     def get_filename(self):
-        return self.fname # Don't return the path-name
+        return self.fname  # Don't return the path-name
 
     def get_dates_dict(self):
         return self.dates_dict
@@ -75,4 +76,4 @@ class IndexData(MarketDataStorage):
         return self.index_cleaned
 
     def get_id(self):
-        return self.id
+        return self.id_

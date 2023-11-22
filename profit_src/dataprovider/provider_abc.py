@@ -23,7 +23,7 @@ class DataProvider(ABC):
         pass
 
     @abstractmethod
-    def retrieve_forex_data(self):
+    def retrieve_forex_data(self, sym_a, sym_b, startdate, stopdate):
         """Return forex-data for two symbols (e.g., CHF and USD).
         :param sym_a, sym_b: String of the currency symbol, as used by the data provider.
         :param startdate: stopdate: Strings for the date-interval of the desired historic data.
@@ -32,7 +32,7 @@ class DataProvider(ABC):
         pass
 
     @abstractmethod
-    def retrieve_stock_data(self):
+    def retrieve_stock_data(self, symbol, startdate, stopdate, symbol_exchange=None):
         """Return stock-data for a symbol and/or exchange
         :param symbol: String of the stock symbol, as used by the data provider.
         :param startdate: String of the start-date of the interval that should be retrieved

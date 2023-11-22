@@ -17,6 +17,7 @@ from . import plotting_aux
 from . import helper
 from . import files
 
+
 # Todo clean up this massive file
 
 def plot_currency_values(assetlist, fname, titlestring, analyzer, drawstackedplot=True):
@@ -1043,11 +1044,9 @@ def plot_asset_returns_individual(assetlist, fname, analyzer):
             # Check, if the holding period return is irreasonably negative. Then, the holding period return calc. was
             # not possible due to missing price-data of today.
             if ret_h > -1e9:
-                ret_str = "Analysis Period Return: {:.2f} %".format(ret_a) + "\n" + \
-                          "Holding Period Return: {:.2f} %".format(ret_h)
+                ret_str = f"Analysis Period Return: {ret_a:.2f}\nHolding Period Return: {ret_h:.2f}"
             else:
-                ret_str = "Analysis Period Return: {:.2f} %".format(ret_a) + "\n" + \
-                          "Holding Period Return: N/A (missing price of today)"
+                ret_str = f"Analysis Period Return: {ret_a:.2f}\nHolding Period Return: N/A (missing price of today)"
 
             # Place the text relative to the axes:
             plt.text(0.05, 0.78, ret_str, horizontalalignment='left', verticalalignment='center',
@@ -1209,7 +1208,7 @@ def plot_asset_values_stacked(assetlist, fname, title, analyzer):
     fname = plotting_aux.modify_plot_path(config.PLOTS_FOLDER, fname)
     # Sanity Check:
     if len(assetlist) == 0:
-        print(f"No assets given for plot: {fname.name}") # Todo: convert all these fname to fname.name
+        print(f"No assets given for plot: {fname.name}")  # Todo: convert all these fname to fname.name
         return
 
     if len(assetlist) == 0:

@@ -246,7 +246,7 @@ def get_return_asset_holdingperiod(asset, dateformat):
             transact_price_necessary = False  # We have a price
         else:
             transact_price_necessary = True
-    else: # No market- or provider data was available.
+    else:  # No market- or provider data was available.
         transact_price_necessary = True
 
     # Price must be derived from transaction-data:

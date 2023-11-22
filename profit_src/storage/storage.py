@@ -81,7 +81,7 @@ class MarketDataMain:
     def __check_filenames(self, flist):
         if isinstance(flist, list) is False:  # Allows passing single strings
             flist = [flist]
-        fnames = [x.name for x in flist] # Convert to strings
+        fnames = [x.name for x in flist]  # Convert to strings
         for f in fnames:
             if f[0:5] == "forex":
                 if self.__is_string_valid_format(f, self.FORMAT_FOREX) is False:
@@ -102,7 +102,7 @@ class MarketDataMain:
     def __parse_forex_index_file(self, fname, is_index=False):
         lines = files.get_file_lines(fname)
         # Read the header:
-        id = None
+        id_ = None
         dates = []
         vals = []
         for line_nr, line in enumerate(lines):
@@ -115,7 +115,7 @@ class MarketDataMain:
                 txt, val = stringoperations.read_crop_string_delimited(stripline, self.DELIMITER)
                 if txt != self.ID_STRING:
                     raise RuntimeError(f"After Header, the Id-string must follow. File: {fname}")
-                id = val
+                id_ = val
             elif line_nr == 2:
                 txt, _ = stringoperations.read_crop_string_delimited(stripline, self.DELIMITER)
                 if txt != self.DATA_STRING:
@@ -133,15 +133,15 @@ class MarketDataMain:
         if dateoperations.check_date_order(dates, self.analyzer, allow_ident_days=False) is False and len(dates) > 0:
             raise RuntimeError(f"The dates in a forex-storage file must be in order! File: {fname}")
         if is_index is False:
-            f = ForexData(fname, id, (dates, vals))
+            f = ForexData(fname, id_, (dates, vals))
         else:
-            f = IndexData(fname, id, (dates, vals))
+            f = IndexData(fname, id_, (dates, vals))
         return f
 
     def __parse_stock_file(self, fname):
         lines = files.get_file_lines(fname)
         # Read the header:
-        id = None
+        id_ = None
         splits = []
         dates = []
         vals = []
@@ -156,7 +156,7 @@ class MarketDataMain:
                 txt, val = stringoperations.read_crop_string_delimited(stripline, self.DELIMITER)
                 if txt != self.ID_STRING:
                     raise RuntimeError(f"After Header, the Id-string must follow. File: {fname}")
-                id = val
+                id_ = val
             elif line_nr >= 2 and data_reached is False:  # Can be "SPLIT" or "Data"
                 begin, rest = stringoperations.read_crop_string_delimited(stripline, self.DELIMITER)
                 if begin == self.SPLIT_STRING:
@@ -182,9 +182,9 @@ class MarketDataMain:
             raise RuntimeError("Dates and values must have same length. File: " + fname)
         if dateoperations.check_date_order(dates, self.analyzer, allow_ident_days=False) is False and len(dates) > 0:
             raise RuntimeError(f"The dates in a stock-storage file must be in order! File: {fname}")
-        if id is None:
+        if id_ is None:
             raise RuntimeError(f"The Id should have been read. File: {fname}")
-        f = StockData(fname, id, (dates, vals), splits)
+        f = StockData(fname, id_, (dates, vals), splits)
         return f
 
     def __read_data_line_from_storage_file(self, line):
@@ -219,16 +219,6 @@ class MarketDataMain:
         for file in self.filesdict["index"]:
             self.dataobjects.append(self.__parse_forex_index_file(file, is_index=True))
 
-    def __get_marketdata_object(self, fname):
-        """Checks if a marketdata file is available for a given file name, and returns the related object if available.
-        Returns none, if the file/related data is not available.
-        It searches for file-names, not path-names.
-        """
-        for obj in self.dataobjects:
-            if obj.get_filename() == fname:
-                return obj
-        return None
-
     def __build_stock_filename(self, symbol, exchange, currency):
         p = f"stock_{symbol}_{exchange}_{currency}.csv"
         return Path(p)
@@ -240,22 +230,6 @@ class MarketDataMain:
     def __build_index_filename(self, indexname):
         p = f"index_{indexname}.csv"
         return Path(p)
-
-    def get_marketdata_object(self, obj_type, symbols):
-        if obj_type == "stock":
-            symbol = symbols[0]
-            exchange = symbols[1]
-            currency = symbols[2]
-            return self.__get_marketdata_object(self.__build_stock_filename(symbol, exchange, currency))
-        elif obj_type == "forex":
-            symbol_a = symbols[0]
-            symbol_b = symbols[1]
-            return self.__get_marketdata_object(self.__build_forex_filename(symbol_a, symbol_b))
-        elif obj_type == "index":
-            indexname = symbols
-            return self.get_marketdata_object(self.__build_index_filename(indexname))
-        else:
-            return RuntimeError("Object type not known. Must be stock, forex or index")
 
     def get_stored_data(self, storage_obj, interval):
         """Obtains stored data. The interval (tuple of start/stop date strings) must be within the data-range
@@ -288,43 +262,43 @@ class MarketDataMain:
         :param symbols: List of object-dependent strings to characterize it
         :return storage-object if existing, else, None"""
         if obj_type == "stock":
-            id = symbols[0]
+            id_ = symbols[0]
         elif obj_type == "forex":
             symbol_a = symbols[0]
             symbol_b = symbols[1]
-            id = f"{symbol_a}_{symbol_b}"
+            id_ = f"{symbol_a}_{symbol_b}"
         elif obj_type == "index":
-            id = symbols
+            id_ = symbols
         else:
             return RuntimeError("Object type not known. Must be stock, forex or index")
 
         for obj in self.dataobjects:
-            if obj.get_id() == id:
+            if obj.get_id() == id_:
                 return obj
         return None
 
     def __create_storage_file_header(self, obj_type, symbols):
         """Create the appropriate file header. Populate with default values. Returns the filename, too."""
         if obj_type == "stock":
-            id = symbols[0] # Todo: Does this ID-thing work? Test weird IDs, and check if the file is correctly re-found when run a 2nd time.
-            symbol_clean = files.clean_string(id)
+            id_ = symbols[0]
+            symbol_clean = files.clean_string(id_)
             exchange = symbols[1]
             currency = symbols[2]
             fn = self.__build_stock_filename(symbol_clean, exchange, currency)
         elif obj_type == "forex":
             symbol_a = symbols[0]
             symbol_b = symbols[1]
-            id = f"{symbol_a}_{symbol_b}"
+            id_ = f"{symbol_a}_{symbol_b}"
             fn = self.__build_forex_filename(symbol_a, symbol_b)
         elif obj_type == "index":
-            id = symbols
-            indexname = files.clean_string(id)
+            id_ = symbols
+            indexname = files.clean_string(id_)
             fn = self.__build_index_filename(indexname)
         else:
             return RuntimeError("Object type not known. Must be stock, forex or index")
         lines = []
         lines.append(f"{self.HEADER_STRING}{self.DELIMITER}")
-        lines.append(f"{self.ID_STRING}{self.DELIMITER}{id}")
+        lines.append(f"{self.ID_STRING}{self.DELIMITER}{id_}")
         lines.append(f"{self.DATA_STRING}{self.DELIMITER}")
         return fn, lines
 
@@ -384,13 +358,13 @@ class MarketDataMain:
                         new_values[idx_new] = price_csv  # Adjust provider data to existing data
                         logging.info("Found a mismatch between provider- and market data. Will prioritize market-data")
                         logging.info(f"Date: {date_cur}\tStorage Value: {price_csv:.2f}\t"
-                                      f"Provider Value: {price_new:.2f}")
+                                     f"Provider Value: {price_new:.2f}")
                     else:
                         values_merged[idx] = price_new  # Take the new/provider-data to write back to file
                         logging.info("Found a mismatch between provider- and market data. "
-                                      "Will prioritize provider-data")
+                                     "Will prioritize provider-data")
                         logging.info(f"Date: {date_cur}\tStorage Value: {price_csv:.2f}\t"
-                                      f"Provider Value: {price_new:.2f}")
+                                     f"Provider Value: {price_new:.2f}")
                     # Record a string for later output:
                     discrepancy_entries.append(f"{date_cur};\t{price_csv:.3f};\t{price_new:.3f}")
 
@@ -401,7 +375,7 @@ class MarketDataMain:
                   f"(tolerance is set to: {tolerance_percent:.1f}%).")
             print(f"Storage data is ground truth is set to: {storage_is_groundtruth}")
             print(f"File: {storage_obj.get_filename()}. Entries (listing only first {numentry} elements):")
-            print(f"Date;\tRecorded Price;\tObtained Price")
+            print("Date;\tRecorded Price;\tObtained Price")
             for i in range(numentry):
                 print(discrepancy_entries[i])
 
@@ -445,7 +419,7 @@ class MarketDataMain:
         lines_to_write = []
         lines_csv = files.get_file_lines(storage_obj.get_pathname())
         # Copy the header. The header stops at self.DATA_STRING
-        for line_nr, line in enumerate(lines_csv):
+        for line in lines_csv:
             stripline = stringoperations.strip_whitespaces(line)
             txt, _ = stringoperations.read_crop_string_delimited(stripline, self.DELIMITER)
             if txt == self.DATA_STRING:

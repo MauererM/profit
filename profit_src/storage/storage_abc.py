@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 
+
 # Todo add header (also in data-provider abc), add description
 
 class MarketDataStorage(ABC):
@@ -14,7 +15,7 @@ class MarketDataStorage(ABC):
 
     @abstractmethod
     def get_dates_list(self):
-        return self.dates
+        pass
 
     @abstractmethod
     def get_values(self):
@@ -35,4 +36,3 @@ class MarketDataStorage(ABC):
     @abstractmethod
     def get_id(self):
         pass
-
