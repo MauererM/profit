@@ -183,13 +183,12 @@ def create_colormap(mapname, num_colors, invert_colorrange):
 def modify_plot_path(folder, file):
     """Modifies the path of a plot-file.
     It attaches the plots-folder and the extension (.pdf)
-    :param folder: String of plots-folder, in current directory
-    :param file: String of filename
-    :return: String of modified path
+    :param folder: String or Path-object of folder-path
+    :param file: Filename, string or Path-Object
+    :return: Path-object of amended path
     """
-    fname = files.create_path(folder, file)
-    fname = fname + ".pdf"
-    return fname
+    pname = files.create_path(folder, file)
+    return files.filename_add_extension(pname, ".pdf")
 
 
 def open_plot(fname):

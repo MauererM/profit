@@ -480,8 +480,7 @@ class Investment:
                                                                                 zero_padding=False)
 
                 # Store the latest available price and date, for the holding-period return analysis
-                self.latestpricedata = (
-                full_dates[-1], full_prices[-1])  # Todo: Who needs this? What if this is None? Is this caught?
+                self.latestpricedata = (full_dates[-1], full_prices[-1])
 
                 # Interpolate the data to get a consecutive list (this only fills holes, and does not
                 # extrapolate over the given date-range):
@@ -660,7 +659,7 @@ class Investment:
 
     def get_filename(self):
         """Return the filename of the associated investment-file (as string)"""
-        return self.filename
+        return self.filename.name
 
     def get_currency(self):
         """Return the currency of the investment (as string)"""

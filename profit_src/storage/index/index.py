@@ -40,7 +40,7 @@ class IndexData(MarketDataStorage):
         self.fname = files.get_filename_from_path(self.pname)
         match = re.match(self.FORMAT_FNAME_GROUPS, self.fname)
         groups = match.groups()
-        self.index = groups[0]
+        self.index_cleaned = groups[0]
 
         self.dates_dict = create_dict_from_list(self.dates)
 
@@ -72,7 +72,7 @@ class IndexData(MarketDataStorage):
         return self.pname
 
     def get_index(self):
-        return self.index
+        return self.index_cleaned
 
     def get_id(self):
         return self.id

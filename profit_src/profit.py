@@ -22,12 +22,7 @@ from .timedomaindata import StockMarketIndicesData
 
 # Todo: Move the configs here to config.py?
 
-"""
-These strings specify the folders from which the account and investment files
-are taken.
-"""
-ACCOUNT_FOLDER = "accounts_examples"
-INVESTMENT_FOLDER = "investments_examples"
+
 
 """
 Data is analyzed a certain number of days into the past, from today
@@ -49,6 +44,7 @@ The following strings name the paths of the different plots that will be generat
 Do not provide the file-extension; PDF files will be created.
 The plots are stored in the "plots" folder
 """
+# Todo: Migrate all these strings to Path-Objects (?)
 # Values of all assets, stacked:
 FILENAME_STACKPLOT_ASSET_VALUES = "Asset_Values_Stacked"
 # Values of all investments, stacked:
@@ -111,16 +107,18 @@ In the following, the main script begins
 ########################################################################################################################
 ########################################################################################################################
 """
-def main(marketdata_storage_path):
+def main():
 
     # Todo Get the proper path, e.g. the marketdata_storage_path is one level up! Get the full path? Use that path-lib?!
-    marketdata_storage_path = Path(marketdata_storage_path)
-    marketdata_storage_path = marketdata_storage_path.resolve()
+    storage_path = Path(config.STORAGE_FOLDER).resolve()
+    plot_path = Path(config.PLOTS_FOLDER).resolve()
+    account_path = Path(config.ACCOUNT_FOLDER).resolve()
+    investment_path = Path(config.INVESTMENT_FOLDER).resolve()
 
     # Print the current version of the tool
     print("PROFIT V{:.1f} starting".format(config.PROFIT_VERSION))
 
-    # Initialize classes:
+    # Initialize the caching datetime/string converter class (used in analyzer below):
     datetimeconverter = stringoperations.DateTimeConversion()
 
     """
@@ -139,8 +137,7 @@ def main(marketdata_storage_path):
     provider = DataproviderMain(analyzer)
 
     # Initialize the market data system.
-    # Todo use the path from config. Clean up old config entries.
-    storage = MarketDataMain(marketdata_storage_path, config.FORMAT_DATE, analyzer)
+    storage = MarketDataMain(storage_path, config.FORMAT_DATE, analyzer)
 
     """
     Sanity checks:
@@ -153,38 +150,44 @@ def main(marketdata_storage_path):
     Parse Investments:
     """
     print("\nAcquiring and parsing investments")
-    invstmtfiles = files.get_file_list(INVESTMENT_FOLDER, ".txt")
+    invstmtfiles = files.get_file_list(investment_path, ".txt")
     invstmtfiles.sort()  # Sort alphabetically
-    print("Found the following " + str(len(invstmtfiles)) + " textfiles (.txt) in the investment-folder:")
-    [print(x) for x in invstmtfiles]
+    if len(invstmtfiles) > 0:
+        print(f"Found the following {len(invstmtfiles)} textfiles (.txt) in the investment-folder:")
+        [print(x.name) for x in invstmtfiles]
+    else:
+        print(f"Found no investment files in folder {investment_path}")
     # Parsing; also creates the investment-objects
     investments = []
     for file in invstmtfiles:
-        filepath = files.create_path(INVESTMENT_FOLDER, file)  # Get path of file, including its folder
+        filepath = file.resolve()
         investments.append(
             investmentparser.parse_investment_file(filepath, config.FORMAT_DATE, provider, analyzer,
                                                    config.BASECURRENCY,
                                                    config.ASSET_PURPOSES, storage))
     if len(investments) > 0:
-        print("Successfully parsed " + str(len(investments)) + " investments.")
+        print(f"Successfully parsed {len(investments)} investments.")
 
     """
     Parse Accounts:
     """
     print("\nAcquiring and parsing account files")
-    accountfiles = files.get_file_list(ACCOUNT_FOLDER, ".txt")
+    accountfiles = files.get_file_list(account_path, ".txt")
     accountfiles.sort()  # Sort alphabetically
-    print("Found the following " + str(len(accountfiles)) + " textfiles (.txt) in the account-folder:")
-    [print(x) for x in accountfiles]
+    if len(accountfiles) > 0:
+        print(f"Found the following {len(accountfiles)} textfiles (.txt) in the account-folder:")
+        [print(x.name) for x in accountfiles]
+    else:
+        print(f"Found no account files in folder {account_path}")
     # Parsing; also creates the account-objects
     accounts = []
     for file in accountfiles:
-        filepath = files.create_path(ACCOUNT_FOLDER, file)  # Get path of file, including its folder
+        filepath = file.resolve()
         accounts.append(
             accountparser.parse_account_file(filepath, config.FORMAT_DATE, analyzer, config.BASECURRENCY,
                                              config.ASSET_PURPOSES))
     if len(accounts) > 0:
-        print("Successfully parsed " + str(len(accounts)) + " accounts.")
+        print(f"Successfully parsed {len(accounts)} accounts.")
 
     # Combine accounts and investments into assets:
     assets = accounts + investments
@@ -252,10 +255,9 @@ def main(marketdata_storage_path):
         indexprices = []
         for stockidx in INDICES:
             sym = stockidx["Symbol"]
-            ex = stockidx["Exchange"] # Todo Get rid of this hack, we now have the proper class for this
-            currency = stockidx["Name"]  # The name of the stock-index is stored as the currency
+            name = stockidx["Name"]  # The name of the stock-index is stored as the currency
             # Obtain the prices
-            obj = StockMarketIndicesData(sym, currency, storage, date_analysis_start_str, date_today_str, provider, analyzer)
+            obj = StockMarketIndicesData(sym, name, storage, date_analysis_start_str, date_today_str, provider, analyzer)
             indexprices.append(obj)
 
     """
@@ -268,10 +270,9 @@ def main(marketdata_storage_path):
 
     if config.PURGE_OLD_PLOTS is True:
         print("Deleting existing plots.")
-        fileslist = files.get_file_list(config.PLOTS_FOLDER, None)  # Get all files
+        fileslist = files.get_file_list(plot_path, None)  # Get all files
         for f in fileslist:
-            fname = files.create_path(config.PLOTS_FOLDER, f)
-            files.delete_file(fname)
+            files.delete_file(f)
     else:
         print("Existing plots are not deleted.")
 

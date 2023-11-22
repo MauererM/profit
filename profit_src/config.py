@@ -52,10 +52,11 @@ ASSET_GROUPS = [ASSET_GROUP_1, ASSET_GROUP_2, ASSET_GROUP_3, ASSET_GROUP_4]
 # Corresponding user-defined names can be given for the groups, which will be used in the plots.
 ASSET_GROUPNAMES = ["Freely Available Money", "Retirement", "Safety", "Savings"]
 
-# The marketdata-folder stores different files containing historic prices and forex-rates
-MARKETDATA_FOLDER = "marketdata"
-# The plots-folder:
+
+STORAGE_FOLDER = "marketdata_storage"
 PLOTS_FOLDER = "plots"
+ACCOUNT_FOLDER = "accounts_examples"
+INVESTMENT_FOLDER = "investments_examples"
 
 # The dateformat used by the marketdata-files may be different. Provide it as string, e.g., "%d.%m.%Y"
 MARKETDATA_FORMAT_DATE = "%d.%m.%Y"

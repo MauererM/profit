@@ -17,6 +17,7 @@ class DataproviderMain:
     It imports dataproviders from the respective subpackages and initializes them.
     The first functioning data provider will be selected.
     """
+    PACKAGE_NAME = "dataprovider"
 
     def __init__(self, analyzer):
         """
@@ -24,16 +25,24 @@ class DataproviderMain:
         self.dateformat = analyzer.get_dateformat()
         self.analyzer = analyzer
 
-        # Find all subpackages:
-        toplevel_name = 'dataprovider'
-        submodules = pkgutil.iter_modules([toplevel_name])
-        loaded_modules = []
-        for loader, name, is_pkg in submodules:
-            full_module_name = f"{toplevel_name}.{name}"
-            if is_pkg:
-                module = importlib.import_module(full_module_name)
-                loaded_modules.append(module)
+        # Traverse the package hierarchy to find the "dataprovider" top-level package. Within this package, we then
+        # find the data providers.
+        providerpackage = self.__find_package(self.PACKAGE_NAME, path=None)
 
+        # Find all subpackages:
+        submodules = pkgutil.walk_packages(providerpackage.__path__, providerpackage.__name__ + '.')
+        loaded_modules = []
+        for finder, name, is_pkg in submodules:
+            if is_pkg:
+                try:
+                    submodule = importlib.import_module(name)
+                    loaded_modules.append(submodule)
+                except ImportError:
+                    print(f"Could not load module {name}.")
+        if len(loaded_modules) == 0:
+            print("Could not discover any dataprovider subpackage. Is the package-discovery working correctly?")
+
+        # Find all classes that inherit from the provider's ABC. These are our entry points.
         classes = []  # Find the classes in the discovered modules that inherit the ABC for the dataprovider.
         for module in loaded_modules:
             for name, obj in inspect.getmembers(module):
@@ -46,7 +55,7 @@ class DataproviderMain:
             raise RuntimeError("There seem to be multiple or not enough classes in the loaded modules that "
                                "inherit from the dataprovider ABC")
 
-        print(f"Discovered {len(classes):d} data providers.")
+        print(f"Discovered {len(classes):d} data provider packages.")
 
         # The list of available/feasible data providers. The last provider here should be DataproviderEmpty
         self.providers = classes
@@ -65,6 +74,26 @@ class DataproviderMain:
         # the falling functions to fall back to alternative means, making the data-source selection somewhat automatic)
         if self.active_provider is None:
             print("Failed to initialize any data provider. Will rely on transactions-data or stored market data.")
+
+    def __find_package(self, package_name, path=None, parent_name = ''):
+        """
+        Find a package or subpackage by name.
+        :param package_name: Name of the package to find.
+        :param path: List of paths where to start the search or None for all paths.
+        :return: The module object if found, None otherwise.
+        """
+        for finder, name, ispkg in pkgutil.iter_modules(path):
+            full_name = f"{parent_name}.{name}" if parent_name else name
+            if name == package_name:
+                mod = importlib.import_module(full_name)
+                return mod
+            elif ispkg:
+                # Recursively search in subpackages
+                package = importlib.import_module(full_name)
+                found_package = self.__find_package(package_name, package.__path__, full_name)
+                if found_package is not None:
+                    return found_package
+        return None
 
     def get_stock_data(self, sym_stock, sym_exchange, startdate, stopdate):
         """Provides stock-prices (values at closing-time of given days; historic data).

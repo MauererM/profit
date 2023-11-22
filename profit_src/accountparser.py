@@ -8,6 +8,7 @@ Copyright (c) 2018 Mario Mauerer
 from . import stringoperations as stringops
 from . import account
 from . import config
+from . import files
 
 
 def parse_account_file(filepath, dateformat, analyzer, basecurrency, assetpurposes):
@@ -22,8 +23,7 @@ def parse_account_file(filepath, dateformat, analyzer, basecurrency, assetpurpos
     :return: Account-object
     """
     # Read all lines in the file:
-    with open(filepath, encoding='utf8') as f:
-        lines = f.readlines()
+    lines = files.get_file_lines(filepath)
 
     # Get rid of white spaces in last line of file, then check if it ends with "EOF":
     endline = stringops.strip_whitespaces(lines[-1])

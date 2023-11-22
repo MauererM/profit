@@ -8,6 +8,7 @@ Copyright (c) 2018 Mario Mauerer
 from . import stringoperations
 from . import investment
 from . import config
+from . import files
 
 
 def parse_investment_file(filepath, dateformat, dataprovider, analyzer, basecurrency, assetpurposes, storage):
@@ -24,8 +25,7 @@ def parse_investment_file(filepath, dateformat, dataprovider, analyzer, basecurr
     """
 
     # Read all lines in the file:
-    with open(filepath, encoding='utf8') as f:
-        lines = f.readlines()
+    lines = files.get_file_lines(filepath)
 
     # Get rid of white spaces in last line of file, then check if it ends with "EOF":
     endline = stringoperations.strip_whitespaces(lines[-1])

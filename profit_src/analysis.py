@@ -227,26 +227,14 @@ def get_return_asset_holdingperiod(asset, dateformat):
     # otherwise not very meaningful.
     today_dt = dateoperations.get_date_today(dateformat, datetime_obj=True)
 
-    # Try to get the most recent value of the asset.
-    priceobj = asset.get_marketprice_obj()
-
-    # No prices are given:
-    if priceobj is None:
-        print("WARNING: Cannot calculate holding period return of "
-              + asset.get_filename() + " due to unavailable and missing price of today. "
-                                       "Update the assets marketdata-file with values from today or "
-                                       "add a price-defining update-transaction of today.")
-        # Return a seemingly impossible (negative!) value:
-        return -1e10
-
     # If the asset is with a foreign currency, the values must be adapted:
     if asset.get_currency() != asset.get_basecurrency():
         forex_obj = asset.get_forex_obj()
 
     # If there is an asset-price available, get the latest possible one that is recorded:
-    transact_price_necessary = True
-    if priceobj.is_price_avail() is True:
-        latest_date, latest_price = priceobj.get_latest_price_date()
+    ret = asset.get_latest_price_date()
+    if ret is not None:
+        latest_date, latest_price = ret
         latest_date_dt = stringoperations.str2datetime(latest_date, dateformat)
         # The value can be determined from most recent price!
         if latest_date_dt >= today_dt:
@@ -256,6 +244,10 @@ def get_return_asset_holdingperiod(asset, dateformat):
                 val2 = forex_obj.perform_conversion([latest_date], [val2])
                 val2 = val2[0]
             transact_price_necessary = False  # We have a price
+        else:
+            transact_price_necessary = True
+    else: # No market- or provider data was available.
+        transact_price_necessary = True
 
     # Price must be derived from transaction-data:
     if transact_price_necessary is True:
@@ -528,13 +520,11 @@ def get_returns_asset_daily_absolute_analysisperiod(asset, dateformat, analyzer)
     # otherwise not very meaningful.
     today_dt = dateoperations.get_date_today(dateformat, datetime_obj=True)
 
-    # Try to get the most recent value of the asset.
-    priceobj = asset.get_marketprice_obj()
-
     # If there is an asset-price available, get the latest possible one that is recorded:
     today_price_avail = False
-    if priceobj.is_price_avail() is True:
-        latest_date, _ = priceobj.get_latest_price_date()
+    ret = asset.get_get_latest_price_date()
+    if ret is not None:
+        latest_date, _ = ret
         latest_date_dt = analyzer.str2datetime(latest_date)
         # The value can be determined from most recent price!
         if latest_date_dt >= today_dt:  # We have a price, even for today; this is good.

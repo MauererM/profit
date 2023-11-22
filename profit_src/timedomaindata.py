@@ -189,7 +189,7 @@ class ForexTimeDomainData:
     def __create_new_forex_storage_file(self):
         self.storageobj = self.storage.create_new_storage_file("forex", (self.currency, self.basecurrency))
 
-    def get_price_data(self):  # Used to be named get_dates_rates
+    def get_price_data(self):
         if self.full_dates is not None:
             return self.full_dates, self.full_prices
         else:
@@ -359,7 +359,7 @@ def obtain_data_from_storage_and_provider(startdate_dataprovider, stopdate_datap
         # Online data retrieval necessary
         try:
             if isinstance(storageobj, StockData):
-                symbol = storageobj.get_symbol()
+                symbol = storageobj.get_id() # We use the id as symbol, as this can contain non-alphanumeric chars.
                 exchange = storageobj.get_exchange()
                 ret = provider.get_stock_data(symbol, exchange, startdate_dataprovider, stopdate_dataprovider)
                 if ret is not None:
@@ -371,7 +371,7 @@ def obtain_data_from_storage_and_provider(startdate_dataprovider, stopdate_datap
                 if ret is not None:
                     print(f"Obtained some provider data for the currencies {symbol_a} and {symbol_b}")
             elif isinstance(storageobj, IndexData):
-                symbol = storageobj.get_index()
+                symbol = storageobj.get_id() # We use the id as symbol, as this can contain non-alphanumeric chars.
                 ret = provider.get_stock_data(symbol, "", startdate_dataprovider, stopdate_dataprovider)
                 if ret is not None:
                     print(f"Obtained some provider data for the stock market index {symbol}")

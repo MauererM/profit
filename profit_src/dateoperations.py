@@ -70,6 +70,8 @@ def format_datelist(datelist, vallist, begin_date, stop_date, analyzer, zero_pad
     (dates, values)
     """
     # Sanity check:
+    if not isinstance(datelist, list) or not isinstance(vallist, list):
+        raise RuntimeError("Received empty lists!")
     if len(datelist) != len(vallist):
         raise RuntimeError("Datelist and vallist must be of identical length.")
     # Convert to datetime:

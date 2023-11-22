@@ -5,100 +5,168 @@ MIT License
 Copyright (c) 2018 Mario Mauerer
 """
 
-import os
+from pathlib import Path
 import re
+
+
+def filename_append_number(fpath, separator, num):
+    """Adds a number to a filename. E.g., /test.pdf ==> /test_2.pdf
+    :param fpath: Path of the file, or filename (Path-object)
+    :param separator: String, encoding the desired character before the number is added, e.g., "_"
+    :param num: Number added to the file-path
+    :return: Path-object of the modified path
+    """
+    if not isinstance(fpath, Path):
+        fpath = Path(fpath)
+    stem = fpath.stem
+    suffix = fpath.suffix
+    newname = f"{stem}{separator}{int(num)}{suffix}"
+    return fpath.with_name(newname)
+
+
+def filename_append_string(fpath, separator, addstring):
+    """Adds a string to a filename. E.g., /test.pdf ==> /test_group.pdf
+    :param fpath: Path of the file, or filename (Path-object)
+    :param separator: String, encoding the desired character before the number is added, e.g., "_"
+    :param addstring: String to be added to the file-path
+    :return: Path-object of the modified path
+    """
+    if not isinstance(fpath, Path):
+        fpath = Path(fpath)
+    stem = fpath.stem
+    suffix = fpath.suffix
+    newname = f"{stem}{separator}{addstring}{suffix}"
+    return fpath.with_name(newname)
+
+def filename_add_extension(fpath, extension):
+    """Adds an extension to a file name.
+    """
+    if not isinstance(fpath, Path):
+        fpath = Path(fpath)
+    if isinstance(extension, str):
+        if extension.startswith('.'):
+            extension = extension[1:]
+    else:
+        raise RuntimeError("Extension must be a string")
+
+    stem = fpath.stem
+    newname = f"{stem}.{extension}"
+    return fpath.with_name(newname)
+
+
+def get_filename(fpath, keep_suffix=False):
+    """Obtains the filename from paths that are separated with '/'
+    :param fpath: Path of the file, or filename (Path-object)
+    :param keep_suffix: If true, the file-extension is retained with the filename
+    :return: Path-object of the file name
+    """
+    if not isinstance(fpath, Path):
+        fpath = Path(fpath)
+    if keep_suffix:
+        return fpath.name
+    return fpath.stem
 
 
 def write_file_lines(filepath, lines, overwrite=False):
     """Writes lines of strings, supplied as list, into a file.
-    :param filepath: Path of the file, as string
+    :param filepath: Path of the file, as Path-object
     :param lines: List of strings to be written to file
     :param overwrite: Boolean, if True, it overwrites any existing file. If False, it appends the lines to an existing
     file.
     :return: Nothing.
     """
+    if not isinstance(filepath, Path):
+        filepath = Path(filepath)
     if overwrite is True:
-        with open(filepath, 'w', encoding='utf8') as f:
-            for line in lines:
-                string = line + '\n'
-                f.write(string)
+        filepath.write_text('\n'.join(lines), encoding='utf8') # Todo: Does this work?
     else:
-        with open(filepath, 'a', encoding='utf8') as f:
+        with filepath.open('a', encoding='utf8') as f: # Todo Does this work, too?
             for line in lines:
-                string = line + '\n'
-                f.write(string)
+                f.write(f"{line}\n")
 
 def clean_string(s):
     """Remove non-alphanumeric characters from a string such that it
-    can be used for a filename.
+    can be used for a filename. The dot (".") is allowed.
     """
-    return re.sub(r'[^a-zA-Z0-9]', '', s)
+    return re.sub(r'[^a-zA-Z0-9.]', '', s)
 
 def get_file_lines(filepath):
     """Returns all lines of a file as a list of strings
-    :param filepath: String of the file's path
+    :param filepath: Path object of the file
     :return: List of strings
     """
+    if not isinstance(filepath, Path):
+        filepath = Path(filepath)
     # Read all lines in the file:
-    with open(filepath, encoding='utf8') as f:
-        lines = f.readlines()
+    lines = filepath.read_text().splitlines()
     return lines
 
 
 def file_exists(filepath):
     """Returns true if a certain file exists, False if not.
-    :param filepath: String of the file's path
+    :param filepath: Pathlib object of the file
     :return: True, if file exists, otherwise False.
     """
-    return os.path.isfile(filepath)
+    if not isinstance(filepath, Path):
+        filepath = Path(filepath)
+    return filepath.exists()
 
 
-def create_path(foldername, filename):
+def create_path(folderpath, filename):
     """Simply creates a path from a folder-name (which resides inside the project directory) and a file within.
-    :param foldername: String of folder-name
-    :param filename: String of file-name
-    :return: String of joined path
+    :param foldername: String or Path-object of folder-name
+    :param filename: String or Path-object of file-name
+    :return: Path-object of joined path
     """
-    # Strip "^" and ":", which are sometimes used in stock market index symbols, from the path:
-    p =  os.path.join(foldername, filename)  # Get path of file, including its folder
-    p = re.sub('\^|\:', '', p) # Remove all "^" and ":" characters.
-    return p
+    if not isinstance(folderpath, Path):
+        folderpath = Path(folderpath)
+
+    if isinstance(filename, str):
+        filename = clean_string(filename)
+        filename = Path(filename)
+        return folderpath.joinpath(filename)
+    if isinstance(filename, Path):
+        return folderpath.joinpath(filename)
+
+    raise RuntimeError("Filename must either be a string or a Path-object.")
 
 
 def delete_file(path):
     """Deletes a file.
-    :param path: String of the file's path
+    :param path: String of the file's path, or a Path-object
     """
-    os.remove(path)
+    if not isinstance(path, Path):
+        path = Path(path)
+    try:
+        if path.exists():
+            path.unlink()
+        else:
+            raise RuntimeError("File does not exist.")
+    except PermissionError:
+        print("No permission to delete file.")
+    except IsADirectoryError:
+        print("The path specified is a directory, not a file.")
 
 
 def get_file_list(folderpath, extension):
     """Lists files of a given extension in a folder
-    :param folderpath: Path of folder (string)
+    :param folderpath: Path of folder (Path-object)
     :param extension: String that encodes the extension of the files that are being collected.
     If this is None, all files are returned
-    :return: List of strings containing the file names, including extension
+    :return: List of Path-objects for the files discovered
     """
+    if not isinstance(folderpath, Path):
+        folderpath = Path(folderpath)
     if extension is not None:
-        return [f for f in os.listdir(folderpath) if (os.path.isfile(os.path.join(folderpath, f))
-                                                      and f.endswith(extension) is True)]
-    return [f for f in os.listdir(folderpath) if os.path.isfile(os.path.join(folderpath, f))]
+        if extension.startswith('.'):
+            extension = extension[1:]
+        files = folderpath.glob(f'*.{extension}')
+        return list(files)
+    files = [item for item in folderpath.iterdir() if item.is_file()]
+    return files
 
 def get_filename_from_path(fname):
     """Strip the folder-path from a file name"""
-    return os.path.basename(fname)
-
-"""
-    Stand-alone execution for testing:
-"""
-if __name__ == '__main__':
-    # filepath = "investments_test/testfile.txt"
-    # print(file_exists(filepath))
-
-    # test = get_file_lines(filepath)
-    # print("Done")
-
-    # write_file_lines(filepath, ["First line", "Second Line"], overwrite=True)
-
-    test3 = create_path("folder", "fi^l:e")
-    print(test3)
+    if not isinstance(fname, Path):
+        fname = Path(fname)
+    return fname.name

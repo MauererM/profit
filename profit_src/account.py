@@ -232,7 +232,7 @@ class Account:
 
     def get_filename(self):
         """Returns the filename (as string) of the corresponding account-file"""
-        return self.filename
+        return self.filename.name
 
     def get_currency(self):
         """Returns the currency of the account (as string)"""

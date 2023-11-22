@@ -10,15 +10,14 @@ Investment, account also as plugin...? Subpackage? Sensible?
 
 Check out the logging module for debug-outputs
 
-Migrate to pathlib for path-string operations
-
 Convert to f-strings, get rid of the plus-signs
 
 Is if name == main the right thing for module-level debugging? How to do better testing?
 
+Change the parsers also to pathlib
+
 
 Continue in marketdata: 
-- Introduce Pathlib to storage.py and/or files.py. See all the todos. 
 - Test if the IDs work, with weird symbols. Fix it for the indexes. 
 - It's almost working. Test these cases:
 - Marketdata with empty/full folders at startup
@@ -27,3 +26,4 @@ Continue in marketdata:
 - Is the data correctly merged?
 - Is the storage-data being overwritten (or not)? 
 - Check the todos. 
+- Something is shady; Large spikes in investment-values. Why?
