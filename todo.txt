@@ -15,5 +15,7 @@ Is if name == main the right thing for module-level debugging? How to do better 
 Finalize the marketdata-branch:
 - Test if the splits work, e.g., with AAPL or AUUSI (use your data, though)
 - Compare your data with what the newest branch outputs - are the plots the same?
+- Read todos, finalize documentation
+- Update version number
 
 Migrate this file to github

@@ -49,25 +49,6 @@ class StockData(MarketDataStorage):
 
         self.dates_dict = create_dict_from_list(self.dates)
 
-        # If there are splits given in the marketdata-file: Adjust the read data accordingly (but do not
-        # overwrite storec csv data).
-        # This can be needed as some data providers do not account properly for the splits in the data they provide;
-        # This allows to do it manually.
-        if len(self.splits) > 0:
-            split_dates = [x[0] for x in self.splits]
-            split_ratios = [x[1] for x in self.splits]
-            split_factor = 1.0
-            split_cnt = 0
-            for idx in range(len(self.dates) - 1, -1, -1):
-                d = self.dates[idx]
-                index = next((i for i, item in enumerate(split_dates) if item == d), None)
-                if index is not None:
-                    split_factor = split_factor * split_ratios[index]
-                    split_cnt = split_cnt + 1
-                self.values[idx] = self.values[idx] * split_factor
-            if split_cnt < len(split_dates):
-                raise RuntimeError("Not all splits were available in the provided dataset. File: " + self.fname)
-
     def get_filename(self):
         return self.fname  # Don't return the path-name
 
@@ -109,3 +90,6 @@ class StockData(MarketDataStorage):
 
     def get_holes(self):
         return self.holes
+
+    def get_splits(self):
+        return self.splits

@@ -27,7 +27,7 @@ from .timedomaindata import StockMarketIndicesData
 """
 Data is analyzed a certain number of days into the past, from today
 """
-DAYS_ANALYSIS = 3000
+DAYS_ANALYSIS = 2000
 
 """
 Number of years to project the values of the investments into the future. The interest rate is given below.

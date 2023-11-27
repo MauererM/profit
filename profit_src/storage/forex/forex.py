@@ -83,3 +83,6 @@ class ForexData(MarketDataStorage):
 
     def get_holes(self):
         return self.holes
+
+    def get_splits(self):
+        return []

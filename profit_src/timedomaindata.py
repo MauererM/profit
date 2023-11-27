@@ -407,6 +407,12 @@ def obtain_data_from_storage_and_provider(startdate_dataprovider, stopdate_datap
                 debuglen = min(len(providerdates), 5)
                 for i in range(debuglen):
                     logging.debug(f"Date: {providerdates[i]}\t Value: {providerprices[i]:.3f}")
+                splits = storageobj.get_splits() # This is currently only used for stocks/could also be done above,
+                # but all storageobj implement this.
+                if len(splits) > 0:
+                    providerdates, providerprices = storage.apply_splits(splits, (providerdates, providerprices))
+                    print("Split(s) are detected in the storage-csv. Will modify provider data.")
+
             else:
                 logging.debug("Did not obtain provider-data")
         except:

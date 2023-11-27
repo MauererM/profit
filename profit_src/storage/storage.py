@@ -40,6 +40,14 @@ class MarketDataMain:
     ...
     Note: The split-lines are optional. The split-value can be float. With this, reverse splits are also possible
     Normal splits have a split-factor >1. Reverse splits are <1.
+    If a split is present in the storage-header, then the corresponding _provider_ data will be adjusted (and not the
+    stored csv-data!).
+    CAREFUL: Once the split-data is given in the header, any data from the corresponding provider will be modified and
+    written to the file (where it then becomes ground-truth). # Todo: In future, a header-mechanism that steers what is ground-truth and what not will provide more control in cases where the provider changes the split-behavior
+    NOTE: If you introduce or modify a split in a storage-csv-file, you MUST delete all content fo the file (but keep
+    the header!). This forces profit to re-pull all data from the provider, and apply the split.
+    You also might have to play with the day of the split in the storge-header by +/- 1 day to match the
+    recorded transactions.
     """
     DELIMITER = ";"
     EXTENSION = "csv"
@@ -402,6 +410,37 @@ class MarketDataMain:
         if dateoperations.check_date_order(dates_merged, self.analyzer, allow_ident_days=False) is False:
             raise RuntimeError(f"Something went wrong when fusing the data. Path: {storage_obj.get_filename()}")
         return dates_merged, values_merged
+
+    def apply_splits(self, splits, provider_data):
+        """Applies splits to provider-data  (and _not_ to storage-data, as it otherwise will be written to file).
+        Used, if provider does not apply splits.
+        The split-data used here originates from the header-section of stock-files in the storage-folder/CSVs
+        :param splits: List of tuples of splits
+        :param provider_data: Tuple of two lists (dates, values) of the provider
+        :return: Tuple of two lists (dates, values), where the splits have been applied.
+        """
+        if len(splits) == 0:
+            return provider_data
+        split_dates = [x[0] for x in splits]
+        split_ratios = [x[1] for x in splits]
+        split_factor = 1.0
+        dates, values = provider_data
+        if len(values) != len(dates):
+            raise RuntimeError("Data must be of equal length")
+        split_cnt = 0
+        for idx in range(len(dates) - 1, -1, -1):
+            d = dates[idx]
+            index = next((i for i, item in enumerate(split_dates) if item == d), None)
+            if index is not None:
+                split_factor = split_factor * split_ratios[index]
+                split_cnt = split_cnt + 1
+            values[idx] = values[idx] / split_factor
+        if split_cnt < len(split_dates):
+            raise RuntimeError(f"Not all splits were available in the provided dataset. File: {self.fname}")
+        if len(values) != len(dates):
+            raise RuntimeError("Something went wrong in the split-calculation.")
+        return dates, values
+
 
     def write_data_to_storage(self, storage_obj, data):
         """New (and existing) data is written to storage, i.e., the data is extended with the new data that was

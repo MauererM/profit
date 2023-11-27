@@ -32,7 +32,7 @@ class Account:
         self.purpose = purpose_str
         self.currency = currency_str
         self.basecurrency = basecurrency_str
-        self.filename = filename_str
+        self.filename = filename_str # Todo: This should already be a Path-object...
         self.transactions = transactions_dict
         self.dateformat = dateformat_str
         self.analyzer = analyzer
@@ -51,17 +51,17 @@ class Account:
         # day are possible)
         if dateoperations.check_date_order(self.transactions[config.DICT_KEY_DATES], self.analyzer,
                                            allow_ident_days=True) is False:
-            raise RuntimeError("Transaction-dates are not in temporal order. But: identical successive dates are "
-                               "allowed. Filename: " + self.filename)
+            raise RuntimeError(f"Transaction-dates are not in temporal order. But: identical successive dates are "
+                               f"allowed. Filename: {self.filename}")
 
         # Check, if the transactions-actions-column only contains allowed strings:
         if stringoperations.check_allowed_strings(self.transactions[config.DICT_KEY_ACTIONS],
                                                   config.ACCOUNT_ALLOWED_ACTIONS) is False:
-            raise RuntimeError("Actions-column contains faulty strings. Filename: " + self.filename)
+            raise RuntimeError(f"Actions-column contains faulty strings. Filename: {self.filename}")
 
         # Check, if the purpose-string only contains allowed purposes:
         if stringoperations.check_allowed_strings([self.purpose], assetpurposes) is False:
-            raise RuntimeError("Purpose of Account is not recognized. Filename: " + self.filename)
+            raise RuntimeError(f"Purpose of Account is not recognized. Filename: {self.filename}")
 
         # Create a list of consecutive calendar days that corresponds to the date-range of the recorded transactions:
         self.datelist = dateoperations.create_datelist(self.get_first_transaction_date(),

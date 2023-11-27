@@ -40,3 +40,7 @@ class MarketDataStorage(ABC):
     @abstractmethod
     def get_holes(self):
         pass
+
+    @abstractmethod
+    def get_splits(self):
+        pass

@@ -61,18 +61,17 @@ class Investment:
         # Check, if the transaction-dates are in order. Allow identical successive days
         if dateoperations.check_date_order(self.transactions[config.DICT_KEY_DATES], self.analyzer,
                                            allow_ident_days=True) is False:
-            raise RuntimeError(
-                "Transaction-dates are not in temporal order (Note: Identical successive dates are allowed). "
-                "Filename: " + self.filename)
+            raise RuntimeError(f"Transaction-dates are not in temporal order "
+                               f"(Note: Identical successive dates are allowed). Filename: {self.filename}")
 
         # Check, if the transactions-actions-column only contains allowed strings:
         if stringoperations.check_allowed_strings(self.transactions[config.DICT_KEY_ACTIONS],
                                                   config.INVSTMT_ALLOWED_ACTIONS) is False:
-            raise RuntimeError("Actions-column contains faulty strings. Filename: " + self.filename)
+            raise RuntimeError(f"Actions-column contains faulty strings. Filename: {self.filename}")
 
         # Check, if the purpose-string only contains allowed purposes:
         if stringoperations.check_allowed_strings([self.purpose], assetpurposes) is False:
-            raise RuntimeError("Purpose of investment is not recognized. Filename: " + self.filename)
+            raise RuntimeError(f"Purpose of investment is not recognized. Filename: {self.filename}")
 
         # Perform sanity-checks with the transactions.
         self.transactions_sanity_check(self.transactions[config.DICT_KEY_DATES],
@@ -534,6 +533,8 @@ class Investment:
                     print("Date;\t\t\tRecorded Price;\tObtained Price")
                     for i, entry in enumerate(mismatches):
                         print(f"{entry[0]};\t\t{entry[1]:.2f};\t\t\t{entry[2]:.2f};")
+                    print("Could a split cause this? Potentially adjust via the split-option in the header "
+                          "in the storage-csv file.")
 
                 # Calculate the values of the investment:
                 self.analysis_values = []
@@ -580,9 +581,9 @@ class Investment:
         # The value of the investment is now known. Calculate the value in the basecurrency, if applicable:
         # Check, if a forex-object is given (only required if the account holds foreign currencies)
         if self.currency != self.basecurrency and self.forex_data_given is False:
-            raise RuntimeError("Investment is in a foreign currency. Forex-object is required. "
-                               "Investment-currency is: " + self.currency + ". Basecurrency is: " + self.basecurrency +
-                               ". Investment-file is: " + self.filename)
+            raise RuntimeError(f"Investment is in a foreign currency. Forex-object is required. "
+                               f"Investment-currency is: {self.currency}. Basecurrency is: {self.basecurrency}."
+                               f"Investment-file is: {self.filename}")
 
         # Forex conversion required:
         if self.currency != self.basecurrency and self.forex_data_given is True:
