@@ -20,9 +20,10 @@ class ForexData(MarketDataStorage):
 
     FORMAT_FNAME_GROUPS = r'forex_([a-zA-Z0-9]{1,5})_([a-zA-Z0-9]{1,5})\.csv'
 
-    def __init__(self, pathname, id_, data):
+    def __init__(self, pathname, id_, data, holes):
         self.pname = pathname
         self.id_ = id_
+        self.holes = holes  # If the stored data is non-contiguous, this is a list of missing dates (or an empty list)
 
         dates = data[0]
         values = data[1]
@@ -79,3 +80,6 @@ class ForexData(MarketDataStorage):
 
     def get_id(self):
         return self.id_
+
+    def get_holes(self):
+        return self.holes

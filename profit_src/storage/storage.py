@@ -16,22 +16,14 @@ from ..storage.forex.forex import ForexData
 from ..storage.stock.stock import StockData
 from ..storage.index.index import IndexData
 
-"""
-Fundamental principles: 
-1) It is OK for "holes" to be stored in the market data, i.e., data must not be consecutive. 
-2) Marketdata-files have precedent/are ground truth. 
-3) Stock splits can optionally be given in header of stock-files. Read data will be adjusted accordingly (but no stored data is overwritten). Reason: Some data providers do not reflect splits; This allows to correct this. 
-
-# Todo: Flag in header to allow overwrite of stored data from data provider? Reason: Change of provider? More flexibility?
-
-Header-content: 
-Stocks: Splits, Allowed interpolation
-If splits are given, then the data, when further processed, is automatically adjusted according to the splits. # Todo document this in the docs, also the fact how the headers should look. 
-"""
-
 
 class MarketDataMain:
     """
+    Fundamental principles:
+    1) The data stored must not necessarily be contiguous (but in order). There can be "holes" in the data. However, whenever a hole is detected, the timedomain-class(es) will pull the full range from the provider, as it can not yet pull data granularly. Todo: Implement this at some point as well.
+    2) Marketdata-files have precedent/are ground truth. # Todo: Make this configurable via a setting in the header.
+    3) Stock splits can optionally be given in header of stock-files. Read data will be adjusted accordingly (but no stored data is overwritten). Reason: Some data providers do not reflect splits; This allows to correct this.  # Todo document this in the docs, also the fact how the headers should look.
+
     The content-format for forex- and stockmarket-index-files is as follows:
     Header;
     Id;<Name>
@@ -48,7 +40,6 @@ class MarketDataMain:
     ...
     Note: The split-lines are optional. The split-value can be float. With this, reverse splits are also possible
     Normal splits have a split-factor >1. Reverse splits are <1.
-
     """
     DELIMITER = ";"
     EXTENSION = "csv"
@@ -130,12 +121,14 @@ class MarketDataMain:
 
         if len(dates) != len(vals):
             raise RuntimeError(f"Dates and values must have same length. File: {fname}")
-        if dateoperations.check_date_order(dates, self.analyzer, allow_ident_days=False) is False and len(dates) > 0:
-            raise RuntimeError(f"The dates in a forex-storage file must be in order! File: {fname}")
+        if dateoperations.check_date_order(dates, self.analyzer, allow_ident_days=False) is False and len(
+                dates) > 0:
+            raise RuntimeError(f"The dates in a stock-storage file must be in order! File: {fname}. Data corrupted?")
+        holes = dateoperations.find_holes_in_dates(dates, self.analyzer)
         if is_index is False:
-            f = ForexData(fname, id_, (dates, vals))
+            f = ForexData(fname, id_, (dates, vals), holes)
         else:
-            f = IndexData(fname, id_, (dates, vals))
+            f = IndexData(fname, id_, (dates, vals), holes)
         return f
 
     def __parse_stock_file(self, fname):
@@ -181,10 +174,11 @@ class MarketDataMain:
         if len(dates) != len(vals):
             raise RuntimeError("Dates and values must have same length. File: " + fname)
         if dateoperations.check_date_order(dates, self.analyzer, allow_ident_days=False) is False and len(dates) > 0:
-            raise RuntimeError(f"The dates in a stock-storage file must be in order! File: {fname}")
+            raise RuntimeError(f"The dates in a stock-storage file must be in order! File: {fname}. Data corrupted?")
         if id_ is None:
             raise RuntimeError(f"The Id should have been read. File: {fname}")
-        f = StockData(fname, id_, (dates, vals), splits)
+        holes = dateoperations.find_holes_in_dates(dates, self.analyzer)
+        f = StockData(fname, id_, (dates, vals), splits, holes)
         return f
 
     def __read_data_line_from_storage_file(self, line):
@@ -253,6 +247,7 @@ class MarketDataMain:
         return (dates_list[startidx:stopidx + 1], values[startidx:stopidx + 1])
 
     def get_start_stopdate(self, storage_obj):
+        """Returns None if the storage object does not (yet) contain data. """
         return (storage_obj.get_startdate(), storage_obj.get_stopdate())
 
     def is_storage_data_existing(self, obj_type, symbols):
@@ -430,6 +425,9 @@ class MarketDataMain:
         dates, values = data
         if len(dates) != len(values):
             raise RuntimeError("Data and values must be of equal length")
+
+        if not dateoperations.check_date_order(dates, self.analyzer, allow_ident_days=False):
+            raise RuntimeError("Data to be written to storage must be in order without duplicates")
 
         for idx, date in enumerate(dates):
             if dateoperations.is_date_valid(date, self.dateformat) is False:

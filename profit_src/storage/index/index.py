@@ -20,11 +20,12 @@ class IndexData(MarketDataStorage):
 
     FORMAT_FNAME_GROUPS = r'index_([a-zA-Z0-9.\^]{1,10})\.csv'
 
-    def __init__(self, pathname, id_, data):
+    def __init__(self, pathname, id_, data, holes):
         # Give the symbol/id explicitly (don't derive it from the file name) -
         # this allows weird characters like ^ in the symbol, too
         self.pname = pathname
         self.id_ = id_
+        self.holes = holes  # If the stored data is non-contiguous, this is a list of missing dates (or an empty list)
 
         dates = data[0]
         values = data[1]
@@ -77,3 +78,6 @@ class IndexData(MarketDataStorage):
 
     def get_id(self):
         return self.id_
+
+    def get_holes(self):
+        return self.holes

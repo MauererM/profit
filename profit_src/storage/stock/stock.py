@@ -6,7 +6,7 @@ Copyright (c) 2018-2023 Mario Mauerer
 """
 
 import re
-from ...import files
+from ... import files
 from ...storage.storage_abc import MarketDataStorage
 from ...helper import create_dict_from_list
 
@@ -19,11 +19,12 @@ class StockData(MarketDataStorage):
     """
     FORMAT_FNAME_GROUPS = r'stock_([a-zA-Z0-9.]{1,15})_([a-zA-Z0-9.]{1,15})_([a-zA-Z0-9]{1,5})\.csv'
 
-    def __init__(self, pathname, id_, data, splits):
+    def __init__(self, pathname, id_, data, splits, holes):
         # Give the symbol/id explicitly (don't derive it from the file name) -
         # this allows weird characters like ^ in the symbol, too
         self.pname = pathname
         self.id_ = id_
+        self.holes = holes  # If the stored data is non-contiguous, this is a list of missing dates (or an empty list)
 
         dates = data[0]
         values = data[1]
@@ -105,3 +106,6 @@ class StockData(MarketDataStorage):
 
     def get_id(self):
         return self.id_
+
+    def get_holes(self):
+        return self.holes

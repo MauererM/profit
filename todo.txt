@@ -17,3 +17,5 @@ Finalize the marketdata-branch:
 - Test if the splits work, e.g., with AAPL or AUUSI (use your data, though)
 - Compare your data with what the newest branch outputs - are the plots the same?
 
+Lint the profiler
+

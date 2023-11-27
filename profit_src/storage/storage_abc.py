@@ -36,3 +36,7 @@ class MarketDataStorage(ABC):
     @abstractmethod
     def get_id(self):
         pass
+
+    @abstractmethod
+    def get_holes(self):
+        pass

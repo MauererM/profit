@@ -354,6 +354,22 @@ def check_date_order(datelist, analyzer, allow_ident_days=False):
         oldday = date
     return True
 
+def find_holes_in_dates(datelist, analyzer):
+    """Finds holes in a set of dates.
+    Returns an empty list if there are no holes (i.e., all dates are consecutive).
+    :param datelist: List of strings of dates
+    :param analyzer: Analyzer-object
+    :return: List of missing dates (list of strings, or empty list)"""
+    if len(datelist) == 0:
+        return []
+    if not isinstance(datelist, list) or not isinstance(datelist[0], str):
+        raise RuntimeError("Datelist must be a list of strings.")
+    if not check_date_order(datelist, analyzer, allow_ident_days=False):
+        raise RuntimeError("Initial list has duplicate days, or is not in order. This is likely fishy...")
+    list_full = create_datelist(datelist[0], datelist[-1], analyzer)
+    list_missing = list(set(list_full) - set(datelist))
+    return list_missing
+
 
 def check_dates_consecutive(datelist, analyzer):
     """Checks if a list of dates contains consecutive dates (1-day increments)

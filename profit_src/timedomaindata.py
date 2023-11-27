@@ -286,10 +286,20 @@ def get_provider_storage_ranges(storageobj, storage, analyzer, analysis_startdat
 
         # The storage-interval can not, partially, or over-overlap the analysis interval (and vice versa).
         # Depending on this, different data should be obtained by the data provider.
-        # Todo: This assumes that the storage-data is a continuous set of dates! This is currently not the case... How to solve this? Ensure no holes in storage data? What is a smart approach?
 
+        # The storage object contains holes in its data ==> Pull the full range from the provider, as otherwise,
+        # all assumptions/cases below will not work. For the time being, this system needs contiguous data in the
+        # storage, as we only pull one set of data from the provider.
+        # Todo: This could be made more granular (if pulling less data from the provider is a need)
+        if len(storageobj.get_holes()) != 0:
+            startdate_dataprovider = analyzer.datetime2str(startdate_analysis_dt)
+            stopdate_dataprovider = analyzer.datetime2str(stopdate_analysis_dt)
+            startdate_from_storage = None
+            stopdate_from_storage = None
+            print(f"Holes in the data of the storage object for {storageobj.get_filename()} detected. "
+                  f"Will pull all data from provider.")
         # The analysis-interval is fully contained in the market-data: No online retrieval necessary.
-        if startdate_storage_dt <= startdate_analysis_dt and stopdate_analysis_dt <= stopdate_storage_dt:
+        elif startdate_storage_dt <= startdate_analysis_dt and stopdate_analysis_dt <= stopdate_storage_dt:
             startdate_dataprovider = None
             stopdate_dataprovider = None
             startdate_from_storage = analyzer.datetime2str(startdate_analysis_dt)
@@ -357,7 +367,7 @@ def obtain_data_from_storage_and_provider(startdate_dataprovider, stopdate_datap
                 storagedates, storageprices = ret
                 if len(storagedates) != len(storageprices):
                     raise RuntimeError("Lists should be of identical length")
-                print("Obtained data from storage.")
+                print("Obtained some data from storage.")
                 debuglen = min(len(storagedates), 5)
                 logging.debug("Obtained data from storage. First few entries:")
                 for i in range(debuglen):
