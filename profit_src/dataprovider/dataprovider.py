@@ -224,7 +224,7 @@ class DataproviderMain:
 
         # Fill in missing data in the vector
         dates_full, values_full = dateoperations.interpolate_data(dates, values,
-                                                                  self.analyzer)  # Todo: Introduce a check here that prevents massive interpolation. Use the interpolation-setting from the storage-system?
+                                                                  self.analyzer)  # Todo: Introduce a check here that prevents massive interpolation?
         return dates_full, values_full
 
 
