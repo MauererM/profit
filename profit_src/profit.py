@@ -6,31 +6,28 @@ MIT License
 Copyright (c) 2018 Mario Mauerer
 """
 import datetime
-import accountparser
-import investmentparser
-import files
-import stringoperations
-import forex
-import dateoperations
-import plotting
-import analysis
-import prices
-import config
-from dataprovider.dataprovider import DataproviderMain
+import logging
+from pathlib import Path
+from . import accountparser
+from . import investmentparser
+from . import files
+from . import stringoperations
+from . import dateoperations
+from . import plotting
+from . import analysis
+from . import config
+from .dataprovider.dataprovider import DataproviderMain
+from .storage.storage import MarketDataMain
+from .timedomaindata import ForexTimeDomainData
+from .timedomaindata import StockMarketIndicesData
 
 # Todo: Move the configs here to config.py?
 
-"""
-These strings specify the folders from which the account and investment files
-are taken.
-"""
-ACCOUNT_FOLDER = "accounts_examples"
-INVESTMENT_FOLDER = "investments_examples"
 
 """
 Data is analyzed a certain number of days into the past, from today
 """
-DAYS_ANALYSIS = 3500
+DAYS_ANALYSIS = 2000
 
 """
 Number of years to project the values of the investments into the future. The interest rate is given below.
@@ -48,39 +45,39 @@ Do not provide the file-extension; PDF files will be created.
 The plots are stored in the "plots" folder
 """
 # Values of all assets, stacked:
-FILENAME_STACKPLOT_ASSET_VALUES = "Asset_Values_Stacked"
+FILENAME_STACKPLOT_ASSET_VALUES = Path("Asset_Values_Stacked")
 # Values of all investments, stacked:
-FILENAME_STACKPLOT_INVESTMENT_VALUES = "Investment_Values_Stacked"
+FILENAME_STACKPLOT_INVESTMENT_VALUES = Path("Investment_Values_Stacked")
 # Values of all accounts, stacked:
-FILENAME_STACKPLOT_ACCOUNT_VALUES = "Account_Values_Stacked"
+FILENAME_STACKPLOT_ACCOUNT_VALUES = Path("Account_Values_Stacked")
 # Returns of all investments, for different time periods:
-FILENAME_TOTAL_INVESTMENT_RETURNS = "Investments_Total_Returns"
+FILENAME_TOTAL_INVESTMENT_RETURNS = Path("Investments_Total_Returns")
 # Returns of individual investments, multiple plots per sheet:
-FILENAME_INVESTMENT_RETURNS = "Investments_Returns"
+FILENAME_INVESTMENT_RETURNS = Path("Investments_Returns")
 # Absolute returns of individual investments, multiple plots per sheet:
-FILENAME_INVESTMENT_RETURNS_ABSOLUTE = "Investments_Returns_Absolute"
+FILENAME_INVESTMENT_RETURNS_ABSOLUTE = Path("Investments_Returns_Absolute")
 # Absolute returns of all investments, summed up:
-FILENAME_INVESTMENT_RETURNS_ABSOLUTE_TOTAL = "Investments_Returns_Absolute_Summed"
+FILENAME_INVESTMENT_RETURNS_ABSOLUTE_TOTAL = Path("Investments_Returns_Absolute_Summed")
 # Values of individual investments, multiple plots per sheet:
-FILENAME_INVESTMENT_VALUES = "Investments_Values"
+FILENAME_INVESTMENT_VALUES = Path("Investments_Values")
 # Values of individual accounts, multiple plots per sheet:
-FILENAME_ACCOUNT_VALUES = "Accounts_Values"
+FILENAME_ACCOUNT_VALUES = Path("Accounts_Values")
 # Value of all investments, compared to some indices:
-FILENAME_INVESTMENT_VALUES_INDICES = "Investment_Values_Indices"
+FILENAME_INVESTMENT_VALUES_INDICES = Path("Investment_Values_Indices")
 # Value of all assets, sorted according to their purpose:
-FILENAME_ASSETS_VALUES_PURPOSE = "Assets_Values_Purpose"
+FILENAME_ASSETS_VALUES_PURPOSE = Path("Assets_Values_Purpose")
 # Value of the groups of assets (see below for groups), two plots are done; one line, one stacked
-FILENAME_ASSETS_VALUES_GROUPS_STACKED = "Assets_Values_Groups_Stacked"
-FILENAME_ASSETS_VALUES_GROUPS_LINE = "Assets_Values_Groups_Line"
+FILENAME_ASSETS_VALUES_GROUPS_STACKED = Path("Assets_Values_Groups_Stacked")
+FILENAME_ASSETS_VALUES_GROUPS_LINE = Path("Assets_Values_Groups_Line")
 # Forex rates:
-FILENAME_FOREX_RATES = "Forex_Rates"
+FILENAME_FOREX_RATES = Path("Forex_Rates")
 # Plots of the groups (can be multiple plots), will be extended with the corresponding group name.
-FILENAME_PLOT_GROUP = "Group"
+FILENAME_PLOT_GROUP = Path("Group")
 # Plots of asset values according to currency:
-FILENAME_CURRENCIES_STACKED = "Asset_Values_Currencies_Stacked"
-FILENAME_CURRENCIES_LINE = "Asset_Values_Currencies_Line"
+FILENAME_CURRENCIES_STACKED = Path("Asset_Values_Currencies_Stacked")
+FILENAME_CURRENCIES_LINE = Path("Asset_Values_Currencies_Line")
 # Projected investment values:
-FILENAME_INVESTMENT_PROJECTIONS = "Investments_Values_Projected"
+FILENAME_INVESTMENT_PROJECTIONS = Path("Investments_Values_Projected")
 
 """
 Stockmarket-Indices. These are used in certain plots. They are also obtained from the dataprovider.
@@ -109,12 +106,24 @@ In the following, the main script begins
 ########################################################################################################################
 ########################################################################################################################
 """
-if __name__ == '__main__':
+
+
+def main():
+    # Folder-paths for the outputs of PROFIT:
+    storage_path = Path(config.STORAGE_FOLDER).resolve()
+    plot_path = Path(config.PLOTS_FOLDER).resolve()
+    account_path = Path(config.ACCOUNT_FOLDER).resolve()
+    investment_path = Path(config.INVESTMENT_FOLDER).resolve()
+
+    # Set logging:
+    logging.basicConfig(level=logging.WARNING)
+    matplotlib_logger = logging.getLogger('matplotlib')
+    matplotlib_logger.setLevel(logging.INFO)  # Exclude matplotlib's debug-messages, as they otherwise spam a lot.
 
     # Print the current version of the tool
-    print("PROFIT V{:.1f} starting".format(config.PROFIT_VERSION))
+    print(f"PROFIT v{config.PROFIT_VERSION:.1f} starting")
 
-    # Initialize classes:
+    # Initialize the caching datetime/string converter class (used in analyzer below):
     datetimeconverter = stringoperations.DateTimeConversion()
 
     """
@@ -132,6 +141,9 @@ if __name__ == '__main__':
     # Initialize the data provider. If none can be initialized, an empty fallback provider will be selected.
     provider = DataproviderMain(analyzer)
 
+    # Initialize the market data system.
+    storage = MarketDataMain(storage_path, config.FORMAT_DATE, analyzer)
+
     """
     Sanity checks:
     """
@@ -143,38 +155,44 @@ if __name__ == '__main__':
     Parse Investments:
     """
     print("\nAcquiring and parsing investments")
-    invstmtfiles = files.get_file_list(INVESTMENT_FOLDER, ".txt")
+    invstmtfiles = files.get_file_list(investment_path, ".txt")
     invstmtfiles.sort()  # Sort alphabetically
-    print("Found the following " + str(len(invstmtfiles)) + " textfiles (.txt) in the investment-folder:")
-    [print(x) for x in invstmtfiles]
+    if len(invstmtfiles) > 0:
+        print(f"Found the following {len(invstmtfiles)} textfiles (.txt) in the investment-folder:")
+        for x in invstmtfiles: print(x.name)
+    else:
+        print(f"Found no investment files in folder {investment_path}")
     # Parsing; also creates the investment-objects
     investments = []
     for file in invstmtfiles:
-        filepath = files.create_path(INVESTMENT_FOLDER, file)  # Get path of file, including its folder
+        filepath = file.resolve()
         investments.append(
             investmentparser.parse_investment_file(filepath, config.FORMAT_DATE, provider, analyzer,
                                                    config.BASECURRENCY,
-                                                   config.ASSET_PURPOSES))
+                                                   config.ASSET_PURPOSES, storage))
     if len(investments) > 0:
-        print("Successfully parsed " + str(len(investments)) + " investments.")
+        print(f"Successfully parsed {len(investments)} investments.")
 
     """
     Parse Accounts:
     """
     print("\nAcquiring and parsing account files")
-    accountfiles = files.get_file_list(ACCOUNT_FOLDER, ".txt")
+    accountfiles = files.get_file_list(account_path, ".txt")
     accountfiles.sort()  # Sort alphabetically
-    print("Found the following " + str(len(accountfiles)) + " textfiles (.txt) in the account-folder:")
-    [print(x) for x in accountfiles]
+    if len(accountfiles) > 0:
+        print(f"Found the following {len(accountfiles)} textfiles (.txt) in the account-folder:")
+        for x in accountfiles: print(x.name)
+    else:
+        print(f"Found no account files in folder {account_path}")
     # Parsing; also creates the account-objects
     accounts = []
     for file in accountfiles:
-        filepath = files.create_path(ACCOUNT_FOLDER, file)  # Get path of file, including its folder
+        filepath = file.resolve()
         accounts.append(
             accountparser.parse_account_file(filepath, config.FORMAT_DATE, analyzer, config.BASECURRENCY,
                                              config.ASSET_PURPOSES))
     if len(accounts) > 0:
-        print("Successfully parsed " + str(len(accounts)) + " accounts.")
+        print(f"Successfully parsed {len(accounts)} accounts.")
 
     # Combine accounts and investments into assets:
     assets = accounts + investments
@@ -207,19 +225,15 @@ if __name__ == '__main__':
     forexdict = {}
     if len(forex_currencies) > 0:
         if len(investments) > 0:
-            print(
-                "Will obtain forex-data back to the " + earliest_forex +
-                " (needed for holding period return calculation)")
+            print(f"Will obtain forex-data back to the {earliest_forex} "
+                  f"(needed for holding period return calculation).")
         else:
-            print(
-                "Will obtain forex-data back to the " + earliest_forex)
+            print(f"Will obtain forex-data back to the {earliest_forex}")
 
         for forexstring in forex_currencies:
-            print("Getting forex-rates for " + forexstring)
-            forexdict[forexstring] = forex.ForexRates(forexstring, config.BASECURRENCY, config.MARKETDATA_FOLDER,
-                                                      config.MARKETDATA_FORMAT_DATE, config.MARKETDATA_DELIMITER,
-                                                      earliest_forex,
-                                                      date_today_str, config.FORMAT_DATE, provider, analyzer)
+            print(f"Getting forex-rates for {forexstring}")
+            forexdict[forexstring] = ForexTimeDomainData(forexstring, config.BASECURRENCY, storage, earliest_forex,
+                                                         date_today_str, provider, analyzer)
 
     # Store an empty object in the basecurrency-key of the forex-dict:
     forexdict[config.BASECURRENCY] = None
@@ -247,13 +261,10 @@ if __name__ == '__main__':
         indexprices = []
         for stockidx in INDICES:
             sym = stockidx["Symbol"]
-            ex = stockidx["Exchange"]
-            currency = stockidx["Name"]  # The name of the stock-index is stored as the currency
+            name = stockidx["Name"]  # The name of the stock-index is stored as the currency
             # Obtain the prices
-            obj = prices.MarketPrices(sym, ex, currency, config.MARKETDATA_FOLDER, config.MARKETDATA_FORMAT_DATE,
-                                      config.MARKETDATA_DELIMITER, date_analysis_start_str, date_today_str,
-                                      config.FORMAT_DATE, provider, analyzer)
-            obj.extrapolate_market_data_to_full_range()  # If not all data obtained: Extrapolate.
+            obj = StockMarketIndicesData(sym, name, storage, date_analysis_start_str, date_today_str, provider,
+                                         analyzer)
             indexprices.append(obj)
 
     """
@@ -266,10 +277,9 @@ if __name__ == '__main__':
 
     if config.PURGE_OLD_PLOTS is True:
         print("Deleting existing plots.")
-        fileslist = files.get_file_list(config.PLOTS_FOLDER, None)  # Get all files
+        fileslist = files.get_file_list(plot_path, None)  # Get all files
         for f in fileslist:
-            fname = files.create_path(config.PLOTS_FOLDER, f)
-            files.delete_file(fname)
+            files.delete_file(f)
     else:
         print("Existing plots are not deleted.")
 
@@ -304,8 +314,8 @@ if __name__ == '__main__':
                                         "Future Value of All Investments, Compounded Annual Interest", analyzer)
         # Calculate the return of all investments, for the considered analysis-period:
         tot_return = analysis.get_returns_assets_accumulated_analysisperiod(investments, analyzer)
-        print("\nThe return of the investments of the considered analysis-period (past {:d} days) is: {:.2f} %".format(
-            DAYS_ANALYSIS, tot_return))
+        print(
+            f"\nThe return of the investments of the considered analysis-period (past {DAYS_ANALYSIS:d} days) is: {tot_return:.2f}%")
 
     if len(assets) > 0:
         # Plot the values of each asset purpose:

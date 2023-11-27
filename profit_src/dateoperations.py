@@ -7,7 +7,7 @@ Copyright (c) 2018 Mario Mauerer
 """
 
 import datetime
-import stringoperations
+from . import stringoperations
 
 
 def add_years(date, num_years, dateformat):
@@ -70,6 +70,8 @@ def format_datelist(datelist, vallist, begin_date, stop_date, analyzer, zero_pad
     (dates, values)
     """
     # Sanity check:
+    if not isinstance(datelist, list) or not isinstance(vallist, list):
+        raise RuntimeError("Received empty lists!")
     if len(datelist) != len(vallist):
         raise RuntimeError("Datelist and vallist must be of identical length.")
     # Convert to datetime:
@@ -328,7 +330,7 @@ def create_datelist(startdate, stopdate, analyzer, dateformat=None):
     return datelist
 
 
-def check_date_order(datelist, analyzer, allow_ident_days):
+def check_date_order(datelist, analyzer, allow_ident_days=False):
     """Checks if a list of dates/times is in order.
     Returns false, if an empty list is supplied.
     :param datelist: list of strings of dates
@@ -353,6 +355,23 @@ def check_date_order(datelist, analyzer, allow_ident_days):
     return True
 
 
+def find_holes_in_dates(datelist, analyzer):
+    """Finds holes in a set of dates.
+    Returns an empty list if there are no holes (i.e., all dates are consecutive).
+    :param datelist: List of strings of dates
+    :param analyzer: Analyzer-object
+    :return: List of missing dates (list of strings, or empty list)"""
+    if len(datelist) == 0:
+        return []
+    if not isinstance(datelist, list) or not isinstance(datelist[0], str):
+        raise RuntimeError("Datelist must be a list of strings.")
+    if not check_date_order(datelist, analyzer, allow_ident_days=False):
+        raise RuntimeError("Initial list has duplicate days, or is not in order. This is likely fishy...")
+    list_full = create_datelist(datelist[0], datelist[-1], analyzer)
+    list_missing = list(set(list_full) - set(datelist))
+    return list_missing
+
+
 def check_dates_consecutive(datelist, analyzer):
     """Checks if a list of dates contains consecutive dates (1-day increments)
     Returns false, if an empty list is supplied.
@@ -373,10 +392,9 @@ def check_dates_consecutive(datelist, analyzer):
 
 
 def fuse_two_value_lists(datelist_full, dates_1_partial, vals_1_partial_groundtruth, dates_2_partial, vals_2_partial,
-                         analyzer, zero_padding_past, zero_padding_future):
+                         analyzer, zero_padding_past, zero_padding_future, discard_zeroes=True):
     """Fuses two lists of values together, e.g., combines transactions-prices with market-prices.
     Applies extrapolation, too, to cover the full date-list.
-    Note that zero-values are discarded!
     First, the two lists are merged fully, and then cropped/extended to datelist_full
     :param datelist_full: The final list of dates that the merged list will cover.
     :param dates_1_partial: Dates of first partial list
@@ -384,6 +402,8 @@ def fuse_two_value_lists(datelist_full, dates_1_partial, vals_1_partial_groundtr
     this value is taken.
     :param dates_2_partial: Dates of second partial list
     :param vals_2_partial: Values of second partial list
+    :param discard_zeroes: If True, there will be zeroes inserted when the partial lists are merged! Otherwise,
+    data will be interpolated.
     :return: A single list with interpolated and extrapolated values that corresponds to datelist_full
     """
     # Create a dictionary of the lists. Note: This will always store the most recent index, if there are duplicates.
@@ -413,16 +433,32 @@ def fuse_two_value_lists(datelist_full, dates_1_partial, vals_1_partial_groundtr
             val = vals_1_partial_groundtruth[dates_1_dict[date]]
         elif date in dates_2_dict:  # If no entry in list 1, check list 2
             val = vals_2_partial[dates_2_dict[date]]
-        if val > 1e-6:  # The transactions-data also contains zero-values for price. Ignore those.
+        if discard_zeroes is True and val > 1e-6:
+            output.append(val)
+            date_output.append(date)
+        elif discard_zeroes is False:
             output.append(val)
             date_output.append(date)
 
-    # Interpolate the given range to ensure there are no holes:
+    # Interpolate the given range to ensure there are no holes (e.g., if no zeroes were inserted above):
     date_out, out = interpolate_data(date_output, output, analyzer)
     # Now, date_output and output need to be extrapolated (or cropped) to cover the range of datelist_full.
     _, values_final = format_datelist(date_out, out, datelist_full[0], datelist_full[-1], analyzer,
                                       zero_padding_past=zero_padding_past, zero_padding_future=zero_padding_future)
     return values_final
+
+
+def is_date_valid(datestring, dateformat):
+    """Checks if the provided date-string is a valid date
+    :param datestring: String of a date
+    :param dateformat: Desired date-format
+    :return True, if datestring adheres to dateformat
+    """
+    try:
+        datetime.datetime.strptime(datestring, dateformat)
+        return True
+    except:
+        return False
 
 
 """

@@ -10,12 +10,15 @@ import matplotlib
 import matplotlib.pyplot as plt
 from matplotlib.ticker import FormatStrFormatter
 import pylab
-import stringoperations
-import analysis
-import config
-import plotting_aux
-import helper
+from . import stringoperations
+from . import analysis
+from . import config
+from . import plotting_aux
+from . import helper
+from . import files
 
+
+# Todo clean up this massive file
 
 def plot_currency_values(assetlist, fname, titlestring, analyzer, drawstackedplot=True):
     """Plots the values of the assets grouped according to their currencies
@@ -204,7 +207,7 @@ def plot_asset_groups(assets, grouplist, groupnames, fname, titlestring, analyze
             ax.fmt_xdata = matplotlib.dates.DateFormatter('%d.%m.%Y')
 
             # Modify the file name: add the name of the group:
-            fname_cur = stringoperations.filename_append_string(fname, "_", groupnames[purpidx])
+            fname_cur = files.filename_append_string(fname, "_", groupnames[purpidx])
 
             # PDF Export:
             plt.savefig(fname_cur)
@@ -234,7 +237,7 @@ def plot_forex_rates(forexobjdict, fname, titlestr, analyzer):
     for key, obj in forexobjdict.items():
         # Only plot foreign rates:
         if key != config.BASECURRENCY:
-            date, rate = obj.get_dates_rates()
+            date, rate = obj.get_price_data()
             xlist = [analyzer.str2datetime(x) for x in date]
             ax.plot(xlist, rate, alpha=1.0, zorder=3, clip_on=False, color=colorlist[i], marker='',
                     label=obj.get_currency())
@@ -475,7 +478,7 @@ def plot_asset_purposes(assetlist, fname, titlestr, analyzer):
 def plot_asset_values_indices(assetlist, indexlist, fname, titlestr, analyzer):
     """Plots the summed values of the given assets, together with some stock-market indices
     :param assetlist: List of asset-objects
-    :param indexlist: List of MarketPrices-objects that contain the index-data
+    :param indexlist: List of Index-objects that contain the index-data
     :param fname: String of filename of plot
     :param titlestr: String of plot-title
     """
@@ -523,11 +526,11 @@ def plot_asset_values_indices(assetlist, indexlist, fname, titlestr, analyzer):
     for stockidx in indexlist:
         # Check if the object actually contains data:
         if stockidx.is_price_avail() is True:
-            dat = stockidx.get_price_values()
+            dat = stockidx.get_values()
             if len(dat) != len(datelist):
                 raise RuntimeError("The stockmarket-index-data must be of equal length than the asset values.")
             indexvals.append(dat)
-            indexname.append(stockidx.get_currency())  # The name of the index is stored as currency
+            indexname.append(stockidx.get_name())  # The name of the index is stored as currency
 
     # Rescale the summed values such that the first entry is "100":
     startidx = [i for i, x in enumerate(sumlist_corr) if x > 1e-9 or x < -1e-9][0]
@@ -706,7 +709,7 @@ def plot_asset_total_absolute_returns_accumulated(dates, returns, fname, analyze
         raise RuntimeError("The summed list and date-list must correspond in length.")
 
     if helper.list_all_zero(returns) is True:
-        print("All summed asset values are zero. Not plotting. File: " + fname)
+        print(f"All summed asset values are zero. Not plotting. File: {fname.name}")
         return
 
     # Plot:
@@ -751,7 +754,7 @@ def plot_assets_returns_total(assetlist, fname, titlestr, analyzer):
     fname = plotting_aux.modify_plot_path(config.PLOTS_FOLDER, fname)
     # Sanity Check:
     if len(assetlist) == 0:
-        print("No assets given for plot: " + fname)
+        print(f"No assets given for plot: {fname.name}")
         return
 
     plotting_aux.configure_lineplot()
@@ -811,7 +814,7 @@ def plot_assets_returns_total(assetlist, fname, titlestr, analyzer):
         plotted = True
 
     if plotted is False:
-        print("All returns of the given assets are zero for the considered period. Not plotting. File: " + fname)
+        print(f"All returns of the given assets are zero for the considered period. Not plotting. File: {fname.name}")
         return
 
     plt.legend(fancybox=True, shadow=True, ncol=1, framealpha=1.0, loc='upper left',
@@ -855,7 +858,7 @@ def plot_asset_values_cost_payout_individual(assetlist, fname, analyzer):
             assetlist_plot.append(asset)
 
     if len(assetlist_plot) == 0:
-        print("No assets of value given at the end of the analysis-period. Not plotting. File: " + fname)
+        print(f"No assets of value given at the end of the analysis-period. Not plotting. File: {fname.name}")
         return
 
     dateformat = assetlist_plot[0].get_dateformat()
@@ -867,7 +870,7 @@ def plot_asset_values_cost_payout_individual(assetlist, fname, analyzer):
     # Get a list of asset-lists, whereas each top-level list contains 6 plots, for a single plot-sheet.
     assetlists_sheet = analysis.partition_list(assetlist_plot, 6)
     num_sheets = len(assetlists_sheet)
-    print("Plotting the asset-values with {:d} figure-sheet(s). Filename: ".format(num_sheets) + fname)
+    print(f"Plotting the asset-values with {num_sheets:d} figure-sheet(s). Filename: {fname.name}")
 
     xlabel = "Date"
     ylabel = "Value (" + config.BASECURRENCY + ")"
@@ -923,9 +926,9 @@ def plot_asset_values_cost_payout_individual(assetlist, fname, analyzer):
             ax.set_xlabel(xlabel)
             ax.set_ylabel(ylabel)
             assetname = asset.get_filename()
-            assetname = stringoperations.get_filename(assetname, keep_type=False)
+            assetname = files.get_filename(assetname, keep_suffix=False)
             assettype = asset.get_type()
-            titlestr = "Values: " + assetname + " (in " + config.BASECURRENCY + ", " + assettype + ")"
+            titlestr = f"Values: {assetname.name} (in {config.BASECURRENCY}, {assettype})"
             plt.title(titlestr)
 
             # Add a comma to separate thousands:
@@ -952,7 +955,7 @@ def plot_asset_values_cost_payout_individual(assetlist, fname, analyzer):
         elif len(assets) > 6:
             raise RuntimeError("More than 6 plots on the subplot-sheet are not possible.")
 
-        fname_ext = stringoperations.filename_append_number(fname, "_", sheet_num + 1)
+        fname_ext = files.filename_append_number(fname, "_", sheet_num + 1)
 
         # PDF Export:
         plt.savefig(fname_ext)
@@ -992,7 +995,7 @@ def plot_asset_returns_individual(assetlist, fname, analyzer):
     # Get a list of asset-lists, whereas each top-level list contains 6 plots, for a single plot-sheet.
     assetlists_sheet = analysis.partition_list(assetlist_plot, 6)
     num_sheets = len(assetlists_sheet)
-    print("Plotting the asset-values with {:d} figure-sheet(s). Filename: ".format(num_sheets) + fname)
+    print(f"Plotting the asset-values with {num_sheets:d} figure-sheet(s). Filename: {fname.name}")
 
     xlabel = "Date"
     ylabel = "Return (%)"
@@ -1041,11 +1044,9 @@ def plot_asset_returns_individual(assetlist, fname, analyzer):
             # Check, if the holding period return is irreasonably negative. Then, the holding period return calc. was
             # not possible due to missing price-data of today.
             if ret_h > -1e9:
-                ret_str = "Analysis Period Return: {:.2f} %".format(ret_a) + "\n" + \
-                          "Holding Period Return: {:.2f} %".format(ret_h)
+                ret_str = f"Analysis Period Return: {ret_a:.2f}\nHolding Period Return: {ret_h:.2f}"
             else:
-                ret_str = "Analysis Period Return: {:.2f} %".format(ret_a) + "\n" + \
-                          "Holding Period Return: N/A (missing price of today)"
+                ret_str = f"Analysis Period Return: {ret_a:.2f}\nHolding Period Return: N/A (missing price of today)"
 
             # Place the text relative to the axes:
             plt.text(0.05, 0.78, ret_str, horizontalalignment='left', verticalalignment='center',
@@ -1064,8 +1065,8 @@ def plot_asset_returns_individual(assetlist, fname, analyzer):
             ax.set_xlabel(xlabel)
             ax.set_ylabel(ylabel)
             assetname = asset.get_filename()
-            assetname = stringoperations.get_filename(assetname, keep_type=False)
-            titlestr = "Return: " + assetname
+            assetname = files.get_filename(assetname, keep_suffix=False)
+            titlestr = f"Return: {assetname.name}"
             plt.title(titlestr)
 
             # Only use autofmt_xdate, if there are actually 6 plots on the sheet. Otherwise, the axis-labels of the
@@ -1084,7 +1085,7 @@ def plot_asset_returns_individual(assetlist, fname, analyzer):
         elif len(assets) > 6:
             raise RuntimeError("More than 6 plots on the subplot-sheet are not possible.")
 
-        fname_ext = stringoperations.filename_append_number(fname, "_", sheet_num + 1)
+        fname_ext = files.filename_append_number(fname, "_", sheet_num + 1)
 
         # PDF Export:
         plt.savefig(fname_ext)
@@ -1102,7 +1103,7 @@ def plot_asset_returns_individual_absolute(assetlist, fname, analyzer):
     fname = plotting_aux.modify_plot_path(config.PLOTS_FOLDER, fname)
     # Sanity Check:
     if len(assetlist) == 0:
-        print("No assets given for plot: " + fname)
+        print(f"No assets given for plot: {fname.name}")
         return [0], [0]
 
     # Only plot assets with some value during the analysis period:
@@ -1112,7 +1113,7 @@ def plot_asset_returns_individual_absolute(assetlist, fname, analyzer):
             assetlist_plot.append(asset)
 
     if len(assetlist_plot) == 0:
-        print("No assets of value given at the end of the analysis-period. Not plotting. File: " + fname)
+        print(f"No assets of value given at the end of the analysis-period. Not plotting. File: {fname.name}")
         return [0], [0]
 
     dateformat = assetlist_plot[0].get_dateformat()
@@ -1124,7 +1125,7 @@ def plot_asset_returns_individual_absolute(assetlist, fname, analyzer):
     # Get a list of asset-lists, whereas each top-level list contains 6 plots, for a single plot-sheet.
     assetlists_sheet = analysis.partition_list(assetlist_plot, 6)
     num_sheets = len(assetlists_sheet)
-    print("Plotting the asset-values with {:d} figure-sheet(s). Filename: ".format(num_sheets) + fname)
+    print(f"Plotting the asset-values with {num_sheets:d} figure-sheet(s). Filename: {fname.name}")
 
     xlabel = "Date"
     ylabel = "Return (Absolute; Currency)"
@@ -1166,8 +1167,8 @@ def plot_asset_returns_individual_absolute(assetlist, fname, analyzer):
             ax.set_xlabel(xlabel)
             ax.set_ylabel(ylabel)
             assetname = asset.get_filename()
-            assetname = stringoperations.get_filename(assetname, keep_type=False)
-            titlestr = "Abs. Return/Gain: " + assetname
+            assetname = files.get_filename(assetname, keep_suffix=False)
+            titlestr = f"Abs. Return/Gain: {assetname.name}"
             plt.title(titlestr)
 
             # Only use autofmt_xdate, if there are actually 6 plots on the sheet. Otherwise, the axis-labels of the
@@ -1186,7 +1187,7 @@ def plot_asset_returns_individual_absolute(assetlist, fname, analyzer):
         elif len(assets) > 6:
             raise RuntimeError("More than 6 plots on the subplot-sheet are not possible.")
 
-        fname_ext = stringoperations.filename_append_number(fname, "_", sheet_num + 1)
+        fname_ext = files.filename_append_number(fname, "_", sheet_num + 1)
 
         # PDF Export:
         plt.savefig(fname_ext)
@@ -1207,11 +1208,11 @@ def plot_asset_values_stacked(assetlist, fname, title, analyzer):
     fname = plotting_aux.modify_plot_path(config.PLOTS_FOLDER, fname)
     # Sanity Check:
     if len(assetlist) == 0:
-        print("No assets given for plot: " + fname)
+        print(f"No assets given for plot: {fname.name}")  # Todo: convert all these fname to fname.name
         return
 
     if len(assetlist) == 0:
-        print("No assets given for plot: " + fname)
+        print(f"No assets given for plot: {fname.name}")
         return
 
     dateformat = assetlist[0].get_dateformat()

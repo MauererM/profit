@@ -5,18 +5,18 @@ MIT License
 Copyright (c) 2018 Mario Mauerer
 """
 
-import dateoperations
-import stringoperations
-import prices
-import config
-import helper
+from . import dateoperations
+from . import stringoperations
+from . import config
+from . import helper
+from .timedomaindata import StockTimeDomainData
 
 
 class Investment:
     """Implements an investment. Parses transactions, provides analysis-data, performs currency conversions"""
 
     def __init__(self, id_str, type_str, purpose_str, currency_str, basecurrency_str, symbol_str, exchange_str,
-                 filename_str, transactions_dict, dateformat_str, dataprovider, analyzer, assetpurposes):
+                 filename_str, transactions_dict, dateformat_str, dataprovider, analyzer, assetpurposes, storage):
         """Investment constructor
         Use the function parse_investment_file to obtain the necessary information from an investment file.
         It sets up all internal data structures and analyzes the transactions, and creates some basic data
@@ -46,6 +46,7 @@ class Investment:
         self.forex_data_given = False
         self.provider = dataprovider
         self.analyzer = analyzer
+        self.storage = storage
         # Data not known yet:
         self.forex_obj = None
         self.analysis_dates = None
@@ -54,24 +55,23 @@ class Investment:
         self.analysis_inflows = None
         self.analysis_outflows = None
         self.analysis_costs = None
-        self.marketpricesobj = None
         self.analysis_payouts = None
+        self.latestpricedata = None
 
         # Check, if the transaction-dates are in order. Allow identical successive days
         if dateoperations.check_date_order(self.transactions[config.DICT_KEY_DATES], self.analyzer,
                                            allow_ident_days=True) is False:
-            raise RuntimeError(
-                "Transaction-dates are not in temporal order (Note: Identical successive dates are allowed). "
-                "Filename: " + self.filename)
+            raise RuntimeError(f"Transaction-dates are not in temporal order "
+                               f"(Note: Identical successive dates are allowed). Filename: {self.filename}")
 
         # Check, if the transactions-actions-column only contains allowed strings:
         if stringoperations.check_allowed_strings(self.transactions[config.DICT_KEY_ACTIONS],
                                                   config.INVSTMT_ALLOWED_ACTIONS) is False:
-            raise RuntimeError("Actions-column contains faulty strings. Filename: " + self.filename)
+            raise RuntimeError(f"Actions-column contains faulty strings. Filename: {self.filename}")
 
         # Check, if the purpose-string only contains allowed purposes:
         if stringoperations.check_allowed_strings([self.purpose], assetpurposes) is False:
-            raise RuntimeError("Purpose of investment is not recognized. Filename: " + self.filename)
+            raise RuntimeError(f"Purpose of investment is not recognized. Filename: {self.filename}")
 
         # Perform sanity-checks with the transactions.
         self.transactions_sanity_check(self.transactions[config.DICT_KEY_DATES],
@@ -174,6 +174,7 @@ class Investment:
                 quant_mod[idx] = trans_quantity[idx] * float(split_factor)
         return price_mod, bal_mod, quant_mod
 
+    # Todo: Some of these functions need the dunder?
     def transactions_sanity_check(self, trans_dates, trans_actions, trans_quantity, trans_price, trans_cost,
                                   trans_payout, trans_balance):
         """Checks, if the recorded balances of the transactions are in order and match with the "sell" and "buy" entries
@@ -216,10 +217,9 @@ class Investment:
             elif trans_actions[idx] == config.STRING_INVSTMT_ACTION_SELL:
                 if idx == 0:
                     raise RuntimeError("First investment-transaction cannot be a sell.")
-                else:
-                    if helper.isclose(trans_balance[idx], (trans_balance[idx - 1] - trans_quantity[idx])) is False:
-                        raise RuntimeError("Transactions not in order (balance not correct). "
-                                           "Transaction-Nr: " + repr(idx + 1))
+                if helper.isclose(trans_balance[idx], (trans_balance[idx - 1] - trans_quantity[idx])) is False:
+                    raise RuntimeError(f"Transactions not in order (balance not correct). "
+                                       f"Transaction-Nr: {(idx + 1):d}")
             elif trans_actions[idx] == config.STRING_INVSTMT_ACTION_SPLIT:
                 if idx == 0:
                     raise RuntimeError("First investment-transcation cannot be a split.")
@@ -359,8 +359,9 @@ class Investment:
         # Check the individual transactions for updates in price, and update the value according to the balance.
         # If no price-updates are given, the last value is used.
         trans_value = []
+        valid_actions = {str_action_buy, str_action_sell, str_action_update}
         for idx, action in enumerate(trans_actions):
-            if action == str_action_buy or action == str_action_sell or action == str_action_update:
+            if action in valid_actions:
                 trans_value.append(trans_balance[idx] * trans_price[idx])
             else:
                 trans_value.append(trans_value[-1])
@@ -392,7 +393,7 @@ class Investment:
         than recorded data.
         :param date_stop: String of a date that designates the stop-date. Cannot be in the future.
         """
-        print("\n" + self.symbol + ":")
+        print("\n" + self.symbol + ":")  # Show in the terminal what's going on/which investment is getting processed
 
         # Extrapolate or crop the data:
         # The balance is extrapolated with zeroes into the past, and with the last known values into the future,
@@ -436,36 +437,71 @@ class Investment:
         # the value
         if self.type == config.STRING_ASSET_SECURITY:
             # The prices need only be obtained from a time period onwards, where the balance > 0:
-            startidx = len(self.analysis_balances) + 1  # Needed further below, in case
+            startidx = None
             for idx, bal in enumerate(self.analysis_balances):
                 if bal > 1e-9:
                     startidx = idx
                     break
             # If the balances are zero all the time (in the analysis-period)
-            if startidx == len(self.analysis_balances) + 1:
+            if startidx is None:
                 # Set the startidx equal to the stop-idx:
-                indexes = [i for i, x in enumerate(self.analysis_dates) if
-                           x == date_stop]  # Todo can this be done better via find or so?
+                indexes = [i for i, x in enumerate(self.analysis_dates) if x == date_stop]
                 startidx = indexes[0]
             # Use this start-value to get the asset-prices:
             startdate_prices = self.analysis_dates[startidx]
+            startdate_analysis_dt = self.analyzer.str2datetime(startdate_prices)
+            stopdate_analysis_dt = self.analyzer.str2datetime(date_stop)
+            if startdate_analysis_dt > stopdate_analysis_dt:
+                raise RuntimeError(f"Startdate cannot be after stopdate. Symbol: {self.symbol}. "
+                                   f"Exchange: {self.exchange}")
 
-            # Create a market-prices object; it will obtain the desired data, if possible. It uses the marketdata-folder
-            # to store and update the obtained prices, for future use / offline use.
-            self.marketpricesobj = prices.MarketPrices(self.symbol, self.exchange, self.currency,
-                                                       config.MARKETDATA_FOLDER,
-                                                       config.MARKETDATA_FORMAT_DATE, config.MARKETDATA_DELIMITER,
-                                                       startdate_prices, date_stop, self.dateformat, self.provider,
-                                                       self.analyzer)
+            # Check if data is available from storage and/or obtain data via data provider:
+            stockdata = StockTimeDomainData(self.symbol, self.exchange, self.currency, (startdate_prices, date_stop),
+                                            self.analyzer, self.storage, self.provider)
+            full_dates, full_prices = stockdata.get_price_data()
+            write_to_file = stockdata.storage_to_update()
 
-            # Asset prices during the analysis-period are available:
-            if self.marketpricesobj.is_price_avail() is True:
-                marketdates = self.marketpricesobj.get_price_dates()
-                marketprices = self.marketpricesobj.get_price_values()
-                # Sanity-checks, just to be sure:
-                if dateoperations.check_dates_consecutive(marketdates, self.analyzer) is False:
-                    raise RuntimeError("The obtained market-price-dates are not consecutive. Investment: "
-                                       + self.filename)
+            # Todo: Put this also into timedomaindata, like it is done for forex, and merge with the forex-code?
+            # Write the fused provider- and storge-data back to file:
+            if write_to_file is True:
+                self.storage.write_data_to_storage(stockdata.get_storageobj(), (full_dates, full_prices))
+
+            if full_dates is not None:
+                # If only 3 days are missing until "today", then extrapolate forward
+                # (avoid having to manually enter data)
+                lastdate_dt = self.analyzer.str2datetime(full_dates[-1])
+                duration = stopdate_analysis_dt - lastdate_dt
+                duration = duration.days
+                if duration <= 3:
+                    full_dates, full_prices = dateoperations.extend_data_future(full_dates, full_prices,
+                                                                                date_stop,
+                                                                                self.analyzer,
+                                                                                zero_padding=False)
+
+                # Store the latest available price and date, for the holding-period return analysis
+                self.latestpricedata = (full_dates[-1], full_prices[-1])
+
+                # Interpolate the data to get a consecutive list (this only fills holes, and does not
+                # extrapolate over the given date-range):
+                full_dates, full_prices = dateoperations.interpolate_data(full_dates, full_prices, self.analyzer)
+
+                # The available market-data (from the dataprovider and the database) might not reach back to the
+                # desired analysis range startdate! Check it:
+                full_dates_start = self.analyzer.str2datetime(full_dates[0])
+                full_dates_stop = self.analyzer.str2datetime(full_dates[-1])
+                if full_dates_start > startdate_analysis_dt:
+                    print("Available prices (data provider and stored market-data) are only available from the " +
+                          full_dates[
+                              0] + " onwards. Earliest available data will be extrapolated backwards and merged with the manually entered prices. Symbol: " +
+                          self.symbol + ", exchange: " + self.exchange)
+                if full_dates_stop < stopdate_analysis_dt:
+                    print("Available prices (data provider and stored market-data) are only available until the " +
+                          full_dates[
+                              -1] + ". Latest available data will be extrapolated forwards and merged with the manually entered prices. Symbol: " +
+                          self.symbol + ", exchange: " + self.exchange)
+                    print("Update the market-data file or transactions-list manually for correct returns calculation" +
+                          " Symbol: " +
+                          self.symbol + ", exchange: " + self.exchange)
 
                 # The provided market-data can be incomplete. It is consecutive, but might not span the entire
                 # analysis-range. We must merge it with the transactions-data and potentially extrapolate forwards and
@@ -474,29 +510,31 @@ class Investment:
                 transactions_dates = self.transactions[config.DICT_KEY_DATES]
                 # Fuse the lists. Note that transactions_prices will be preferred, should market-data also be available
                 # for a given date. Also: ZOH-extrapolation is used (going with ZOH into the past makes no diff, though)
+                # The transactions-data also contains zero-values for price. Ignore those (discard_zeroes=True)
                 prices_merged = dateoperations.fuse_two_value_lists(self.analysis_dates, transactions_dates,
-                                                                    transactions_prices, marketdates, marketprices,
+                                                                    transactions_prices, full_dates, full_prices,
                                                                     self.analyzer,
                                                                     zero_padding_past=True,
-                                                                    zero_padding_future=False)
+                                                                    zero_padding_future=False,
+                                                                    discard_zeroes=True)
 
-                marketdates_dict = {date: i for i, date in enumerate(marketdates)}
+                # Perform a sanity-check to see if the transactions-recorded and obtained prices do not
+                # significantly deviate:
+                marketdates_dict = {date: i for i, date in enumerate(full_dates)}
                 mismatches = []
-                # Perform a sanity-check to see if the recorded and obtained prices do not significantly deviate:
                 for idx, date in enumerate(transactions_dates):
                     if date in marketdates_dict:
                         record = transactions_prices[idx]
-                        data = marketprices[marketdates_dict[date]]
+                        data = full_prices[marketdates_dict[date]]
                         if record > 1e-6 and helper.within_tol(record, data, 5.0 / 100) is False:
                             mismatches.append((date, record, data))
                 if len(mismatches) > 0:
-                    print("Some obtained market-prices deviate by >5% from the recorded transactions:")
+                    print("Some obtained or stored prices deviate by >5% from the recorded transactions:")
                     print("Date;\t\t\tRecorded Price;\tObtained Price")
                     for i, entry in enumerate(mismatches):
-                        str1 = entry[0]
-                        str2 = "{:.2f}".format(entry[1])
-                        str3 = "{:.2f}".format(entry[2])
-                        print(str1 + ";\t\t" + str2 + ";\t\t\t" + str3 + ";")
+                        print(f"{entry[0]};\t\t{entry[1]:.2f};\t\t\t{entry[2]:.2f};")
+                    print("Could a split cause this? Potentially adjust via the split-option in the header "
+                          "in the storage-csv file.")
 
                 # Calculate the values of the investment:
                 self.analysis_values = []
@@ -509,8 +547,10 @@ class Investment:
                     else:
                         self.analysis_values.append(0.0)
 
-            # No online/marke prices are available:
-            else:
+            if full_dates is None:  # Transactions-data needed!
+                print(f"No financial data available for {self.symbol}")
+                print(f"Provide an update-transaction to deliver the most recent price of the asset. "
+                      "Otherwise, the holding period returns cannot be calculated.")
                 print("Deriving prices from transactions-data.")
                 trans_values_interp = self.__get_format_transactions_values()
                 # Crop the values to the desired analysis-range; in this case, we can not merge data with market-prices:
@@ -523,9 +563,8 @@ class Investment:
 
         # Investment is not a security: Derive value from given transaction-prices
         else:
-            # print("Investment in file " + self.filename + " cannot obtain prices.")
-            print(
-                "Investment is not listed as security. Deriving prices from transactions-data. File: " + self.filename)
+            print(f"Investment is not listed as security. Deriving prices from transactions-data. "
+                  f"File: {self.filename}")
             trans_values_interp = self.__get_format_transactions_values()
             # Crop the values to the desired analysis-range; in this case, we can not merge data with market-prices:
             _, self.analysis_values = dateoperations.format_datelist(self.datelist,
@@ -534,6 +573,7 @@ class Investment:
                                                                      self.analyzer,
                                                                      zero_padding_past=True,
                                                                      zero_padding_future=False)
+        # We now have the value of the investment calculated.
         # Sanity check:
         if len(self.analysis_dates) != len(self.analysis_values):
             raise RuntimeError("The analysis-values are not as long as the analysis dates.")
@@ -541,12 +581,12 @@ class Investment:
         # The value of the investment is now known. Calculate the value in the basecurrency, if applicable:
         # Check, if a forex-object is given (only required if the account holds foreign currencies)
         if self.currency != self.basecurrency and self.forex_data_given is False:
-            raise RuntimeError("Investment is in a foreign currency. Forex-object is required. "
-                               "Investment-currency is: " + self.currency + ". Basecurrency is: " + self.basecurrency +
-                               ". Investment-file is: " + self.filename)
+            raise RuntimeError(f"Investment is in a foreign currency. Forex-object is required. "
+                               f"Investment-currency is: {self.currency}. Basecurrency is: {self.basecurrency}."
+                               f"Investment-file is: {self.filename}")
 
         # Forex conversion required:
-        elif self.currency != self.basecurrency and self.forex_data_given is True:
+        if self.currency != self.basecurrency and self.forex_data_given is True:
             # Convert the recorded values, cost and payouts:
             self.analysis_values = self.forex_obj.perform_conversion(self.analysis_dates, self.analysis_values)
             self.analysis_payouts = self.forex_obj.perform_conversion(self.analysis_dates, self.analysis_payouts)
@@ -617,7 +657,7 @@ class Investment:
 
     def get_filename(self):
         """Return the filename of the associated investment-file (as string)"""
-        return self.filename
+        return self.filename.name
 
     def get_currency(self):
         """Return the currency of the investment (as string)"""
@@ -631,48 +671,45 @@ class Investment:
         """Return the list of dates of the analysis-data (dates as strings)"""
         if self.analysis_data_done is False:
             raise RuntimeError("Cannot return analysis datelist. Set analysis data first. Account ID: " + self.id)
-        else:
-            return list(self.analysis_dates)
+        return list(self.analysis_dates)
 
     def get_analysis_valuelist(self):
         """Return the list of values of the analysis-data (floats)"""
         if self.analysis_data_done is False:
             raise RuntimeError("Cannot return analysis valuelist. Set analysis data first. Account ID: " + self.id)
-        else:
-            return list(self.analysis_values)
+        return list(self.analysis_values)
 
     def get_analysis_costlist(self):
         """Return the list of costs of the analysis-data (floats)"""
         if self.analysis_data_done is False:
             raise RuntimeError("Cannot return analysis costlist. Set analysis data first. Account ID: " + self.id)
-        else:
-            return list(self.analysis_costs)
+        return list(self.analysis_costs)
 
     def get_analysis_payoutlist(self):
         """Return the list of payouts of the analysis-data (floats)"""
         if self.analysis_data_done is False:
             raise RuntimeError("Cannot return analysis payoutlist. Set analysis data first. Account ID: " + self.id)
-        else:
-            return list(self.analysis_payouts)
+        return list(self.analysis_payouts)
 
     def get_analysis_inflowlist(self):
         """Return the list of inflows of the analysis-data (floats)"""
         if self.analysis_data_done is False:
             raise RuntimeError("Cannot return analysis inflowlist. Set analysis data first. Account ID: " + self.id)
-        else:
-            return list(self.analysis_inflows)
+        return list(self.analysis_inflows)
 
     def get_analysis_outflowlist(self):
         """Return the list of outflows of the analysis-data (floats)"""
         if self.analysis_data_done is False:
             raise RuntimeError("Cannot return analysis outflowlist. Set analysis data first. Account ID: " + self.id)
-        else:
-            return list(self.analysis_outflows)
-
-    def get_marketprice_obj(self):
-        """Return the marketprices-object"""
-        return self.marketpricesobj
+        return list(self.analysis_outflows)
 
     def get_dateformat(self):
         """Return the dateformat"""
         return self.dateformat
+
+    def get_latest_price_date(self):
+        """Returns the latest available price and date, that has not been extrapolated.
+        For the calculation of the holding period return.
+        :return: Tuple of date and value
+        """
+        return self.latestpricedata

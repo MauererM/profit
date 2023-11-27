@@ -11,8 +11,8 @@ import urllib.error
 import time
 from io import StringIO
 import pandas as pd
-import stringoperations
-from dataprovider.provider_abc import DataProvider
+from profit_src import stringoperations
+from profit_src.dataprovider.provider_abc import DataProvider
 
 
 class DataproviderYahoo(DataProvider):
@@ -69,7 +69,7 @@ class DataproviderYahoo(DataProvider):
 
         curr_str = sym_a + sym_b
         curr_str = curr_str + "=X"
-        param = dict()
+        param = {}
         param['period1'] = str(p1)
         param['period2'] = str(p2)
         param['interval'] = '1d'
@@ -121,7 +121,7 @@ class DataproviderYahoo(DataProvider):
         p1 = int(time.mktime(startdate_dt.timetuple()))
         p2 = int(time.mktime(stopdate_dt.timetuple()))
 
-        param = dict()
+        param = {}
         param['period1'] = str(p1)
         param['period2'] = str(p2)
         param['interval'] = '1d'

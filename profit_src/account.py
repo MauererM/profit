@@ -5,9 +5,9 @@ MIT License
 Copyright (c) 2018 Mario Mauerer
 """
 
-import config
-import stringoperations
-import dateoperations
+from . import config
+from . import stringoperations
+from . import dateoperations
 
 
 class Account:
@@ -32,7 +32,7 @@ class Account:
         self.purpose = purpose_str
         self.currency = currency_str
         self.basecurrency = basecurrency_str
-        self.filename = filename_str
+        self.filename = filename_str # Todo: This should already be a Path-object...
         self.transactions = transactions_dict
         self.dateformat = dateformat_str
         self.analyzer = analyzer
@@ -51,17 +51,17 @@ class Account:
         # day are possible)
         if dateoperations.check_date_order(self.transactions[config.DICT_KEY_DATES], self.analyzer,
                                            allow_ident_days=True) is False:
-            raise RuntimeError("Transaction-dates are not in temporal order. But: identical successive dates are "
-                               "allowed. Filename: " + self.filename)
+            raise RuntimeError(f"Transaction-dates are not in temporal order. But: identical successive dates are "
+                               f"allowed. Filename: {self.filename}")
 
         # Check, if the transactions-actions-column only contains allowed strings:
         if stringoperations.check_allowed_strings(self.transactions[config.DICT_KEY_ACTIONS],
                                                   config.ACCOUNT_ALLOWED_ACTIONS) is False:
-            raise RuntimeError("Actions-column contains faulty strings. Filename: " + self.filename)
+            raise RuntimeError(f"Actions-column contains faulty strings. Filename: {self.filename}")
 
         # Check, if the purpose-string only contains allowed purposes:
         if stringoperations.check_allowed_strings([self.purpose], assetpurposes) is False:
-            raise RuntimeError("Purpose of Account is not recognized. Filename: " + self.filename)
+            raise RuntimeError(f"Purpose of Account is not recognized. Filename: {self.filename}")
 
         # Create a list of consecutive calendar days that corresponds to the date-range of the recorded transactions:
         self.datelist = dateoperations.create_datelist(self.get_first_transaction_date(),
@@ -182,11 +182,11 @@ class Account:
         # Check, if a forex-object is given (only required if the account holds foreign currencies)
         if self.currency != self.basecurrency and self.forex_data_given is False:
             raise RuntimeError(
-                "Account holds foreign currency. Forex-object is required. Account-currency is: " + self.currency +
-                ". Basecurrency is: " + self.basecurrency + ". Account-file is: " + self.filename)
+                f"Account holds foreign currency. Forex-object is required. Account-currency is: {self.currency}. "
+                f"Basecurrency is: {self.basecurrency}. Account-file is: {self.filename}")
 
         # Forex conversion required:
-        elif self.currency != self.basecurrency and self.forex_data_given is True:
+        if self.currency != self.basecurrency and self.forex_data_given is True:
             # Do the currency-conversion:
             self.analysis_balances = self.forex_obj.perform_conversion(self.analysis_dates, self.analysis_balances)
             self.analysis_costs = self.forex_obj.perform_conversion(self.analysis_dates, self.analysis_costs)
@@ -205,34 +205,30 @@ class Account:
     def get_analysis_datelist(self):
         """Return the list of dates of the analysis-data (dates as strings)"""
         if self.analysis_data_done is False:
-            raise RuntimeError("Cannot return analysis datelist. Set analysis data first. Account ID: " + self.id)
-        else:
-            return list(self.analysis_dates)
+            raise RuntimeError(f"Cannot return analysis datelist. Set analysis data first. Account ID: {self.id}")
+        return list(self.analysis_dates)
 
     def get_analysis_valuelist(self):
         """Return the list of values of the analysis-data (floats)"""
         if self.analysis_data_done is False:
-            raise RuntimeError("Cannot return analysis datelist. Set analysis data first. Account ID: " + self.id)
-        else:
-            return list(self.analysis_balances)
+            raise RuntimeError(f"Cannot return analysis datelist. Set analysis data first. Account ID: {self.id}")
+        return list(self.analysis_balances)
 
     def get_analysis_costlist(self):
         """Return the list of costs of the analysis-data (floats)"""
         if self.analysis_data_done is False:
-            raise RuntimeError("Cannot return analysis costlist. Set analysis data first. Account ID: " + self.id)
-        else:
-            return list(self.analysis_costs)
+            raise RuntimeError(f"Cannot return analysis costlist. Set analysis data first. Account ID: {self.id}")
+        return list(self.analysis_costs)
 
     def get_analysis_payoutlist(self):
         """Return the list of payouts/interest of the analysis-data (floats)"""
         if self.analysis_data_done is False:
-            raise RuntimeError("Cannot return analysis payoutlist. Set analysis data first. Account ID: " + self.id)
-        else:
-            return list(self.analysis_interests)
+            raise RuntimeError(f"Cannot return analysis payoutlist. Set analysis data first. Account ID: {self.id}")
+        return list(self.analysis_interests)
 
     def get_filename(self):
         """Returns the filename (as string) of the corresponding account-file"""
-        return self.filename
+        return self.filename.name
 
     def get_currency(self):
         """Returns the currency of the account (as string)"""

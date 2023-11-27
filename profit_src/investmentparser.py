@@ -5,12 +5,13 @@ MIT License
 Copyright (c) 2018 Mario Mauerer
 """
 
-import stringoperations
-import investment
-import config
+from . import stringoperations
+from . import investment
+from . import config
+from . import files
 
 
-def parse_investment_file(filepath, dateformat, dataprovider, analyzer, basecurrency, assetpurposes):
+def parse_investment_file(filepath, dateformat, dataprovider, analyzer, basecurrency, assetpurposes, storage):
     """This function parses an investment-file.
     Any relevant information in the file may not contain whitespaces! They are all eliminated while parsing.
     The last line of the file must contain the string "EOF"
@@ -24,8 +25,7 @@ def parse_investment_file(filepath, dateformat, dataprovider, analyzer, basecurr
     """
 
     # Read all lines in the file:
-    with open(filepath, encoding='utf8') as f:
-        lines = f.readlines()
+    lines = files.get_file_lines(filepath)
 
     # Get rid of white spaces in last line of file, then check if it ends with "EOF":
     endline = stringoperations.strip_whitespaces(lines[-1])
@@ -229,5 +229,5 @@ def parse_investment_file(filepath, dateformat, dataprovider, analyzer, basecurr
     # Create and populate the account-object:
     invstmt = investment.Investment(invstmt_id, invstmt_type, invstmt_purpose, invstmt_currency, basecurrency,
                                     invstmt_sym, invstmt_exchange, filepath, transactions, dateformat, dataprovider,
-                                    analyzer, assetpurposes)
+                                    analyzer, assetpurposes, storage)
     return invstmt

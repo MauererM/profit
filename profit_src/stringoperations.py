@@ -8,46 +8,6 @@ Copyright (c) 2018 Mario Mauerer
 import re
 import datetime as dt
 
-
-def filename_append_number(pathstr, separator, num):
-    """Adds a number to a filename. E.g., /test.pdf ==> /test_2.pdf
-    :param pathstr: Path of the file, or filename (string)
-    :param separator: String, encoding the desired character before the number is added, e.g., "_"
-    :param num: Number added to the file-path
-    :return: String of the modified path
-    """
-    filename = pathstr.split('.')
-    filename[-2] = filename[-2] + separator + repr(num)
-    filename = '.'.join(filename)
-    return filename
-
-
-def filename_append_string(pathstr, separator, addstring):
-    """Adds a string to a filename. E.g., /test.pdf ==> /test_group.pdf
-    :param pathstr: Path of the file, or filename (string)
-    :param separator: String, encoding the desired character before the number is added, e.g., "_"
-    :param addstring: String to be added to the file-path
-    :return: String of the modified path
-    """
-    filename = pathstr.split('.')
-    filename[-2] = filename[-2] + separator + addstring
-    filename = '.'.join(filename)
-    return filename
-
-
-def get_filename(pathstr, keep_type=False):
-    """Obtains the filename from paths that are separated with '/'
-    :param pathstr: String of the path
-    :param keep_type: If true, the file-extension is retained with the filename
-    :return: String of the desired filename
-    """
-    filename = pathstr.split('/')[-1]
-    if keep_type is True:
-        return filename
-    filename = filename.split('.')[-2]
-    return filename
-
-
 def check_allowed_strings(strlist, reflist):
     """Checks, if a list only contains allowed strings.
     :param strlist: List of strings to test
@@ -133,24 +93,3 @@ def datetime2str(datetimeobj, fmt):
     :return: datetime object
     """
     return datetimeobj.strftime(fmt)
-
-
-"""
-    Stand-alone execution for testing:
-"""
-if __name__ == '__main__':
-    # pathstr = "/test_folder/file.pdf"
-    # separator = "_"
-    # num = 3
-    # print(filename_append_number(pathstr, separator, num))
-
-    date, val = read_crop_string_delimited("01.02.2010; 134.3443", ";")
-    print(date)
-    print(val)
-
-    test = float("131.34235")
-    print("asdf")
-
-    # pathstr = "/this_is/a/test_path/filename.txt"
-    # pathstr_2 = "adsf"
-    # print(get_filename(pathstr, keep_type=True))
