@@ -24,7 +24,7 @@ class DataproviderYahoo(DataProvider):
         self.cookie = None
         self.crumb = None
         self.dateformat = dateformat
-        self.cooldown = 1.5  # Cooldown time in seconds between subsequent API calls.
+        self.cooldown = 0.2  # Cooldown time in seconds between subsequent API calls.
         self.useragent = {'User-Agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:84.0) Gecko/20100101 Firefox/83.0'}
         self.cooker = urllib.request.HTTPCookieProcessor()
         self.opener = urllib.request.build_opener(self.cooker)

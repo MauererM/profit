@@ -12,9 +12,4 @@ Convert to f-strings, get rid of the plus-signs. Use the linter? Use grep?
 
 Is if name == main the right thing for module-level debugging? How to do better testing? ==> Rather use unittest...
 
-Finalize the marketdata-branch:
-- Compare your data with what the newest branch outputs - are the plots the same?
-- Read todos, finalize documentation
-- Update version number
-
 Migrate this file to github

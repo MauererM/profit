@@ -315,7 +315,7 @@ class MarketDataMain:
         try:
             files.write_file_lines(fp, lines, overwrite=True)
         except Exception:
-            raise RuntimeError(f"Could not create/write new marketdata-file. Path: {fp}")
+            raise RuntimeError(f"Could not create/write new marketdata-file. Path: {fp}. Is the folder existing?")
 
         self.__check_filenames(fn)  # adds it also to the dict. Don't pass the path
         if obj_type == "stock":
