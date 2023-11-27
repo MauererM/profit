@@ -27,7 +27,7 @@ from .timedomaindata import StockMarketIndicesData
 """
 Data is analyzed a certain number of days into the past, from today
 """
-DAYS_ANALYSIS = 3500
+DAYS_ANALYSIS = 3000
 
 """
 Number of years to project the values of the investments into the future. The interest rate is given below.
@@ -314,7 +314,8 @@ def main():
                                         "Future Value of All Investments, Compounded Annual Interest", analyzer)
         # Calculate the return of all investments, for the considered analysis-period:
         tot_return = analysis.get_returns_assets_accumulated_analysisperiod(investments, analyzer)
-        print(f"\nThe return of the investments of the considered analysis-period (past {DAYS_ANALYSIS:d} days) is: {tot_return:.2f}%")
+        print(
+            f"\nThe return of the investments of the considered analysis-period (past {DAYS_ANALYSIS:d} days) is: {tot_return:.2f}%")
 
     if len(assets) > 0:
         # Plot the values of each asset purpose:

@@ -354,6 +354,7 @@ def check_date_order(datelist, analyzer, allow_ident_days=False):
         oldday = date
     return True
 
+
 def find_holes_in_dates(datelist, analyzer):
     """Finds holes in a set of dates.
     Returns an empty list if there are no holes (i.e., all dates are consecutive).

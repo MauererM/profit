@@ -11,8 +11,8 @@ import urllib.error
 import time
 from io import StringIO
 import pandas as pd
-from ... import stringoperations
-from ...dataprovider.provider_abc import DataProvider
+from profit_src import stringoperations
+from profit_src.dataprovider.provider_abc import DataProvider
 
 
 class DataproviderYahoo(DataProvider):

@@ -13,9 +13,7 @@ Convert to f-strings, get rid of the plus-signs. Use the linter? Use grep?
 Is if name == main the right thing for module-level debugging? How to do better testing? ==> Rather use unittest...
 
 Finalize the marketdata-branch:
-- Problem! Since storage-data can contain holes: How to determine what data to retrieve from online-provider?! This is currently not implemented/buggy... The determination of what data to pull from storage and from the provider assumes there are no holes in the storage-data... 
 - Test if the splits work, e.g., with AAPL or AUUSI (use your data, though)
 - Compare your data with what the newest branch outputs - are the plots the same?
 
-Lint the profiler
-
+Migrate this file to github
