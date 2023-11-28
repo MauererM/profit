@@ -5,7 +5,6 @@ MIT License
 Copyright (c) 2018 Mario Mauerer
 """
 
-from . import config
 from . import stringoperations
 from . import dateoperations
 
@@ -14,7 +13,7 @@ class Account:
     """Implements an account. Parses transactions, provides analysis-data, performs currency conversions"""
 
     def __init__(self, ident_str, type_str, purpose_str, currency_str, basecurrency_str, filename_str,
-                 transactions_dict, dateformat_str, analyzer, assetpurposes):
+                 transactions_dict, dateformat_str, analyzer, assetpurposes, config):
         """Account constructor
         Use the function parse_account_file to obtain the necessary information from an account file.
         It sets up all internal data structures and analyzes the transactions.
@@ -36,6 +35,7 @@ class Account:
         self.transactions = transactions_dict
         self.dateformat = dateformat_str
         self.analyzer = analyzer
+        self.config = config
         # Analysis data is not yet prepared:
         self.analysis_data_done = False
         # Forex data has not yet been obtained:
@@ -49,14 +49,14 @@ class Account:
 
         # Check if the transaction-dates are in order. Allow identical successive days (e.g., multiple payouts on one
         # day are possible)
-        if dateoperations.check_date_order(self.transactions[config.DICT_KEY_DATES], self.analyzer,
+        if dateoperations.check_date_order(self.transactions[self.config.DICT_KEY_DATES], self.analyzer,
                                            allow_ident_days=True) is False:
             raise RuntimeError(f"Transaction-dates are not in temporal order. But: identical successive dates are "
                                f"allowed. Filename: {self.filename}")
 
         # Check, if the transactions-actions-column only contains allowed strings:
-        if stringoperations.check_allowed_strings(self.transactions[config.DICT_KEY_ACTIONS],
-                                                  config.ACCOUNT_ALLOWED_ACTIONS) is False:
+        if stringoperations.check_allowed_strings(self.transactions[self.config.DICT_KEY_ACTIONS],
+                                                  self.config.ACCOUNT_ALLOWED_ACTIONS) is False:
             raise RuntimeError(f"Actions-column contains faulty strings. Filename: {self.filename}")
 
         # Check, if the purpose-string only contains allowed purposes:
@@ -68,20 +68,20 @@ class Account:
                                                        self.get_last_transaction_date(), self.analyzer)
 
         # Interpolate the balances, such that the entries in balancelist correspond to the days in datelist.
-        _, self.balancelist = dateoperations.interpolate_data(self.transactions[config.DICT_KEY_DATES],
-                                                              self.transactions[config.DICT_KEY_BALANCES],
+        _, self.balancelist = dateoperations.interpolate_data(self.transactions[self.config.DICT_KEY_DATES],
+                                                              self.transactions[self.config.DICT_KEY_BALANCES],
                                                               self.analyzer)
 
         # The cost and interest does not need interpolation. The lists are populated (corresponding to datelist), i.e.,
         # the values correspond to the day they occur, all other values are set to zero
-        self.costlist = self.populate_full_list(self.transactions[config.DICT_KEY_DATES],
-                                                self.transactions[config.DICT_KEY_ACTIONS],
-                                                self.transactions[config.DICT_KEY_AMOUNTS],
-                                                config.STRING_ACCOUNT_ACTION_COST, self.datelist)
-        self.interestlist = self.populate_full_list(self.transactions[config.DICT_KEY_DATES],
-                                                    self.transactions[config.DICT_KEY_ACTIONS],
-                                                    self.transactions[config.DICT_KEY_AMOUNTS],
-                                                    config.STRING_ACCOUNT_ACTION_INTEREST,
+        self.costlist = self.populate_full_list(self.transactions[self.config.DICT_KEY_DATES],
+                                                self.transactions[self.config.DICT_KEY_ACTIONS],
+                                                self.transactions[self.config.DICT_KEY_AMOUNTS],
+                                                self.config.STRING_ACCOUNT_ACTION_COST, self.datelist)
+        self.interestlist = self.populate_full_list(self.transactions[self.config.DICT_KEY_DATES],
+                                                    self.transactions[self.config.DICT_KEY_ACTIONS],
+                                                    self.transactions[self.config.DICT_KEY_AMOUNTS],
+                                                    self.config.STRING_ACCOUNT_ACTION_INTEREST,
                                                     self.datelist)
 
     def populate_full_list(self, trans_dates, trans_actions, trans_amounts, triggerstring, datelist):
@@ -196,11 +196,11 @@ class Account:
 
     def get_first_transaction_date(self):
         """Returns the date (as string) of the first recorded transaction of the account"""
-        return self.transactions[config.DICT_KEY_DATES][0]
+        return self.transactions[self.config.DICT_KEY_DATES][0]
 
     def get_last_transaction_date(self):
         """Returns the date (as string) of the last recorded transaction of the account"""
-        return self.transactions[config.DICT_KEY_DATES][-1]
+        return self.transactions[self.config.DICT_KEY_DATES][-1]
 
     def get_analysis_datelist(self):
         """Return the list of dates of the analysis-data (dates as strings)"""

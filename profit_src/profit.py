@@ -15,100 +15,14 @@ from . import stringoperations
 from . import dateoperations
 from . import plotting
 from . import analysis
-from . import config
 from .dataprovider.dataprovider import DataproviderMain
 from .storage.storage import MarketDataMain
 from .timedomaindata import ForexTimeDomainData
 from .timedomaindata import StockMarketIndicesData
 
-# Todo: Move the configs here to config.py?
 
-
-"""
-Data is analyzed a certain number of days into the past, from today
-"""
-DAYS_ANALYSIS = 2000
-
-"""
-Number of years to project the values of the investments into the future. The interest rate is given below.
-"""
-NUM_YEARS_INVEST_PROJECTION = 20
-
-"""
-Assumed interest rate (annual compounding) for the projection, in percent
-"""
-INTEREST_PROJECTION_PERCENT = 3.0
-
-"""
-The following strings name the paths of the different plots that will be generated.
-Do not provide the file-extension; PDF files will be created.
-The plots are stored in the "plots" folder
-"""
-# Values of all assets, stacked:
-FILENAME_STACKPLOT_ASSET_VALUES = Path("Asset_Values_Stacked")
-# Values of all investments, stacked:
-FILENAME_STACKPLOT_INVESTMENT_VALUES = Path("Investment_Values_Stacked")
-# Values of all accounts, stacked:
-FILENAME_STACKPLOT_ACCOUNT_VALUES = Path("Account_Values_Stacked")
-# Returns of all investments, for different time periods:
-FILENAME_TOTAL_INVESTMENT_RETURNS = Path("Investments_Total_Returns")
-# Returns of individual investments, multiple plots per sheet:
-FILENAME_INVESTMENT_RETURNS = Path("Investments_Returns")
-# Absolute returns of individual investments, multiple plots per sheet:
-FILENAME_INVESTMENT_RETURNS_ABSOLUTE = Path("Investments_Returns_Absolute")
-# Absolute returns of all investments, summed up:
-FILENAME_INVESTMENT_RETURNS_ABSOLUTE_TOTAL = Path("Investments_Returns_Absolute_Summed")
-# Values of individual investments, multiple plots per sheet:
-FILENAME_INVESTMENT_VALUES = Path("Investments_Values")
-# Values of individual accounts, multiple plots per sheet:
-FILENAME_ACCOUNT_VALUES = Path("Accounts_Values")
-# Value of all investments, compared to some indices:
-FILENAME_INVESTMENT_VALUES_INDICES = Path("Investment_Values_Indices")
-# Value of all assets, sorted according to their purpose:
-FILENAME_ASSETS_VALUES_PURPOSE = Path("Assets_Values_Purpose")
-# Value of the groups of assets (see below for groups), two plots are done; one line, one stacked
-FILENAME_ASSETS_VALUES_GROUPS_STACKED = Path("Assets_Values_Groups_Stacked")
-FILENAME_ASSETS_VALUES_GROUPS_LINE = Path("Assets_Values_Groups_Line")
-# Forex rates:
-FILENAME_FOREX_RATES = Path("Forex_Rates")
-# Plots of the groups (can be multiple plots), will be extended with the corresponding group name.
-FILENAME_PLOT_GROUP = Path("Group")
-# Plots of asset values according to currency:
-FILENAME_CURRENCIES_STACKED = Path("Asset_Values_Currencies_Stacked")
-FILENAME_CURRENCIES_LINE = Path("Asset_Values_Currencies_Line")
-# Projected investment values:
-FILENAME_INVESTMENT_PROJECTIONS = Path("Investments_Values_Projected")
-
-"""
-Stockmarket-Indices. These are used in certain plots. They are also obtained from the dataprovider.
-They are given in the following as dicts, with a Name, Symbol and Exchange, whereas the latter two are required by the
-data-provider tool.
-"""
-# Dow Jones industrial average:
-INDEX_DOW = {"Name": "Dow Jones", "Symbol": "DJI", "Exchange": "INDEXDJX"}
-# NASDAQ:
-INDEX_NASDAQ = {"Name": "NASDAQ", "Symbol": "^IXIC", "Exchange": "INDEXNASDAQ"}
-# DAX:
-INDEX_DAX = {"Name": "DAX", "Symbol": "^GDAXI", "Exchange": "INDEXDAX"}
-# SP500:
-INDEX_SP = {"Name": "S&P500", "Symbol": "^GSPC", "Exchange": "INDEXSP500"}
-# SMI:
-INDEX_SMI = {"Name": "SMI", "Symbol": "^SSMI", "Exchange": "INDEXSMI"}
-
-# This list collects the dictionaries, its name must be INDICES!
-INDICES = [INDEX_DOW, INDEX_NASDAQ, INDEX_DAX, INDEX_SP, INDEX_SMI]
-
-"""
-########################################################################################################################
-########################################################################################################################
-END OF USER_CONFIG
-In the following, the main script begins
-########################################################################################################################
-########################################################################################################################
-"""
-
-
-def main():
+def main(config):
+    """The main entry-point of PROFIT"""
     # Folder-paths for the outputs of PROFIT:
     storage_path = Path(config.STORAGE_FOLDER).resolve()
     plot_path = Path(config.PLOTS_FOLDER).resolve()
@@ -132,7 +46,7 @@ def main():
     """
     date_today = dateoperations.get_date_today(config.FORMAT_DATE, datetime_obj=True)
     date_today_str = dateoperations.get_date_today(config.FORMAT_DATE, datetime_obj=False)
-    date_analysis_start = date_today - datetime.timedelta(days=DAYS_ANALYSIS)
+    date_analysis_start = date_today - datetime.timedelta(days=config.DAYS_ANALYSIS)
     date_analysis_start_str = stringoperations.datetime2str(date_analysis_start, config.FORMAT_DATE)
     print("\nData will be analyzed from the " + date_analysis_start_str + " to the " + date_today_str)
     # Create the analysis-instance that tracks some analysis-range-related data:
@@ -169,7 +83,7 @@ def main():
         investments.append(
             investmentparser.parse_investment_file(filepath, config.FORMAT_DATE, provider, analyzer,
                                                    config.BASECURRENCY,
-                                                   config.ASSET_PURPOSES, storage))
+                                                   config.ASSET_PURPOSES, storage, config))
     if len(investments) > 0:
         print(f"Successfully parsed {len(investments)} investments.")
 
@@ -190,7 +104,7 @@ def main():
         filepath = file.resolve()
         accounts.append(
             accountparser.parse_account_file(filepath, config.FORMAT_DATE, analyzer, config.BASECURRENCY,
-                                             config.ASSET_PURPOSES))
+                                             config.ASSET_PURPOSES, config))
     if len(accounts) > 0:
         print(f"Successfully parsed {len(accounts)} accounts.")
 
@@ -259,7 +173,7 @@ def main():
     if len(investments) > 0:
         print("\nObtaining stockmarket-indices")
         indexprices = []
-        for stockidx in INDICES:
+        for stockidx in config.INDICES:
             sym = stockidx["Symbol"]
             name = stockidx["Name"]  # The name of the stock-index is stored as the currency
             # Obtain the prices
@@ -285,65 +199,78 @@ def main():
 
     if len(accounts) > 0:
         # Plot all accounts:
-        plotting.plot_asset_values_stacked(accounts, FILENAME_STACKPLOT_ACCOUNT_VALUES, "Value: All Accounts", analyzer)
+        plotting.plot_asset_values_stacked(accounts, config.FILENAME_STACKPLOT_ACCOUNT_VALUES, "Value: All Accounts",
+                                           analyzer, config)
         # Values of all accounts:
-        plotting.plot_asset_values_cost_payout_individual(accounts, FILENAME_ACCOUNT_VALUES, analyzer)
+        plotting.plot_asset_values_cost_payout_individual(accounts, config.FILENAME_ACCOUNT_VALUES, analyzer, config)
 
     if len(investments) > 0:
-        plotting.plot_asset_values_indices(investments, indexprices, FILENAME_INVESTMENT_VALUES_INDICES,
-                                           "Investment Performance (normalized, payouts not reinvested)", analyzer)
+        plotting.plot_asset_values_indices(investments, indexprices, config.FILENAME_INVESTMENT_VALUES_INDICES,
+                                           "Investment Performance (normalized, payouts not reinvested)", analyzer,
+                                           config)
         # Plot the values of all investments:
-        plotting.plot_asset_values_cost_payout_individual(investments, FILENAME_INVESTMENT_VALUES, analyzer)
+        plotting.plot_asset_values_cost_payout_individual(investments, config.FILENAME_INVESTMENT_VALUES, analyzer,
+                                                          config)
         # Plot the returns of all investmets, for different periods:
-        plotting.plot_asset_returns_individual(investments, FILENAME_INVESTMENT_RETURNS, analyzer)
+        plotting.plot_asset_returns_individual(investments, config.FILENAME_INVESTMENT_RETURNS, analyzer, config)
         # Plot the daily absolute returns of all investmets:
         d, ret_total = plotting.plot_asset_returns_individual_absolute(investments,
-                                                                       FILENAME_INVESTMENT_RETURNS_ABSOLUTE, analyzer)
+                                                                       config.FILENAME_INVESTMENT_RETURNS_ABSOLUTE,
+                                                                       analyzer, config)
         # Plot the accumulated/summed daily absolute returns of all investmets:
-        plotting.plot_asset_total_absolute_returns_accumulated(d, ret_total, FILENAME_INVESTMENT_RETURNS_ABSOLUTE_TOTAL,
-                                                               analyzer)
+        plotting.plot_asset_total_absolute_returns_accumulated(d, ret_total,
+                                                               config.FILENAME_INVESTMENT_RETURNS_ABSOLUTE_TOTAL,
+                                                               analyzer, config)
         # Plot all investments:
-        plotting.plot_asset_values_stacked(investments, FILENAME_STACKPLOT_INVESTMENT_VALUES, "Value: All Investments",
-                                           analyzer)
+        plotting.plot_asset_values_stacked(investments, config.FILENAME_STACKPLOT_INVESTMENT_VALUES,
+                                           "Value: All Investments",
+                                           analyzer, config)
         # Plot the returns of all investments accumulated, for the desired period:
-        plotting.plot_assets_returns_total(investments, FILENAME_TOTAL_INVESTMENT_RETURNS, "Returns of Investments",
-                                           analyzer)
+        plotting.plot_assets_returns_total(investments, config.FILENAME_TOTAL_INVESTMENT_RETURNS,
+                                           "Returns of Investments",
+                                           analyzer, config)
         # Project the value of the investments into the future:
-        plotting.plot_asset_projections(investments, INTEREST_PROJECTION_PERCENT, NUM_YEARS_INVEST_PROJECTION,
-                                        FILENAME_INVESTMENT_PROJECTIONS,
-                                        "Future Value of All Investments, Compounded Annual Interest", analyzer)
+        plotting.plot_asset_projections(investments, config.INTEREST_PROJECTION_PERCENT,
+                                        config.NUM_YEARS_INVEST_PROJECTION,
+                                        config.FILENAME_INVESTMENT_PROJECTIONS,
+                                        "Future Value of All Investments, Compounded Annual Interest", analyzer, config)
         # Calculate the return of all investments, for the considered analysis-period:
         tot_return = analysis.get_returns_assets_accumulated_analysisperiod(investments, analyzer)
         print(
-            f"\nThe return of the investments of the considered analysis-period (past {DAYS_ANALYSIS:d} days) is: {tot_return:.2f}%")
+            f"\nThe return of the investments of the considered analysis-period (past {config.DAYS_ANALYSIS:d} days) is: {tot_return:.2f}%")
 
     if len(assets) > 0:
         # Plot the values of each asset purpose:
-        plotting.plot_asset_purposes(assets, FILENAME_ASSETS_VALUES_PURPOSE, "Total Asset Values According to Purpose",
-                                     analyzer)
+        plotting.plot_asset_purposes(assets, config.FILENAME_ASSETS_VALUES_PURPOSE,
+                                     "Total Asset Values According to Purpose",
+                                     analyzer, config)
         # Plot the values of each asset-group:
-        plotting.plot_assets_grouped(assets, FILENAME_ASSETS_VALUES_GROUPS_STACKED, "Asset Values According to Group",
-                                     "stacked", analyzer)
-        plotting.plot_assets_grouped(assets, FILENAME_ASSETS_VALUES_GROUPS_LINE, "Asset Values According to Group",
-                                     "line", analyzer)
+        plotting.plot_assets_grouped(assets, config.FILENAME_ASSETS_VALUES_GROUPS_STACKED,
+                                     "Asset Values According to Group",
+                                     "stacked", analyzer, config)
+        plotting.plot_assets_grouped(assets, config.FILENAME_ASSETS_VALUES_GROUPS_LINE,
+                                     "Asset Values According to Group",
+                                     "line", analyzer, config)
         # Plot the value of all assets:
-        plotting.plot_asset_values_stacked(assets, FILENAME_STACKPLOT_ASSET_VALUES, "Value: All Assets", analyzer)
+        plotting.plot_asset_values_stacked(assets, config.FILENAME_STACKPLOT_ASSET_VALUES, "Value: All Assets",
+                                           analyzer, config)
 
         # Plot the values of each group:
         if len(config.ASSET_GROUPS) > 0:
-            plotting.plot_asset_groups(assets, config.ASSET_GROUPS, config.ASSET_GROUPNAMES, FILENAME_PLOT_GROUP,
-                                       "Group Value (" + config.BASECURRENCY + ")", analyzer)
+            plotting.plot_asset_groups(assets, config.ASSET_GROUPS, config.ASSET_GROUPNAMES, config.FILENAME_PLOT_GROUP,
+                                       "Group Value (" + config.BASECURRENCY + ")", analyzer, config)
 
         # Plot the values grouped according to currency:
-        plotting.plot_currency_values(assets, FILENAME_CURRENCIES_STACKED, "Asset Values According to Currencies "
-                                                                           "(in Basecurrency)", analyzer,
-                                      drawstackedplot=True)
-        plotting.plot_currency_values(assets, FILENAME_CURRENCIES_LINE, "Relative Asset Values According to Currencies",
-                                      analyzer, drawstackedplot=False)
+        plotting.plot_currency_values(assets, config.FILENAME_CURRENCIES_STACKED,
+                                      "Asset Values According to Currencies "
+                                      "(in Basecurrency)", analyzer, config, drawstackedplot=True)
+        plotting.plot_currency_values(assets, config.FILENAME_CURRENCIES_LINE,
+                                      "Relative Asset Values According to Currencies",
+                                      analyzer, config, drawstackedplot=False)
 
     # Plot the forex-rates. Note: one element of the forex-dict is the basecurrency, hence >1 and not >= 1
     if len(forexdict) > 1:
-        plotting.plot_forex_rates(forexdict, FILENAME_FOREX_RATES,
-                                  "Forex Rates with the Basecurrency (" + config.BASECURRENCY + ")", analyzer)
+        plotting.plot_forex_rates(forexdict, config.FILENAME_FOREX_RATES,
+                                  "Forex Rates with the Basecurrency (" + config.BASECURRENCY + ")", analyzer, config)
 
     print("\nPROFIT is done.")
