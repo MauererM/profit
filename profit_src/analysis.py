@@ -260,10 +260,9 @@ def get_return_asset_holdingperiod(asset, dateformat):
                 val2 = forex_obj.perform_conversion([datelist[-1]], [val2])
                 val2 = val2[0]
         else:
-            print("WARNING: Cannot calculate holding period return of "
-                  + asset.get_filename() + " due to unavailable and missing price of today. "
-                                           "Update the assets marketdata-file with values from today or "
-                                           "add a price-defining update-transaction of today.")
+            print(f"WARNING: Cannot calculate holding period return of {asset.get_filename()} due to unavailable "
+                  f"and missing price of today. Update the assets marketdata-file with values from today or add a "
+                  f"price-defining update-transaction of today.")
             # Return a seemingly impossible (negative!) value:
             return -1e10
 

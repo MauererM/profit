@@ -165,12 +165,12 @@ class MarketDataMain:
                     if dateoperations.is_date_valid(split_date, self.dateformat) is True:
                         splits.append((split_date, float(split_value)))
                     else:
-                        raise RuntimeError("Invalid date found! File: " + fname + ". Date: " + split_date)
+                        raise RuntimeError(f"Invalid date found! File: {fname}. Date: {split_date}")
                 elif begin == self.DATA_STRING:
                     data_reached = True
                 else:
-                    raise RuntimeError("After max. interpolation days must follow data- or split-string. "
-                                       "File: " + fname)
+                    raise RuntimeError(f"After max. interpolation days must follow data- or split-string. "
+                                       f"File: {fname}")
             elif data_reached is True:
                 ret = self.__read_data_line_from_storage_file(stripline)
                 if ret is None:

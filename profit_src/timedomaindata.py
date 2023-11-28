@@ -139,9 +139,8 @@ class ForexTimeDomainData:
         # No forex data available:
         if self.full_dates is None or len(self.full_dates) < 2:
             # We cannot continue, forex-data is a must, as otherwise the asset values are not known.
-            raise RuntimeError("No forex data available for " +
-                               self.currency + " and " + self.basecurrency +
-                               ". Provide the data in a marketdata-file.")
+            raise RuntimeError(f"No forex data available for {self.currency} and {self.basecurrency}. "
+                               f"Provide the data in a marketdata-file.")
 
         # Write the fused provider- and storge-data back to file:
         if self.write_to_file is True:
@@ -169,11 +168,11 @@ class ForexTimeDomainData:
         dates_full_start = self.analyzer.str2datetime(self.full_dates[0])
         dates_full_stop = self.analyzer.str2datetime(self.full_dates[-1])
         if dates_full_start > self.analysis_startdate_dt:
-            print("Available rates (data provider and stored market-data) are only available from the " +
-                  self.full_dates[0] + " onwards. Earliest available data will be extrapolated backwards.")
+            print(f"Available rates (data provider and stored market-data) are only available from "
+                  f"the {self.full_dates[0]} onwards. Earliest available data will be extrapolated backwards.")
         if dates_full_stop < self.analysis_stopdate_dt:
-            print("Available rates (data provider and stored market-data) are only available until the " +
-                  self.full_dates[-1] + ". Latest available data will be extrapolated forwards.")
+            print(f"Available rates (data provider and stored market-data) are only available until "
+                  f"the {self.full_dates[-1]}. Latest available data will be extrapolated forwards.")
 
         # Crop the data to the desired period:
         self.full_dates, self.full_prices = dateoperations.format_datelist(self.full_dates, self.full_prices,

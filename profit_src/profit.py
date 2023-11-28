@@ -59,7 +59,7 @@ def main(config):
     date_today_str = dateoperations.get_date_today(config.FORMAT_DATE, datetime_obj=False)
     date_analysis_start = date_today - datetime.timedelta(days=config.DAYS_ANALYSIS)
     date_analysis_start_str = stringoperations.datetime2str(date_analysis_start, config.FORMAT_DATE)
-    print("\nData will be analyzed from the " + date_analysis_start_str + " to the " + date_today_str)
+    print(f"\nData will be analyzed from the {date_analysis_start_str} to the {date_today_str}")
     # Create the analysis-instance that tracks some analysis-range-related data:
     analyzer = analysis.AnalysisRange(date_analysis_start_str, date_today_str, config.FORMAT_DATE, datetimeconverter)
 
@@ -136,7 +136,7 @@ def main(config):
     # Determine the foreign currencies:
     forex_currencies = [x for x in currencies if x != config.BASECURRENCY]
 
-    print("\nFound " + repr(len(forex_currencies)) + " foreign currencies")
+    print(f"\nFound {len(forex_currencies):d} foreign currencies")
 
     # The full forex-data for all investment-transactions is required for the holding-period return:
     # Determine the earliest transaction of a foreign-currency investment:
@@ -145,7 +145,7 @@ def main(config):
     if date_analysis_start < stringoperations.str2datetime(earliest_forex, config.FORMAT_DATE):
         earliest_forex = date_analysis_start_str
 
-    print("Basecurrency is " + config.BASECURRENCY)
+    print(f"Basecurrency is {config.BASECURRENCY}")
     # Dictionary for the forex-objects. The key is the corresponding currency.
     forexdict = {}
     if len(forex_currencies) > 0:
@@ -248,7 +248,8 @@ def main(config):
         # Calculate the return of all investments, for the considered analysis-period:
         tot_return = analysis.get_returns_assets_accumulated_analysisperiod(investments, analyzer)
         print(
-            f"\nThe return of the investments of the considered analysis-period (past {config.DAYS_ANALYSIS:d} days) is: {tot_return:.2f}%")
+            f"\nThe return of the investments of the considered analysis-period "
+            f"(past {config.DAYS_ANALYSIS:d} days) is: {tot_return:.2f}%")
 
     if len(assets) > 0:
         # Plot the values of each asset purpose:
@@ -269,7 +270,7 @@ def main(config):
         # Plot the values of each group:
         if len(config.ASSET_GROUPS) > 0:
             plotting.plot_asset_groups(assets, config.ASSET_GROUPS, config.ASSET_GROUPNAMES, config.FILENAME_PLOT_GROUP,
-                                       "Group Value (" + config.BASECURRENCY + ")", analyzer, config)
+                                       f"Group Value ({config.BASECURRENCY})", analyzer, config)
 
         # Plot the values grouped according to currency:
         plotting.plot_currency_values(assets, config.FILENAME_CURRENCIES_STACKED,
@@ -282,6 +283,6 @@ def main(config):
     # Plot the forex-rates. Note: one element of the forex-dict is the basecurrency, hence >1 and not >= 1
     if len(forexdict) > 1:
         plotting.plot_forex_rates(forexdict, config.FILENAME_FOREX_RATES,
-                                  "Forex Rates with the Basecurrency (" + config.BASECURRENCY + ")", analyzer, config)
+                                  f"Forex Rates with the Basecurrency ({config.BASECURRENCY})", analyzer, config)
 
     print("\nPROFIT is done.")

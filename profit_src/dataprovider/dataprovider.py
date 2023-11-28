@@ -67,9 +67,9 @@ class DataproviderMain:
             p = provider(self.dateformat)
             if p.initialize() is True:
                 self.active_provider = p
-                print("Data provider " + p.get_name() + " successfully initialized")
+                print(f"Data provider {p.get_name()} successfully initialized")
                 break
-            print("Failed to initialize provider " + p.get_name())
+            print(f"Failed to initialize provider {p.get_name()}")
         # Now, we either have a functioning provider initialized, or the Empty-provider (which will trigger
         # the falling functions to fall back to alternative means, making the data-source selection somewhat automatic)
         if self.active_provider is None:
@@ -148,7 +148,7 @@ class DataproviderMain:
         if res is not None:
             forexdates, forexrates = res  # List of strings and floats
         else:
-            print("Failed to obtain exchange rates for: " + sym_a + " and " + sym_b)
+            print(f"Failed to obtain exchange rates for: {sym_a} and {sym_b}")
             return None
 
         res = self.__post_process_dataprovider_data(forexdates, forexrates, startdate, stopdate)

@@ -158,8 +158,7 @@ class Investment:
             if trans_actions[idx] == self.config.STRING_INVSTMT_ACTION_SPLIT:
                 if idx == 0:
                     raise RuntimeError("The first transaction is a split?! This should have been caught earlier!")
-                print("Split detected. Stock: " + self.symbol + ". Double-check that data from "
-                                                                "dataprovider reflects this.")
+                print(f"Split detected. Stock: {self.symbol}. Double-check that data from dataprovider reflects this.")
                 if trans_balance[idx - 1] > 1e-9:  # Derive the ratio from the provided balance-entry
                     r = trans_balance[idx] / trans_balance[idx - 1]
                 else:  # Balance is 0 (i.e., all stock sold): Derive ratio from the quantity-column
@@ -395,7 +394,7 @@ class Investment:
         than recorded data.
         :param date_stop: String of a date that designates the stop-date. Cannot be in the future.
         """
-        print("\n" + self.symbol + ":")  # Show in the terminal what's going on/which investment is getting processed
+        print(f"\n{self.symbol}:")  # Show in the terminal what's going on/which investment is getting processed
 
         # Extrapolate or crop the data:
         # The balance is extrapolated with zeroes into the past, and with the last known values into the future,
@@ -492,18 +491,14 @@ class Investment:
                 full_dates_start = self.analyzer.str2datetime(full_dates[0])
                 full_dates_stop = self.analyzer.str2datetime(full_dates[-1])
                 if full_dates_start > startdate_analysis_dt:
-                    print("Available prices (data provider and stored market-data) are only available from the " +
-                          full_dates[
-                              0] + " onwards. Earliest available data will be extrapolated backwards and merged with the manually entered prices. Symbol: " +
-                          self.symbol + ", exchange: " + self.exchange)
+                    print(f"Available prices (provider and stored data) are only available from the {full_dates[0]} "
+                          f"onwards. Earliest available data will be extrapolated backwards and merged with the "
+                          f"manually entered prices. \nSymbol: {self.symbol}, exchange: {self.exchange}")
                 if full_dates_stop < stopdate_analysis_dt:
-                    print("Available prices (data provider and stored market-data) are only available until the " +
-                          full_dates[
-                              -1] + ". Latest available data will be extrapolated forwards and merged with the manually entered prices. Symbol: " +
-                          self.symbol + ", exchange: " + self.exchange)
-                    print("Update the market-data file or transactions-list manually for correct returns calculation" +
-                          " Symbol: " +
-                          self.symbol + ", exchange: " + self.exchange)
+                    print(f"Available prices (data provider and stored market-data) are only available until "
+                          f"the {full_dates[-1]}. Latest available data will be extrapolated forwards and merged with "
+                          f"the manually entered prices.\nSymbol: {self.symbol}, exchange: {self.exchange}."
+                          f"\nUpdate the storage data file or transactions-list for correct returns calculation")
 
                 # The provided market-data can be incomplete. It is consecutive, but might not span the entire
                 # analysis-range. We must merge it with the transactions-data and potentially extrapolate forwards and
