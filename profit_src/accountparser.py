@@ -63,6 +63,7 @@ def parse_account_file(filepath, dateformat, analyzer, basecurrency, assetpurpos
                 accnt_purpose = line_val
             elif line_id == config.STRING_CURRENCY:
                 accnt_currency = line_val
+            # Todo catch an error/else here? Do this more elegantly?
 
     # The header is now parsed. Basic info has to be present and/or correct:
     if transact_line_nr is None:
