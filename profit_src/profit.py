@@ -23,19 +23,30 @@ from .timedomaindata import StockMarketIndicesData
 
 def main(config):
     """The main entry-point of PROFIT"""
+    # Print the current version of the tool
+    print(f"PROFIT v{config.PROFIT_VERSION:.1f} starting")
+
     # Folder-paths for the outputs of PROFIT:
     storage_path = Path(config.STORAGE_FOLDER).resolve()
     plot_path = Path(config.PLOTS_FOLDER).resolve()
     account_path = Path(config.ACCOUNT_FOLDER).resolve()
     investment_path = Path(config.INVESTMENT_FOLDER).resolve()
+    files.check_create_folder(storage_path, create_if_missing=True)
+    files.check_create_folder(plot_path, create_if_missing=True)
+    is_accnt_folder = files.check_create_folder(account_path, create_if_missing=False)
+    is_investment_folder = files.check_create_folder(investment_path, create_if_missing=False)
+    if not is_accnt_folder and not is_investment_folder:
+        raise FileNotFoundError(f"Both folders {account_path} and {investment_path} are not found. "
+                                f"Can not continue / I need either accounts or investments to do anything.")
+    if not is_accnt_folder:
+        logging.warning(f"Folder for accounts ({account_path}) not found. Will not parse accounts.")
+    if not is_investment_folder:
+        logging.warning(f"Folder for investments ({investment_path}) not found. Will not parse investments.")
 
     # Set logging:
     logging.basicConfig(level=logging.WARNING)
     matplotlib_logger = logging.getLogger('matplotlib')
     matplotlib_logger.setLevel(logging.INFO)  # Exclude matplotlib's debug-messages, as they otherwise spam a lot.
-
-    # Print the current version of the tool
-    print(f"PROFIT v{config.PROFIT_VERSION:.1f} starting")
 
     # Initialize the caching datetime/string converter class (used in analyzer below):
     datetimeconverter = stringoperations.DateTimeConversion()

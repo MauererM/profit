@@ -115,6 +115,21 @@ def file_exists(filepath):
         filepath = Path(filepath)
     return filepath.exists()
 
+def check_create_folder(folderpath, create_if_missing=False):
+    """Checks if a folder exists at the specified path (i.e., if the path points to a folder).
+    :param folderpath: Path-object of the folder (or string, will be converted).
+    :param create_if_missing: If False, we return False. If true, it will be created
+    :return: True, if all went well, or if folder is already existing
+    """
+    if not isinstance(folderpath, Path):
+        folderpath = Path(folderpath)
+    if not folderpath.is_dir():
+        if create_if_missing is True:
+            folderpath.mkdir(parents=True, exist_ok=True)
+            print(f"Created the folder {folderpath} as it was missing.")
+            return True
+        return False
+    return True
 
 def create_path(folderpath, filename):
     """Simply creates a path from a folder-name (which resides inside the project directory) and a file within.
