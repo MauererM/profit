@@ -12,7 +12,6 @@ from matplotlib.ticker import FormatStrFormatter
 import pylab
 from . import stringoperations
 from . import analysis
-from . import config
 from . import plotting_aux
 from . import helper
 from . import files
@@ -20,7 +19,7 @@ from . import files
 
 # Todo clean up this massive file
 
-def plot_currency_values(assetlist, fname, titlestring, analyzer, drawstackedplot=True):
+def plot_currency_values(assetlist, fname, titlestring, analyzer, config, drawstackedplot=True):
     """Plots the values of the assets grouped according to their currencies
     :param assetlist: List of asset-objects
     :param fname: String of desired filename
@@ -61,7 +60,7 @@ def plot_currency_values(assetlist, fname, titlestring, analyzer, drawstackedplo
         ylabel = "Value (" + config.BASECURRENCY + ")"
         alpha = 0.8
         plotting_aux.create_stackedplot(xlist, curvals, list(curset), colorlist, titlestring, xlabel, ylabel, alpha,
-                                        fname)
+                                        fname, config)
 
     else:  # Create a line-plot:
         # The relative values of the currencies are plotted:
@@ -89,7 +88,7 @@ def plot_currency_values(assetlist, fname, titlestring, analyzer, drawstackedplo
         legendlist = list(curset)
         legendlist = [legendlist[i] for i in sortedidx]
 
-        plotting_aux.configure_lineplot()
+        plotting_aux.configure_lineplot(config)
         fig = plt.figure()
         ax = fig.add_subplot(111)
 
@@ -117,7 +116,7 @@ def plot_currency_values(assetlist, fname, titlestring, analyzer, drawstackedplo
             plotting_aux.open_plot(fname)
 
 
-def plot_asset_groups(assets, grouplist, groupnames, fname, titlestring, analyzer):
+def plot_asset_groups(assets, grouplist, groupnames, fname, titlestring, analyzer, config):
     """Plots the values of each user-defined group.
     Each group is on a new plot.
     :param assets: List of assets
@@ -149,7 +148,7 @@ def plot_asset_groups(assets, grouplist, groupnames, fname, titlestring, analyze
     for purpidx, purposelist in enumerate(grouplist):
 
         # One plot per group:
-        plotting_aux.configure_lineplot()
+        plotting_aux.configure_lineplot(config)
         fig = plt.figure()
         ax = fig.add_subplot(111)
 
@@ -216,7 +215,7 @@ def plot_asset_groups(assets, grouplist, groupnames, fname, titlestring, analyze
                 plotting_aux.open_plot(fname_cur)
 
 
-def plot_forex_rates(forexobjdict, fname, titlestr, analyzer):
+def plot_forex_rates(forexobjdict, fname, titlestr, analyzer, config):
     """Plot the forex rates.
     The forex-objects are stored in a dictionary, whose keys are the strings of the currencies, e.g., "USD".
     :param forexobjdict: Dictionary with the forex-objects
@@ -227,7 +226,7 @@ def plot_forex_rates(forexobjdict, fname, titlestr, analyzer):
     # Get the full path of the file:
     fname = plotting_aux.modify_plot_path(config.PLOTS_FOLDER, fname)
 
-    plotting_aux.configure_lineplot()
+    plotting_aux.configure_lineplot(config)
     fig = plt.figure()
     ax = fig.add_subplot(111)  # Only one plot
 
@@ -268,7 +267,7 @@ def plot_forex_rates(forexobjdict, fname, titlestr, analyzer):
         plotting_aux.open_plot(fname)
 
 
-def plot_assets_grouped(assetlist, fname, titlestr, plottype, analyzer):
+def plot_assets_grouped(assetlist, fname, titlestr, plottype, analyzer, config):
     """Plots the values of the assets, grouped according to their groups (see main-file)
     A stacked plot is used.
     :param assetlist: List of asset-objects
@@ -327,11 +326,11 @@ def plot_assets_grouped(assetlist, fname, titlestr, plottype, analyzer):
 
     # Plot:
     if plottype == "stacked":
-        plotting_aux.configure_stackedplot()
+        plotting_aux.configure_stackedplot(config)
         plotting_aux.create_stackedplot(xlist, vals_groups, labels_groups, colorlist, titlestr, xlabel, ylabel, alpha,
-                                        fname)
+                                        fname, config)
     elif plottype == "line":
-        plotting_aux.configure_lineplot()
+        plotting_aux.configure_lineplot(config)
         fig = plt.figure()
         ax = fig.add_subplot(111)  # Only one plot
 
@@ -368,7 +367,7 @@ def plot_assets_grouped(assetlist, fname, titlestr, plottype, analyzer):
         raise RuntimeError("Unknown plottype. Only 'stacked' or 'line' are possible")
 
 
-def plot_asset_purposes(assetlist, fname, titlestr, analyzer):
+def plot_asset_purposes(assetlist, fname, titlestr, analyzer, config):
     """Plots the values of the assets, grouped according to their purposes.
     Furthermore, The asset-type (i.e., account or investment) is differentiated
     Multiple lines are plotted in a single plot
@@ -403,7 +402,7 @@ def plot_asset_purposes(assetlist, fname, titlestr, analyzer):
     typemarker = ['x', 'o']  # Two asset types, two markers
 
     # Plot:
-    plotting_aux.configure_lineplot()
+    plotting_aux.configure_lineplot(config)
     fig = plt.figure()
     ax = fig.add_subplot(111)  # Only one plot
 
@@ -475,7 +474,7 @@ def plot_asset_purposes(assetlist, fname, titlestr, analyzer):
         plotting_aux.open_plot(fname)
 
 
-def plot_asset_values_indices(assetlist, indexlist, fname, titlestr, analyzer):
+def plot_asset_values_indices(assetlist, indexlist, fname, titlestr, analyzer, config):
     """Plots the summed values of the given assets, together with some stock-market indices
     :param assetlist: List of asset-objects
     :param indexlist: List of Index-objects that contain the index-data
@@ -546,7 +545,7 @@ def plot_asset_values_indices(assetlist, indexlist, fname, titlestr, analyzer):
         indexvals_rs.append([x / fact for x in vals])
 
     # Plot:
-    plotting_aux.configure_lineplot()
+    plotting_aux.configure_lineplot(config)
     fig = plt.figure()
     ax = fig.add_subplot(111)  # Only one plot
 
@@ -601,7 +600,7 @@ def plot_asset_values_indices(assetlist, indexlist, fname, titlestr, analyzer):
         plotting_aux.open_plot(fname)
 
 
-def plot_asset_projections(assetlist, interest, num_years, fname, titlestr, analyzer):
+def plot_asset_projections(assetlist, interest, num_years, fname, titlestr, analyzer, config):
     """Plots the past summed value of the assets and projects the value into the future, assuming a certain
     interest rate. Compounded growth is assumed.
     :param assetlist: List of asset-objects. Their value will be summed and used for the projection.
@@ -643,7 +642,7 @@ def plot_asset_projections(assetlist, interest, num_years, fname, titlestr, anal
                                                    config.FORMAT_DATE)
 
     # Plot:
-    plotting_aux.configure_lineplot()
+    plotting_aux.configure_lineplot(config)
     fig = plt.figure()
     ax = fig.add_subplot(111)  # Only one plot
 
@@ -693,7 +692,7 @@ def plot_asset_projections(assetlist, interest, num_years, fname, titlestr, anal
         plotting_aux.open_plot(fname)
 
 
-def plot_asset_total_absolute_returns_accumulated(dates, returns, fname, analyzer):
+def plot_asset_total_absolute_returns_accumulated(dates, returns, fname, analyzer, config):
     """Plots the accumulated absolute returns
     :param dates: List of dates
     :param returns: List of day-wise, summed returns of all investments
@@ -713,7 +712,7 @@ def plot_asset_total_absolute_returns_accumulated(dates, returns, fname, analyze
         return
 
     # Plot:
-    plotting_aux.configure_lineplot()
+    plotting_aux.configure_lineplot(config)
     fig = plt.figure()
     ax = fig.add_subplot(111)  # Only one plot
 
@@ -744,7 +743,7 @@ def plot_asset_total_absolute_returns_accumulated(dates, returns, fname, analyze
         plotting_aux.open_plot(fname)
 
 
-def plot_assets_returns_total(assetlist, fname, titlestr, analyzer):
+def plot_assets_returns_total(assetlist, fname, titlestr, analyzer, config):
     """Plots the returns of all assets combined, for different periods (7, 30, 100 and 365 days)
     :param assetlist: List of asset-objects
     :param fname: String of the desired filename of the plot
@@ -757,7 +756,7 @@ def plot_assets_returns_total(assetlist, fname, titlestr, analyzer):
         print(f"No assets given for plot: {fname.name}")
         return
 
-    plotting_aux.configure_lineplot()
+    plotting_aux.configure_lineplot(config)
 
     dateformat = assetlist[0].get_dateformat()
     if len(assetlist) > 1:
@@ -765,7 +764,7 @@ def plot_assets_returns_total(assetlist, fname, titlestr, analyzer):
             if asset.get_dateformat() != dateformat:
                 raise RuntimeError("The dateformats of the assets must be identical.")
 
-    plotting_aux.configure_lineplot()
+    plotting_aux.configure_lineplot(config)
     fig = plt.figure()
     ax = fig.add_subplot(111)  # Only one plot
 
@@ -838,7 +837,7 @@ def plot_assets_returns_total(assetlist, fname, titlestr, analyzer):
         plotting_aux.open_plot(fname)
 
 
-def plot_asset_values_cost_payout_individual(assetlist, fname, analyzer):
+def plot_asset_values_cost_payout_individual(assetlist, fname, analyzer, config):
     """Plots the values of assets, with and without cost and payouts
     The plots are created on a 2x3 grid
     :param assetlist: List of asset-objects
@@ -877,7 +876,7 @@ def plot_asset_values_cost_payout_individual(assetlist, fname, analyzer):
 
     for sheet_num, assets in enumerate(assetlists_sheet):
 
-        plotting_aux.configure_gridplot()
+        plotting_aux.configure_gridplot(config)
         fig = plt.figure()
         fig.subplots_adjust(hspace=0.4, wspace=0.4)
         for idx, asset in enumerate(assets):
@@ -964,7 +963,7 @@ def plot_asset_values_cost_payout_individual(assetlist, fname, analyzer):
             plotting_aux.open_plot(fname_ext)
 
 
-def plot_asset_returns_individual(assetlist, fname, analyzer):
+def plot_asset_returns_individual(assetlist, fname, analyzer, config):
     """Plots different returns of each asset in an individual plot.
     The plots are created on a 2x3 grid
     :param assetlist: List of asset-objects
@@ -1002,7 +1001,7 @@ def plot_asset_returns_individual(assetlist, fname, analyzer):
 
     for sheet_num, assets in enumerate(assetlists_sheet):
 
-        plotting_aux.configure_gridplot()
+        plotting_aux.configure_gridplot(config)
         fig = plt.figure()
         fig.subplots_adjust(hspace=0.4, wspace=0.4)
 
@@ -1094,7 +1093,7 @@ def plot_asset_returns_individual(assetlist, fname, analyzer):
             plotting_aux.open_plot(fname_ext)
 
 
-def plot_asset_returns_individual_absolute(assetlist, fname, analyzer):
+def plot_asset_returns_individual_absolute(assetlist, fname, analyzer, config):
     """Plots different absolute returns of each asset in an individual plot.
     The plots are created on a 2x3 grid
     :param assetlist: List of asset-objects
@@ -1135,7 +1134,7 @@ def plot_asset_returns_individual_absolute(assetlist, fname, analyzer):
 
     for sheet_num, assets in enumerate(assetlists_sheet):
 
-        plotting_aux.configure_gridplot()
+        plotting_aux.configure_gridplot(config)
         fig = plt.figure()
         fig.subplots_adjust(hspace=0.4, wspace=0.4)
 
@@ -1198,7 +1197,7 @@ def plot_asset_returns_individual_absolute(assetlist, fname, analyzer):
     return dates, returns_total
 
 
-def plot_asset_values_stacked(assetlist, fname, title, analyzer):
+def plot_asset_values_stacked(assetlist, fname, title, analyzer, config):
     """This function plots the values of the given assets with a stacked plot.
     :param assetlist: List of asset-objects
     :param fname: String of desired filename
@@ -1254,4 +1253,4 @@ def plot_asset_values_stacked(assetlist, fname, title, analyzer):
     ylabel = "Value (" + config.BASECURRENCY + ")"
     alpha = 0.75  # Plot transparency
     # Plot:
-    plotting_aux.create_stackedplot(xlist, ylists, legendlist, colorlist, titlestring, xlabel, ylabel, alpha, fname)
+    plotting_aux.create_stackedplot(xlist, ylists, legendlist, colorlist, titlestring, xlabel, ylabel, alpha, fname, config)

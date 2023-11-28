@@ -7,11 +7,10 @@ Copyright (c) 2018 Mario Mauerer
 
 from . import stringoperations
 from . import investment
-from . import config
 from . import files
 
 
-def parse_investment_file(filepath, dateformat, dataprovider, analyzer, basecurrency, assetpurposes, storage):
+def parse_investment_file(filepath, dateformat, dataprovider, analyzer, basecurrency, assetpurposes, storage, config):
     """This function parses an investment-file.
     Any relevant information in the file may not contain whitespaces! They are all eliminated while parsing.
     The last line of the file must contain the string "EOF"
@@ -229,5 +228,5 @@ def parse_investment_file(filepath, dateformat, dataprovider, analyzer, basecurr
     # Create and populate the account-object:
     invstmt = investment.Investment(invstmt_id, invstmt_type, invstmt_purpose, invstmt_currency, basecurrency,
                                     invstmt_sym, invstmt_exchange, filepath, transactions, dateformat, dataprovider,
-                                    analyzer, assetpurposes, storage)
+                                    analyzer, assetpurposes, storage, config)
     return invstmt

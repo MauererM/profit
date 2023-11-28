@@ -7,7 +7,6 @@ Copyright (c) 2018 Mario Mauerer
 
 from . import dateoperations
 from . import stringoperations
-from . import config
 from . import helper
 from .timedomaindata import StockTimeDomainData
 
@@ -16,7 +15,8 @@ class Investment:
     """Implements an investment. Parses transactions, provides analysis-data, performs currency conversions"""
 
     def __init__(self, id_str, type_str, purpose_str, currency_str, basecurrency_str, symbol_str, exchange_str,
-                 filename_str, transactions_dict, dateformat_str, dataprovider, analyzer, assetpurposes, storage):
+                 filename_str, transactions_dict, dateformat_str, dataprovider, analyzer, assetpurposes, storage,
+                 config):
         """Investment constructor
         Use the function parse_investment_file to obtain the necessary information from an investment file.
         It sets up all internal data structures and analyzes the transactions, and creates some basic data
@@ -47,6 +47,7 @@ class Investment:
         self.provider = dataprovider
         self.analyzer = analyzer
         self.storage = storage
+        self.config = config
         # Data not known yet:
         self.forex_obj = None
         self.analysis_dates = None
@@ -59,14 +60,14 @@ class Investment:
         self.latestpricedata = None
 
         # Check, if the transaction-dates are in order. Allow identical successive days
-        if dateoperations.check_date_order(self.transactions[config.DICT_KEY_DATES], self.analyzer,
+        if dateoperations.check_date_order(self.transactions[self.config.DICT_KEY_DATES], self.analyzer,
                                            allow_ident_days=True) is False:
             raise RuntimeError(f"Transaction-dates are not in temporal order "
                                f"(Note: Identical successive dates are allowed). Filename: {self.filename}")
 
         # Check, if the transactions-actions-column only contains allowed strings:
-        if stringoperations.check_allowed_strings(self.transactions[config.DICT_KEY_ACTIONS],
-                                                  config.INVSTMT_ALLOWED_ACTIONS) is False:
+        if stringoperations.check_allowed_strings(self.transactions[self.config.DICT_KEY_ACTIONS],
+                                                  self.config.INVSTMT_ALLOWED_ACTIONS) is False:
             raise RuntimeError(f"Actions-column contains faulty strings. Filename: {self.filename}")
 
         # Check, if the purpose-string only contains allowed purposes:
@@ -74,22 +75,22 @@ class Investment:
             raise RuntimeError(f"Purpose of investment is not recognized. Filename: {self.filename}")
 
         # Perform sanity-checks with the transactions.
-        self.transactions_sanity_check(self.transactions[config.DICT_KEY_DATES],
-                                       self.transactions[config.DICT_KEY_ACTIONS],
-                                       self.transactions[config.DICT_KEY_QUANTITY],
-                                       self.transactions[config.DICT_KEY_PRICE],
-                                       self.transactions[config.DICT_KEY_COST],
-                                       self.transactions[config.DICT_KEY_PAYOUT],
-                                       self.transactions[config.DICT_KEY_BALANCES])
+        self.transactions_sanity_check(self.transactions[self.config.DICT_KEY_DATES],
+                                       self.transactions[self.config.DICT_KEY_ACTIONS],
+                                       self.transactions[self.config.DICT_KEY_QUANTITY],
+                                       self.transactions[self.config.DICT_KEY_PRICE],
+                                       self.transactions[self.config.DICT_KEY_COST],
+                                       self.transactions[self.config.DICT_KEY_PAYOUT],
+                                       self.transactions[self.config.DICT_KEY_BALANCES])
 
         # Check for stock splits and adjust the balances, prices accordingly
-        prices_mod, balances_mod, quantities_mod = self.adjust_splits(self.transactions[config.DICT_KEY_ACTIONS],
-                                                                      self.transactions[config.DICT_KEY_PRICE],
-                                                                      self.transactions[config.DICT_KEY_BALANCES],
-                                                                      self.transactions[config.DICT_KEY_QUANTITY])
-        self.transactions[config.DICT_KEY_PRICE] = prices_mod
-        self.transactions[config.DICT_KEY_BALANCES] = balances_mod
-        self.transactions[config.DICT_KEY_QUANTITY] = quantities_mod
+        prices_mod, balances_mod, quantities_mod = self.adjust_splits(self.transactions[self.config.DICT_KEY_ACTIONS],
+                                                                      self.transactions[self.config.DICT_KEY_PRICE],
+                                                                      self.transactions[self.config.DICT_KEY_BALANCES],
+                                                                      self.transactions[self.config.DICT_KEY_QUANTITY])
+        self.transactions[self.config.DICT_KEY_PRICE] = prices_mod
+        self.transactions[self.config.DICT_KEY_BALANCES] = balances_mod
+        self.transactions[self.config.DICT_KEY_QUANTITY] = quantities_mod
 
         # Process the transactions, extend the dates/data etc.
         # Create a list of consecutive calendar days that corresponds to the date-range of the recorded transactions:
@@ -97,40 +98,40 @@ class Investment:
                                                        self.get_last_transaction_date(), self.analyzer)
 
         # Interpolate the balances, such that the entries in balancelist correspond to the days in datelist.
-        _, self.balancelist = dateoperations.interpolate_data(self.transactions[config.DICT_KEY_DATES],
-                                                              self.transactions[config.DICT_KEY_BALANCES],
+        _, self.balancelist = dateoperations.interpolate_data(self.transactions[self.config.DICT_KEY_DATES],
+                                                              self.transactions[self.config.DICT_KEY_BALANCES],
                                                               self.analyzer)
 
         # The cost and payouts does not need interpolation. Lists are populated (corresponding to datelist), that
         # contain the transactions.
-        self.costlist = self.populate_full_list(self.transactions[config.DICT_KEY_DATES],
-                                                self.transactions[config.DICT_KEY_COST],
+        self.costlist = self.populate_full_list(self.transactions[self.config.DICT_KEY_DATES],
+                                                self.transactions[self.config.DICT_KEY_COST],
                                                 self.datelist, sum_ident_days=True)
-        self.payoutlist = self.populate_full_list(self.transactions[config.DICT_KEY_DATES],
-                                                  self.transactions[config.DICT_KEY_PAYOUT],
+        self.payoutlist = self.populate_full_list(self.transactions[self.config.DICT_KEY_DATES],
+                                                  self.transactions[self.config.DICT_KEY_PAYOUT],
                                                   self.datelist, sum_ident_days=True)
         # This list holds the prices that are recorded with the transactions:
         # Careful: Prices may not be summed up! The last price of a given day is taken (if there are multiple transactions per day(date)
-        self.pricelist = self.populate_full_list(self.transactions[config.DICT_KEY_DATES],
-                                                 self.transactions[config.DICT_KEY_PRICE],
+        self.pricelist = self.populate_full_list(self.transactions[self.config.DICT_KEY_DATES],
+                                                 self.transactions[self.config.DICT_KEY_PRICE],
                                                  self.datelist, sum_ident_days=False)
 
         # This list contains inflows into the investment (e.g., "Buy"-values). The values are in the currency of
         # the investment.
-        self.inflowlist = self.get_inoutflow_value(self.transactions[config.DICT_KEY_DATES],
-                                                   self.transactions[config.DICT_KEY_ACTIONS],
-                                                   self.transactions[config.DICT_KEY_QUANTITY],
-                                                   self.transactions[config.DICT_KEY_PRICE],
-                                                   config.STRING_INVSTMT_ACTION_BUY,
+        self.inflowlist = self.get_inoutflow_value(self.transactions[self.config.DICT_KEY_DATES],
+                                                   self.transactions[self.config.DICT_KEY_ACTIONS],
+                                                   self.transactions[self.config.DICT_KEY_QUANTITY],
+                                                   self.transactions[self.config.DICT_KEY_PRICE],
+                                                   self.config.STRING_INVSTMT_ACTION_BUY,
                                                    self.datelist)
 
         # This list contains outflows of the investment (e.g., "Sell"-values). The values are in the currency of
         # the investment.
-        self.outflowlist = self.get_inoutflow_value(self.transactions[config.DICT_KEY_DATES],
-                                                    self.transactions[config.DICT_KEY_ACTIONS],
-                                                    self.transactions[config.DICT_KEY_QUANTITY],
-                                                    self.transactions[config.DICT_KEY_PRICE],
-                                                    config.STRING_INVSTMT_ACTION_SELL,
+        self.outflowlist = self.get_inoutflow_value(self.transactions[self.config.DICT_KEY_DATES],
+                                                    self.transactions[self.config.DICT_KEY_ACTIONS],
+                                                    self.transactions[self.config.DICT_KEY_QUANTITY],
+                                                    self.transactions[self.config.DICT_KEY_PRICE],
+                                                    self.config.STRING_INVSTMT_ACTION_SELL,
                                                     self.datelist)
 
     def adjust_splits(self, trans_actions, trans_price, trans_balance, trans_quantity):
@@ -154,7 +155,7 @@ class Investment:
         for idx in range(len(trans_actions) - 1, -1, -1):
             # Check for a split.
             # Note that in the split-transaction, the newest price and balance are already modified/given.
-            if trans_actions[idx] == config.STRING_INVSTMT_ACTION_SPLIT:
+            if trans_actions[idx] == self.config.STRING_INVSTMT_ACTION_SPLIT:
                 if idx == 0:
                     raise RuntimeError("The first transaction is a split?! This should have been caught earlier!")
                 print("Split detected. Stock: " + self.symbol + ". Double-check that data from "
@@ -194,7 +195,7 @@ class Investment:
             raise RuntimeError("The transaction-lists must be of equal lenghts.")
 
         # First transaction must be a buy:
-        if trans_actions[0] != config.STRING_INVSTMT_ACTION_BUY:
+        if trans_actions[0] != self.config.STRING_INVSTMT_ACTION_BUY:
             raise RuntimeError("First investment-transaction must be a buy.")
 
         # Check every transaction:
@@ -204,7 +205,7 @@ class Investment:
                 raise RuntimeError("Detected a negative balance. This does not make sense. "
                                    "Transaction-Nr: " + repr(idx + 1))
             # If an investment is extended by buying more:
-            if trans_actions[idx] == config.STRING_INVSTMT_ACTION_BUY:
+            if trans_actions[idx] == self.config.STRING_INVSTMT_ACTION_BUY:
                 if idx == 0:
                     if trans_balance[idx] != trans_quantity[idx]:
                         raise RuntimeError("Transactions not in order (balance or quantity not correct). "
@@ -214,13 +215,13 @@ class Investment:
                                       (trans_balance[idx - 1] + trans_quantity[idx])) is False:
                         raise RuntimeError("Transactions not in order (balance or quantity not correct). "
                                            "Transaction-Nr: " + repr(idx + 1))
-            elif trans_actions[idx] == config.STRING_INVSTMT_ACTION_SELL:
+            elif trans_actions[idx] == self.config.STRING_INVSTMT_ACTION_SELL:
                 if idx == 0:
                     raise RuntimeError("First investment-transaction cannot be a sell.")
                 if helper.isclose(trans_balance[idx], (trans_balance[idx - 1] - trans_quantity[idx])) is False:
                     raise RuntimeError(f"Transactions not in order (balance not correct). "
                                        f"Transaction-Nr: {(idx + 1):d}")
-            elif trans_actions[idx] == config.STRING_INVSTMT_ACTION_SPLIT:
+            elif trans_actions[idx] == self.config.STRING_INVSTMT_ACTION_SPLIT:
                 if idx == 0:
                     raise RuntimeError("First investment-transcation cannot be a split.")
                 if trans_balance[idx - 1] > 1e-9:
@@ -243,23 +244,24 @@ class Investment:
                 if trans_quantity[idx] > 1e-9:
                     raise RuntimeError("Only sell or buy transactions may provide a quantity."
                                        "Transaction-Nr: " + repr(idx + 1))
-            if trans_actions[idx] == config.STRING_INVSTMT_ACTION_UPDATE:
+            if trans_actions[idx] == self.config.STRING_INVSTMT_ACTION_UPDATE:
                 if trans_quantity[idx] > 1e-9 or trans_cost[idx] > 1e-9 or trans_payout[idx] > 1e-9:
                     raise RuntimeError("Update-actions may not have quantity, cost or payout, only price."
                                        "Transaction-Nr: " + repr(idx + 1))
         # Do some further checks:
         # Check every transaction:
         for idx, _ in enumerate(trans_dates):
-            if trans_actions[idx] == config.STRING_INVSTMT_ACTION_BUY or trans_actions[idx] \
-                    == config.STRING_INVSTMT_ACTION_SELL or trans_actions[idx] == config.STRING_INVSTMT_ACTION_SPLIT:
+            if trans_actions[idx] == self.config.STRING_INVSTMT_ACTION_BUY or trans_actions[idx] \
+                    == self.config.STRING_INVSTMT_ACTION_SELL or trans_actions[
+                idx] == self.config.STRING_INVSTMT_ACTION_SPLIT:
                 if trans_payout[idx] > 1e-9:
                     raise RuntimeError("Buy, sell or split-transactions may not encode a payout. "
                                        "Transaction-Nr: " + repr(idx + 1))
-            if trans_actions[idx] == config.STRING_INVSTMT_ACTION_PAYOUT:
+            if trans_actions[idx] == self.config.STRING_INVSTMT_ACTION_PAYOUT:
                 if trans_quantity[idx] > 1e-9 or trans_price[idx] > 1e-9:
                     raise RuntimeError("Payout-transactions may not have quantities or prices. "
                                        "Transaction-Nr: " + repr(idx + 1))
-            if trans_actions[idx] == config.STRING_INVSTMT_ACTION_COST:
+            if trans_actions[idx] == self.config.STRING_INVSTMT_ACTION_COST:
                 if trans_quantity[idx] > 1e-9 or trans_price[idx] > 1e-9 or trans_payout[idx] > 1e-9:
                     raise RuntimeError("Cost-transactions may not have quantities, prices or payouts. "
                                        "Transaction-Nr: " + repr(idx + 1))
@@ -373,14 +375,14 @@ class Investment:
             pre-format it.
         """
         # Obtain the values from the transactions:
-        trans_values = self.get_values(self.transactions[config.DICT_KEY_ACTIONS],
-                                       self.transactions[config.DICT_KEY_PRICE],
-                                       self.transactions[config.DICT_KEY_BALANCES],
-                                       config.STRING_INVSTMT_ACTION_BUY,
-                                       config.STRING_INVSTMT_ACTION_SELL,
-                                       config.STRING_INVSTMT_ACTION_UPDATE)
+        trans_values = self.get_values(self.transactions[self.config.DICT_KEY_ACTIONS],
+                                       self.transactions[self.config.DICT_KEY_PRICE],
+                                       self.transactions[self.config.DICT_KEY_BALANCES],
+                                       self.config.STRING_INVSTMT_ACTION_BUY,
+                                       self.config.STRING_INVSTMT_ACTION_SELL,
+                                       self.config.STRING_INVSTMT_ACTION_UPDATE)
         # Interpolate the values, such that the value-list corresponds to the datelist:
-        _, vals = dateoperations.interpolate_data(self.transactions[config.DICT_KEY_DATES],
+        _, vals = dateoperations.interpolate_data(self.transactions[self.config.DICT_KEY_DATES],
                                                   trans_values, self.analyzer)
         return vals
 
@@ -435,7 +437,7 @@ class Investment:
         # Determine the value of the investment:
         # If the investment is a security, obtain the market prices. If not, use the transaction-price to determine
         # the value
-        if self.type == config.STRING_ASSET_SECURITY:
+        if self.type == self.config.STRING_ASSET_SECURITY:
             # The prices need only be obtained from a time period onwards, where the balance > 0:
             startidx = None
             for idx, bal in enumerate(self.analysis_balances):
@@ -506,8 +508,8 @@ class Investment:
                 # The provided market-data can be incomplete. It is consecutive, but might not span the entire
                 # analysis-range. We must merge it with the transactions-data and potentially extrapolate forwards and
                 # backwards to get a combined, proper list of prices.
-                transactions_prices = self.transactions[config.DICT_KEY_PRICE]
-                transactions_dates = self.transactions[config.DICT_KEY_DATES]
+                transactions_prices = self.transactions[self.config.DICT_KEY_PRICE]
+                transactions_dates = self.transactions[self.config.DICT_KEY_DATES]
                 # Fuse the lists. Note that transactions_prices will be preferred, should market-data also be available
                 # for a given date. Also: ZOH-extrapolation is used (going with ZOH into the past makes no diff, though)
                 # The transactions-data also contains zero-values for price. Ignore those (discard_zeroes=True)
@@ -649,11 +651,11 @@ class Investment:
 
     def get_first_transaction_date(self):
         """Returns the date (as string) of the first recorded transaction of the account"""
-        return self.transactions[config.DICT_KEY_DATES][0]
+        return self.transactions[self.config.DICT_KEY_DATES][0]
 
     def get_last_transaction_date(self):
         """Returns the date (as string) of the last recorded transaction of the account"""
-        return self.transactions[config.DICT_KEY_DATES][-1]
+        return self.transactions[self.config.DICT_KEY_DATES][-1]
 
     def get_filename(self):
         """Return the filename of the associated investment-file (as string)"""

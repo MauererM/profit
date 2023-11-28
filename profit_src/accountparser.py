@@ -6,11 +6,10 @@ Copyright (c) 2018 Mario Mauerer
 """
 from . import stringoperations as stringops
 from . import account
-from . import config
 from . import files
 
 
-def parse_account_file(filepath, dateformat, analyzer, basecurrency, assetpurposes):
+def parse_account_file(filepath, dateformat, analyzer, basecurrency, assetpurposes, config):
     """Parses an account-file.
     Calls the constructor of the account-class at the end.
     Any relevant information in the file may not contain whitespaces! They are all eliminated while parsing.
@@ -171,5 +170,5 @@ def parse_account_file(filepath, dateformat, analyzer, basecurrency, assetpurpos
 
     # Create and populate the account-object:
     accnt = account.Account(accnt_id, accnt_type, accnt_purpose, accnt_currency, basecurrency, filepath,
-                            transactions, dateformat, analyzer, assetpurposes)
+                            transactions, dateformat, analyzer, assetpurposes, config)
     return accnt

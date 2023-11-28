@@ -10,10 +10,9 @@ import matplotlib
 import matplotlib.pyplot as plt
 import pylab
 from . import files
-from . import config
 
 
-def configure_plot_common():
+def configure_plot_common(config):
     """Set plot-configurations that are common to all plots:
     """
     plt.rcParams['figure.figsize'] = config.PLOTSIZE
@@ -46,10 +45,10 @@ def configure_plot_common():
     plt.rcParams['ytick.minor.pad'] = 3  # distance of labels(numbers) to major tick label in points
 
 
-def configure_gridplot():
+def configure_gridplot(config):
     """Set configuration parameters for stacked plots
     """
-    configure_plot_common()
+    configure_plot_common(config)
     plt.rcParams['font.size'] = 8.0  # Font size in points
     plt.rcParams['lines.linewidth'] = 0.8  # Line width in points
     plt.rcParams['lines.markeredgewidth'] = 0.2  # line width around the marker symbol
@@ -64,10 +63,10 @@ def configure_gridplot():
     plt.rcParams['figure.max_open_warning'] = 100  # Override a warning generation
 
 
-def configure_lineplot():
+def configure_lineplot(config):
     """Set configuration parameters for stacked plots
     """
-    configure_plot_common()
+    configure_plot_common(config)
     plt.rcParams['font.size'] = 10.0  # Font size in points
     plt.rcParams['lines.linewidth'] = 0.8  # Line width in points
     plt.rcParams['lines.markeredgewidth'] = 0.5  # line width around the marker symbol
@@ -81,10 +80,10 @@ def configure_lineplot():
     plt.rcParams['ytick.labelsize'] = 10.0
 
 
-def configure_stackedplot():
+def configure_stackedplot(config):
     """Set configuration parameters for stacked plots
     """
-    configure_plot_common()
+    configure_plot_common(config)
     plt.rcParams['font.size'] = 10.0  # Font size in points
     plt.rcParams['lines.linewidth'] = 0.5  # Line width in points
     plt.rcParams['lines.markeredgewidth'] = 0.5  # line width around the marker symbol
@@ -98,7 +97,7 @@ def configure_stackedplot():
     plt.rcParams['ytick.labelsize'] = 10.0
 
 
-def create_stackedplot(xlist, ylists, legendlist, colorlist, titlestring, xlabel, ylabel, alpha, fname):
+def create_stackedplot(xlist, ylists, legendlist, colorlist, titlestring, xlabel, ylabel, alpha, fname, config):
     """Create a stacked-plot
     :param xlist: List of x-values
     :param ylists: List of lists for y-values
@@ -115,7 +114,7 @@ def create_stackedplot(xlist, ylists, legendlist, colorlist, titlestring, xlabel
         if len(xlist) != len(y):
             raise RuntimeError("Can only create stacked plot with equally sized data. Plot-filename: " + fname)
 
-    configure_stackedplot()
+    configure_stackedplot(config)
 
     fig = plt.figure()
     ax = fig.add_subplot(111)
