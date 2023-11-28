@@ -402,7 +402,8 @@ def obtain_data_from_storage_and_provider(startdate_dataprovider, stopdate_datap
             if ret is not None:
                 providerdates, providerprices = ret
                 if len(providerdates) != len(providerprices):
-                    raise RuntimeError("Lists should be of identical length")
+                    print("Lists should be of identical length. Will throw an error.")
+                    raise Exception() # Raise without statement to trigger the try-catch loop, print the message above.
                 logging.debug("Obtained data from an online provider. First few data-points:")
                 debuglen = min(len(providerdates), 5)
                 for i in range(debuglen):
@@ -414,9 +415,9 @@ def obtain_data_from_storage_and_provider(startdate_dataprovider, stopdate_datap
                     print("Split(s) are detected in the storage-csv. Will modify provider data.")
 
             else:
-                logging.debug("Did not obtain provider-data")
+                logging.debug("Did not obtain provider-data.")
         except:
-            print("Failed to obtain provider data.")
+            print("Failed to obtain provider data. An (unknown?) error has occurred.")
     return storagedates, storageprices, providerdates, providerprices
 
 

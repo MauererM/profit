@@ -435,8 +435,6 @@ class MarketDataMain:
                 split_factor = split_factor * split_ratios[index]
                 split_cnt = split_cnt + 1
             values[idx] = values[idx] / split_factor
-        if split_cnt < len(split_dates):
-            raise RuntimeError(f"Not all splits were available in the provided dataset. File: {self.fname}")
         if len(values) != len(dates):
             raise RuntimeError("Something went wrong in the split-calculation.")
         return dates, values
