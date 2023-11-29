@@ -5,6 +5,7 @@ PROFIT - Python-Based Return on Investment and Financial Investigation Tool
 MIT License
 Copyright (c) 2018 Mario Mauerer
 """
+import sys
 import datetime
 import logging
 from pathlib import Path
@@ -95,7 +96,8 @@ def main(config):
     accountfiles.sort()  # Sort alphabetically
     if len(accountfiles) > 0:
         print(f"Found the following {len(accountfiles)} textfiles (.txt) in the account-folder:")
-        for x in accountfiles: print(x.name)
+        for x in accountfiles:
+            print(x.name)
     else:
         print(f"Found no account files in folder {account_path}")
     accounts = []
@@ -113,7 +115,8 @@ def main(config):
     invstmtfiles.sort()  # Sort alphabetically
     if len(invstmtfiles) > 0:
         print(f"Found the following {len(invstmtfiles)} textfiles (.txt) in the investment-folder:")
-        for x in invstmtfiles: print(x.name)
+        for x in invstmtfiles:
+            print(x.name)
     else:
         print(f"Found no investment files in folder {investment_path}")
     investments = []
@@ -128,7 +131,7 @@ def main(config):
     assets = accounts + investments
     if len(assets) < 1:
         print("\nNo accounts or investments found. Terminating.")
-        exit()
+        sys.exit(0)
 
     # Collect the currencies of all assets, and the corresponding exchange-rates
     currencies = []

@@ -52,6 +52,7 @@ class PlottingConfig:
     # Projected investment values:
     FILENAME_INVESTMENT_PROJECTIONS = "Investments_Values_Projected"
 
+
 def configure_plot_common(config):
     """Set plot-configurations that are common to all plots:
     """

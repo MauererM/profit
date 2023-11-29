@@ -92,7 +92,12 @@ def create_dict_from_list(string_list):
     Note: If there are duplicate entries in the string_list, the previous entries will be overwritten by the latter ones
     :param string_list: List of strings
     :return: Dict with the strings as keys and values as list indices"""
-    # Todo: Sanitize input? Check for strings? Check if no duplicates?
+    if not isinstance(string_list, list):
+        raise RuntimeError("Expected a list")
+    if len(string_list) == 0:
+        return {}
+    if not isinstance(string_list[0], str):
+        raise RuntimeError("Expected a list of strings")
     d = {}
     for i, txt in enumerate(string_list):
         if txt not in d:
@@ -100,6 +105,7 @@ def create_dict_from_list(string_list):
         else:
             raise RuntimeError("Received duplicate date when trying to create date-dict. This is likely not OK.")
     return d
+
 
 """
     Stand-alone execution for testing:

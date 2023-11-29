@@ -46,7 +46,8 @@ class StockMarketIndicesData:
         self.storageobj = self.__get_index_storage_object()
         if self.storageobj is None:
             self.__create_new_index_storage_file()  # Create a new file, if it does not yet exist.
-        startdate_dataprovider, stopdate_dataprovider, startdate_from_storage, stopdate_from_storage = get_provider_storage_ranges(
+        startdate_dataprovider, stopdate_dataprovider, \
+        startdate_from_storage, stopdate_from_storage = get_provider_storage_ranges(
             self.storageobj, self.storage, self.analyzer, self.analysis_startdate, self.analysis_stopdate)
         storagedates, storageprices, providerdates, providerprices = obtain_data_from_storage_and_provider(
             startdate_dataprovider, stopdate_dataprovider,

@@ -124,14 +124,6 @@ class AccountFile:
         # Get the lines, strip all white spaces:
         self.lines = read_strip_file_lines(self.filepath)
 
-    def __read_account_file(self):
-        try:
-            lines = files.get_file_lines(self.filepath)
-            lines = [stringoperations.strip_whitespaces(x) for x in lines]
-            return lines
-        except:
-            raise RuntimeError(f"Could not read lines of file {self.filepath}")
-
     def parse_account_file(self):
         """Parses an account-file.
         Calls the constructor of the account-class at the end, and returns the account-instance.
@@ -163,8 +155,8 @@ class AccountFile:
 
     def __parse_header_0(self, line):
         """Store the ID of the account"""
-        id, val = stringoperations.read_crop_string_delimited(line, self.profit_conf.DELIMITER)
-        if id == self.parsing_conf.STRING_ID:
+        id_, val = stringoperations.read_crop_string_delimited(line, self.profit_conf.DELIMITER)
+        if id_ == self.parsing_conf.STRING_ID:
             self.account_dict[self.parsing_conf.STRING_ID] = val
         else:
             raise RuntimeError(f"Asset-file does not start with 'ID'-string. File: {self.filepath}")
@@ -172,8 +164,8 @@ class AccountFile:
 
     def __parse_header_1(self, line):
         """Check if it is actually an account-type"""
-        id, val = stringoperations.read_crop_string_delimited(line, self.profit_conf.DELIMITER)
-        if id == self.parsing_conf.STRING_TYPE:
+        id_, val = stringoperations.read_crop_string_delimited(line, self.profit_conf.DELIMITER)
+        if id_ == self.parsing_conf.STRING_TYPE:
             if val != self.parsing_conf.STRING_ASSET_ACCOUNT:
                 raise RuntimeError(f"File does not encode an account. File: {self.filepath}")
             self.account_dict[self.parsing_conf.STRING_TYPE] = val
@@ -183,8 +175,8 @@ class AccountFile:
 
     def __parse_header_2(self, line):
         """Store the Purpose of the account"""
-        id, val = stringoperations.read_crop_string_delimited(line, self.profit_conf.DELIMITER)
-        if id == self.parsing_conf.STRING_PURPOSE:
+        id_, val = stringoperations.read_crop_string_delimited(line, self.profit_conf.DELIMITER)
+        if id_ == self.parsing_conf.STRING_PURPOSE:
             self.account_dict[self.parsing_conf.STRING_PURPOSE] = val
         else:
             raise RuntimeError(f"Asset-file does not have 'Purpose'-string on the 3rd line. File: {self.filepath}")
@@ -192,8 +184,8 @@ class AccountFile:
 
     def __parse_header_3(self, line):
         """Store the Currency of the account"""
-        id, val = stringoperations.read_crop_string_delimited(line, self.profit_conf.DELIMITER)
-        if id == self.parsing_conf.STRING_CURRENCY:
+        id_, val = stringoperations.read_crop_string_delimited(line, self.profit_conf.DELIMITER)
+        if id_ == self.parsing_conf.STRING_CURRENCY:
             self.account_dict[self.parsing_conf.STRING_CURRENCY] = val
         else:
             raise RuntimeError(f"Asset-file does not have 'Currency'-string on the 4th line. File: {self.filepath}")
@@ -201,8 +193,8 @@ class AccountFile:
 
     def __parse_header_4(self, line):
         """Check for the "Transactions"-String:"""
-        id, val = stringoperations.read_crop_string_delimited(line, self.profit_conf.DELIMITER)
-        if id != self.parsing_conf.STRING_TRANSACTIONS:
+        id_, _ = stringoperations.read_crop_string_delimited(line, self.profit_conf.DELIMITER)
+        if id_ != self.parsing_conf.STRING_TRANSACTIONS:
             raise RuntimeError(f"Asset-file does not have 'Transactions'-string on the 5th line. File: {self.filepath}")
         return True
 
@@ -345,8 +337,8 @@ class InvestmentFile:
 
     def __parse_header_0(self, line):
         """Store the ID of the Investment"""
-        id, val = stringoperations.read_crop_string_delimited(line, self.profit_conf.DELIMITER)
-        if id == self.parsing_conf.STRING_ID:
+        id_, val = stringoperations.read_crop_string_delimited(line, self.profit_conf.DELIMITER)
+        if id_ == self.parsing_conf.STRING_ID:
             self.investment_dict[self.parsing_conf.STRING_ID] = val
         else:
             raise RuntimeError(f"Asset-file does not start with 'ID'-string. File: {self.filepath}")
@@ -354,8 +346,8 @@ class InvestmentFile:
 
     def __parse_header_1(self, line):
         """Check if it is actually an investment-type"""
-        id, val = stringoperations.read_crop_string_delimited(line, self.profit_conf.DELIMITER)
-        if id == self.parsing_conf.STRING_TYPE:
+        id_, val = stringoperations.read_crop_string_delimited(line, self.profit_conf.DELIMITER)
+        if id_ == self.parsing_conf.STRING_TYPE:
             self.investment_dict[self.parsing_conf.STRING_TYPE] = val
         else:
             raise RuntimeError(f"Asset-file does not have 'Type'-string on the 2nd line. File: {self.filepath}")
@@ -363,8 +355,8 @@ class InvestmentFile:
 
     def __parse_header_2(self, line):
         """Store the Purpose of the investment"""
-        id, val = stringoperations.read_crop_string_delimited(line, self.profit_conf.DELIMITER)
-        if id == self.parsing_conf.STRING_PURPOSE:
+        id_, val = stringoperations.read_crop_string_delimited(line, self.profit_conf.DELIMITER)
+        if id_ == self.parsing_conf.STRING_PURPOSE:
             self.investment_dict[self.parsing_conf.STRING_PURPOSE] = val
         else:
             raise RuntimeError(f"Asset-file does not have 'Purpose'-string on the 3rd line. File: {self.filepath}")
@@ -372,8 +364,8 @@ class InvestmentFile:
 
     def __parse_header_3(self, line):
         """Store the Currency of the investment"""
-        id, val = stringoperations.read_crop_string_delimited(line, self.profit_conf.DELIMITER)
-        if id == self.parsing_conf.STRING_CURRENCY:
+        id_, val = stringoperations.read_crop_string_delimited(line, self.profit_conf.DELIMITER)
+        if id_ == self.parsing_conf.STRING_CURRENCY:
             self.investment_dict[self.parsing_conf.STRING_CURRENCY] = val
         else:
             raise RuntimeError(f"Asset-file does not have 'Currency'-string on the 4th line. File: {self.filepath}")
@@ -381,8 +373,8 @@ class InvestmentFile:
 
     def __parse_header_4(self, line):
         """Store the symbol of the investment"""
-        id, val = stringoperations.read_crop_string_delimited(line, self.profit_conf.DELIMITER)
-        if id == self.parsing_conf.STRING_SYMBOL:
+        id_, val = stringoperations.read_crop_string_delimited(line, self.profit_conf.DELIMITER)
+        if id_ == self.parsing_conf.STRING_SYMBOL:
             self.investment_dict[self.parsing_conf.STRING_SYMBOL] = val
         else:
             raise RuntimeError(f"Asset-file does not have 'Symbol'-string on the 5th line. File: {self.filepath}")
@@ -390,8 +382,8 @@ class InvestmentFile:
 
     def __parse_header_5(self, line):
         """Store the Exchange of the investment"""
-        id, val = stringoperations.read_crop_string_delimited(line, self.profit_conf.DELIMITER)
-        if id == self.parsing_conf.STRING_EXCHANGE:
+        id_, val = stringoperations.read_crop_string_delimited(line, self.profit_conf.DELIMITER)
+        if id_ == self.parsing_conf.STRING_EXCHANGE:
             self.investment_dict[self.parsing_conf.STRING_EXCHANGE] = val
         else:
             raise RuntimeError(f"Asset-file does not have 'Exchange'-string on the 6th line. File: {self.filepath}")
@@ -399,8 +391,8 @@ class InvestmentFile:
 
     def __parse_header_6(self, line):
         """Check for the "Transactions"-String:"""
-        id, val = stringoperations.read_crop_string_delimited(line, self.profit_conf.DELIMITER)
-        if id != self.parsing_conf.STRING_TRANSACTIONS:
+        id_, _ = stringoperations.read_crop_string_delimited(line, self.profit_conf.DELIMITER)
+        if id_ != self.parsing_conf.STRING_TRANSACTIONS:
             raise RuntimeError(f"Asset-file does not have 'Transactions'-string on the 7th line. File: {self.filepath}")
         return True
 

@@ -1,9 +1,15 @@
+"""Storage-classes (stocks, forex, indices) must adhere to this ABC
+
+PROFIT - Python-Based Return on Investment and Financial Investigation Tool
+MIT License
+Copyright (c) 2018-2023 Mario Mauerer
+"""
+
 from abc import ABC, abstractmethod
 
 
-# Todo add header (also in data-provider abc), add description
-
 class MarketDataStorage(ABC):
+    """The ABC for the data storage classes (e.g., stock, forex, indices)"""
 
     @abstractmethod
     def get_filename(self):

@@ -9,16 +9,17 @@ Copyright (c) 2018-2023 Mario Mauerer
 import cProfile
 from pstats import Stats
 from profit_src.profit import main as dut_main
+from config import ProfitConfig
 
-script = "profit.py"
-METHOD = "exec"
+# Note: Run this from the top-level directory (where profit_main.py) resides! It is stored here as it is a debug-tool.
 
 if __name__ == "__main__":
     # Create a profiler object
     profiler = cProfile.Profile()
 
     profiler.enable()
-    dut_main()
+    config = ProfitConfig()
+    dut_main(config)
     profiler.disable()
 
     stats = Stats(profiler)

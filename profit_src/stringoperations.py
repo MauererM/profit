@@ -4,9 +4,9 @@ PROFIT - Python-Based Return on Investment and Financial Investigation Tool
 MIT License
 Copyright (c) 2018 Mario Mauerer
 """
-
 import re
 import datetime as dt
+
 
 def check_allowed_strings(strlist, reflist):
     """Checks, if a list only contains allowed strings.

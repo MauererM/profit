@@ -505,7 +505,7 @@ class Investment:
 
             elif full_dates is None:  # Transactions-data needed!
                 print(f"No financial data available for {self.symbol}")
-                print(f"Provide an update-transaction to deliver the most recent price of the asset. "
+                print("Provide an update-transaction to deliver the most recent price of the asset. "
                       "Otherwise, the holding period returns cannot be calculated.")
                 print("Deriving prices from transactions-data.")
                 trans_values_interp = self.__get_format_transactions_values()

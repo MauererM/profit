@@ -1,3 +1,10 @@
+"""Data providers must adhere to this ABC
+
+PROFIT - Python-Based Return on Investment and Financial Investigation Tool
+MIT License
+Copyright (c) 2018-2023 Mario Mauerer
+"""
+
 from abc import ABC, abstractmethod
 
 

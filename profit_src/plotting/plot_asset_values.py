@@ -274,7 +274,7 @@ def plot_asset_values_stacked(assetlist, fname, title, analyzer, config):
     fname = plotting.modify_plot_path(config.PLOTS_FOLDER, fname)
     # Sanity Check:
     if len(assetlist) == 0:
-        print(f"No assets given for plot: {fname.name}")  # Todo: convert all these fname to fname.name
+        print(f"No assets given for plot: {fname.name}")
         return
 
     if len(assetlist) == 0:
