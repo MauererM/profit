@@ -105,7 +105,6 @@ class ProfitConfig:
     Do not provide the file-extension; PDF files will be created.
     The plots are stored in the "plots" folder
     """
-    # Todo: These should be strings here. Are they converted to Path objects when used?
     # Todo: Should these names live closer to the plotting-class?
     # Values of all assets, stacked:
     FILENAME_STACKPLOT_ASSET_VALUES = "Asset_Values_Stacked"

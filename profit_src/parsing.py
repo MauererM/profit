@@ -423,7 +423,7 @@ class InvestmentFile:
                 line_id, line_val = stringoperations.read_crop_string_delimited(line_val, self.profit_conf.DELIMITER)
             if line_id != strings_to_check[i]:
                 raise RuntimeError(f"Column {i + 1:d} of transactions-data does not start with "
-                                   f"string '{strings_to_check[i]}'. File: {self.filepath}")  # Todo Test if all the parsing actually works. Mess with a account and investment file to see if it fails properly.
+                                   f"string '{strings_to_check[i]}'. File: {self.filepath}")
         return True
 
     def __parse_transactions_table(self, lines):
