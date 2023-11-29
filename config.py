@@ -53,17 +53,16 @@ class ProfitConfig:
     They are given in the following as dicts, with a Name, Symbol and Exchange, 
     whereas the latter two are required by the data-provider tool.
     """
-    # Todo: Update this dict/format to the newest system that is used. Also, when obtaining them, output the name in the terminal (not the symbol)?
     # Dow Jones industrial average:
-    INDEX_DOW = {"Name": "Dow Jones", "Symbol": "DJI", "Exchange": "INDEXDJX"}
+    INDEX_DOW = {"Name": "Dow Jones", "Symbol": "DJI"}
     # NASDAQ:
-    INDEX_NASDAQ = {"Name": "NASDAQ", "Symbol": "^IXIC", "Exchange": "INDEXNASDAQ"}
+    INDEX_NASDAQ = {"Name": "NASDAQ", "Symbol": "^IXIC"}
     # DAX:
-    INDEX_DAX = {"Name": "DAX", "Symbol": "^GDAXI", "Exchange": "INDEXDAX"}
+    INDEX_DAX = {"Name": "DAX", "Symbol": "^GDAXI"}
     # SP500:
-    INDEX_SP = {"Name": "S&P500", "Symbol": "^GSPC", "Exchange": "INDEXSP500"}
+    INDEX_SP = {"Name": "S&P500", "Symbol": "^GSPC"}
     # SMI:
-    INDEX_SMI = {"Name": "SMI", "Symbol": "^SSMI", "Exchange": "INDEXSMI"}
+    INDEX_SMI = {"Name": "SMI", "Symbol": "^SSMI"}
 
     # This list collects the dictionaries, its name must be INDICES! # Todo Why?
     INDICES = [INDEX_DOW, INDEX_NASDAQ, INDEX_DAX, INDEX_SP, INDEX_SMI]

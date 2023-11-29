@@ -422,7 +422,8 @@ def obtain_data_from_storage_and_provider(startdate_dataprovider, stopdate_datap
                     print(f"Obtained some provider data for the currencies {symbol_a} and {symbol_b}")
             elif isinstance(storageobj, IndexData):
                 symbol = storageobj.get_id()  # We use the id as symbol, as this can contain non-alphanumeric chars.
-                ret = provider.get_stock_data(symbol, "", startdate_dataprovider, stopdate_dataprovider)
+                exchange = ""
+                ret = provider.get_stock_data(symbol, exchange, startdate_dataprovider, stopdate_dataprovider)
                 if ret is not None:
                     print(f"Obtained some provider data for the stock market index {symbol}")
             else:
