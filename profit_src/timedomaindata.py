@@ -124,18 +124,16 @@ class ForexTimeDomainData:
         self.storageobj = self.__get_forex_storage_object()
         if self.storageobj is None:
             self.__create_new_forex_storage_file()  # Create a new file, if it does not yet exist.
-        startdate_dataprovider, stopdate_dataprovider, startdate_from_storage, stopdate_from_storage = get_provider_storage_ranges(
-            self.storageobj, self.storage, self.analyzer, self.analysis_startdate, self.analysis_stopdate)
+        startdate_dataprovider, stopdate_dataprovider, startdate_from_storage, stopdate_from_storage = \
+            get_provider_storage_ranges(self.storageobj, self.storage, self.analyzer, self.analysis_startdate,
+                                        self.analysis_stopdate)
         storagedates, storageprices, providerdates, providerprices = obtain_data_from_storage_and_provider(
             startdate_dataprovider, stopdate_dataprovider,
             startdate_from_storage, stopdate_from_storage, self.storage, self.storageobj, self.provider)
-        self.full_dates, self.full_prices, self.write_to_file = post_process_provider_storage_data(storagedates,
-                                                                                                   storageprices,
-                                                                                                   providerdates,
-                                                                                                   providerprices,
-                                                                                                   self.storage,
-                                                                                                   self.storageobj,
-                                                                                                   self.analyzer)
+        self.full_dates, self.full_prices, self.write_to_file = \
+            post_process_provider_storage_data(storagedates, storageprices, providerdates, providerprices, self.storage,
+                                               self.storageobj, self.analyzer)
+
         # No forex data available:
         if self.full_dates is None or len(self.full_dates) < 2:
             # We cannot continue, forex-data is a must, as otherwise the asset values are not known.
@@ -146,8 +144,6 @@ class ForexTimeDomainData:
         if self.write_to_file is True:
             self.storage.write_data_to_storage(self.storageobj, (self.full_dates, self.full_prices))
 
-        # Todo: The code below can probably be fused with what is currently still in Investment.py
-        # Post-process the data
         # The returned forex data might not be available until today (e.g., if this is run on a weekend).
         # Extend the data accordingly into the future. Note: In Forex, this is OK to do (in investments,
         # it is NOT OK to do this, as there, the manually entered transactions-data may not be overwritten. But in
@@ -244,18 +240,51 @@ class StockTimeDomainData:
         self.storageobj = self.__get_stock_storage_object()
         if self.storageobj is None:
             self.__create_new_stock_storage_file()  # Create a new file, if it does not yet exist.
-        startdate_dataprovider, stopdate_dataprovider, startdate_from_storage, stopdate_from_storage = get_provider_storage_ranges(
-            self.storageobj, self.storage, self.analyzer, self.analysis_startdate, self.analysis_stopdate)
+        startdate_dataprovider, stopdate_dataprovider, startdate_from_storage, stopdate_from_storage = \
+            get_provider_storage_ranges(self.storageobj, self.storage, self.analyzer, self.analysis_startdate,
+                                        self.analysis_stopdate)
         storagedates, storageprices, providerdates, providerprices = obtain_data_from_storage_and_provider(
             startdate_dataprovider, stopdate_dataprovider,
             startdate_from_storage, stopdate_from_storage, self.storage, self.storageobj, self.provider)
-        self.full_dates, self.full_prices, self.write_to_file = post_process_provider_storage_data(storagedates,
-                                                                                                   storageprices,
-                                                                                                   providerdates,
-                                                                                                   providerprices,
-                                                                                                   self.storage,
-                                                                                                   self.storageobj,
-                                                                                                   self.analyzer)
+        self.full_dates, self.full_prices, self.write_to_file = \
+            post_process_provider_storage_data(storagedates, storageprices, providerdates, providerprices, self.storage,
+                                               self.storageobj, self.analyzer)
+
+        # Write the fused provider- and storge-data back to file:
+        if self.write_to_file is True:
+            self.storage.write_data_to_storage(self.storageobj, (self.full_dates, self.full_prices))
+
+        if self.full_dates is not None:
+            # If only 3 days are missing until "today", then extrapolate forward
+            # (avoid having to manually enter data in transactions when not really needed)
+            lastdate_dt = self.analyzer.str2datetime(self.full_dates[-1])
+            stopdate_analysis_dt = self.analyzer.str2datetime(self.analysis_stopdate)
+            startdate_analysis_dt = self.analyzer.str2datetime(self.analysis_startdate)
+            duration = stopdate_analysis_dt - lastdate_dt
+            if duration.days <= 3:
+                self.full_dates, self.full_prices = dateoperations.extend_data_future(self.full_dates, self.full_prices,
+                                                                                      self.analysis_stopdate,
+                                                                                      self.analyzer,
+                                                                                      zero_padding=False)
+
+            # Interpolate the data to get a consecutive list (this only fills holes, and does not
+            # extrapolate over the given date-range):
+            self.full_dates, self.full_prices = dateoperations.interpolate_data(self.full_dates, self.full_prices,
+                                                                                self.analyzer)
+
+            # The available market-data (from the dataprovider and the database) might not reach back to the
+            # desired analysis range startdate! Check it:
+            full_dates_start = self.analyzer.str2datetime(self.full_dates[0])
+            full_dates_stop = self.analyzer.str2datetime(self.full_dates[-1])
+            if full_dates_start > startdate_analysis_dt:
+                print(f"Available prices (provider and stored data) are only available from the {self.full_dates[0]} "
+                      f"onwards. Earliest available data will be extrapolated backwards and merged with the "
+                      f"manually entered prices. \nSymbol: {self.symbol}, exchange: {self.exchange}")
+            if full_dates_stop < stopdate_analysis_dt:
+                print(f"Available prices (data provider and stored market-data) are only available until "
+                      f"the {self.full_dates[-1]}. Latest available data will be extrapolated forwards and merged with "
+                      f"the manually entered prices.\nSymbol: {self.symbol}, exchange: {self.exchange}."
+                      f"\nUpdate the storage data file or transactions-list for correct returns calculation")
 
     def __create_new_stock_storage_file(self):
         self.storageobj = self.storage.create_new_storage_file("stock", (self.symbol, self.exchange, self.currency))
@@ -402,12 +431,12 @@ def obtain_data_from_storage_and_provider(startdate_dataprovider, stopdate_datap
                 providerdates, providerprices = ret
                 if len(providerdates) != len(providerprices):
                     print("Lists should be of identical length. Will throw an error.")
-                    raise Exception() # Raise without statement to trigger the try-catch loop, print the message above.
+                    raise Exception()  # Raise without statement to trigger the try-catch loop, print the message above.
                 logging.debug("Obtained data from an online provider. First few data-points:")
                 debuglen = min(len(providerdates), 5)
                 for i in range(debuglen):
                     logging.debug(f"Date: {providerdates[i]}\t Value: {providerprices[i]:.3f}")
-                splits = storageobj.get_splits() # This is currently only used for stocks/could also be done above,
+                splits = storageobj.get_splits()  # This is currently only used for stocks/could also be done above,
                 # but all storageobj implement this.
                 if len(splits) > 0:
                     providerdates, providerprices = storage.apply_splits(splits, (providerdates, providerprices))

@@ -98,7 +98,7 @@ class ProfitConfig:
     FORMAT_DATE = "%d.%m.%Y"
 
     # Version of PROFIT:
-    PROFIT_VERSION = 1.4
+    PROFIT_VERSION = 1.4 # Todo: Does not belong here
 
     """
     The following strings name the files of the different plots that will be generated.

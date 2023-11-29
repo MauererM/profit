@@ -157,13 +157,8 @@ class AccountFile:
         self.__parse_transactions_table(self.lines[LAST_HEADER_LINE:])
 
         # Create the account-instance, and return it
-        acnt = account.Account(self.account_dict,
-                               self.profit_conf.BASECURRENCY,
-                               self.filepath,
-                               self.transactions,
-                               self.analyzer,
-                               self.profit_conf.ASSET_PURPOSES,
-                               self.parsing_conf)
+        acnt = account.Account(self.account_dict, self.filepath, self.transactions, self.analyzer, self.parsing_conf,
+                               self.profit_conf)
         return acnt
 
     def __parse_header_0(self, line):
@@ -344,9 +339,8 @@ class InvestmentFile:
         self.__parse_transactions_table(self.lines[LAST_HEADER_LINE:])
 
         # Create the investment-instance, and return it
-        invstmt = investment.Investment(self.investment_dict, self.profit_conf.BASECURRENCY, self.filepath,
-                                        self.transactions, self.dataprovider, self.analyzer,
-                                        self.profit_conf.ASSET_PURPOSES, self.storage, self.parsing_conf)
+        invstmt = investment.Investment(self.investment_dict, self.filepath, self.transactions, self.dataprovider,
+                                        self.analyzer, self.storage, self.parsing_conf, self.profit_conf)
         return invstmt
 
     def __parse_header_0(self, line):

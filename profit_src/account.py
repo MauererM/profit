@@ -12,8 +12,8 @@ from . import dateoperations
 class Account:
     """Implements an account. Parses transactions, provides analysis-data, performs currency conversions"""
 
-    def __init__(self, account_dict, basecurrency, filename, transactions_dict, analyzer, assetpurposes,
-                 parsing_config):
+    def __init__(self, account_dict, filename, transactions_dict, analyzer,
+                 parsing_config, profit_config):
         """Account constructor
         Use the function parse_account_file to obtain the necessary information from an account file.
         It sets up all internal data structures and analyzes the transactions.
@@ -21,19 +21,21 @@ class Account:
         :param account_dict: The account-metadata-dict from parsing
         :param filename: Path-Object of the filename associated with this account
         :param transactions_dict: Dictionary with the transactions-data, from parsing
-        :assetpurposes: List of strings of asset purposes, from the PROFIT config.py
-        :parsing_config: The parsing configuration class
+        :param analyzer: Analyzer-instance (for cached analyses)
+        :parsing_config: The parsing configuration class/instance
+        :profit_config: The profit configuration class/instance
         """
         self.config = parsing_config
         self.id = account_dict[self.config.STRING_ID]
         self.type = account_dict[self.config.STRING_TYPE]
         self.purpose = account_dict[self.config.STRING_PURPOSE]
         self.currency = account_dict[self.config.STRING_CURRENCY]
-        self.basecurrency = basecurrency
+        self.basecurrency = profit_config.BASECURRENCY
         self.filename = filename
         self.transactions = transactions_dict
         self.analyzer = analyzer
         self.dateformat = self.analyzer.get_dateformat()
+        self.assetpurposes = profit_config.ASSET_PURPOSES
 
         # Analysis data is not yet prepared:
         self.analysis_data_done = False
@@ -53,13 +55,8 @@ class Account:
             raise RuntimeError(f"Transaction-dates are not in temporal order. But: identical successive dates are "
                                f"allowed. Filename: {self.filename}")
 
-        # Check, if the transactions-actions-column only contains allowed strings: # Todo: Remove this, this is already done in the parser
-        if stringoperations.check_allowed_strings(self.transactions[self.config.DICT_KEY_ACTIONS],
-                                                  self.config.ACCOUNT_ALLOWED_ACTIONS) is False:
-            raise RuntimeError(f"Actions-column contains faulty strings. Filename: {self.filename}")
-
         # Check, if the purpose-string only contains allowed purposes:
-        if stringoperations.check_allowed_strings([self.purpose], assetpurposes) is False:
+        if stringoperations.check_allowed_strings([self.purpose], self.assetpurposes) is False:
             raise RuntimeError(f"Purpose of Account is not recognized. Filename: {self.filename}")
 
         # Create a list of consecutive calendar days that corresponds to the date-range of the recorded transactions:
@@ -73,17 +70,17 @@ class Account:
 
         # The cost and interest does not need interpolation. The lists are populated (corresponding to datelist), i.e.,
         # the values correspond to the day they occur, all other values are set to zero
-        self.costlist = self.populate_full_list(self.transactions[self.config.DICT_KEY_DATES],
+        self.costlist = self.__populate_full_list(self.transactions[self.config.DICT_KEY_DATES],
                                                 self.transactions[self.config.DICT_KEY_ACTIONS],
                                                 self.transactions[self.config.DICT_KEY_AMOUNTS],
                                                 self.config.STRING_ACCOUNT_ACTION_COST, self.datelist)
-        self.interestlist = self.populate_full_list(self.transactions[self.config.DICT_KEY_DATES],
+        self.interestlist = self.__populate_full_list(self.transactions[self.config.DICT_KEY_DATES],
                                                     self.transactions[self.config.DICT_KEY_ACTIONS],
                                                     self.transactions[self.config.DICT_KEY_AMOUNTS],
                                                     self.config.STRING_ACCOUNT_ACTION_INTEREST,
                                                     self.datelist)
 
-    def populate_full_list(self, trans_dates, trans_actions, trans_amounts, triggerstring, datelist):
+    def __populate_full_list(self, trans_dates, trans_actions, trans_amounts, triggerstring, datelist):
         """Populates a list with amounts of certain transactions
         The dates correspond to the dates in both datelist and trans_dates.
         The type of transaction is given by "triggerstring"
