@@ -195,19 +195,19 @@ class Investment:
         for idx, _ in enumerate(trans_dates):
             # Negative investment-balances do not make sense:
             if trans_balance[idx] < 0.0:
-                raise RuntimeError("Detected a negative balance. This does not make sense. "
-                                   "Transaction-Nr: " + repr(idx + 1))
+                raise RuntimeError(f"Detected a negative balance. This does not make sense. "
+                                   f"Transaction-Nr: {(idx + 1):d}")
             # If an investment is extended by buying more:
             if trans_actions[idx] == self.config.STRING_INVSTMT_ACTION_BUY:
                 if idx == 0:
                     if trans_balance[idx] != trans_quantity[idx]:
-                        raise RuntimeError("Transactions not in order (balance or quantity not correct). "
-                                           "Transaction-Nr: " + repr(idx + 1))
+                        raise RuntimeError(f"Transactions not in order (balance or quantity not correct). "
+                                           f"Transaction-Nr: {(idx + 1):d}")
                 else:
                     if helper.isclose(trans_balance[idx],
                                       (trans_balance[idx - 1] + trans_quantity[idx])) is False:
-                        raise RuntimeError("Transactions not in order (balance or quantity not correct). "
-                                           "Transaction-Nr: " + repr(idx + 1))
+                        raise RuntimeError(f"Transactions not in order (balance or quantity not correct). "
+                                           f"Transaction-Nr: {(idx + 1):d}")
             elif trans_actions[idx] == self.config.STRING_INVSTMT_ACTION_SELL:
                 if idx == 0:
                     raise RuntimeError("First investment-transaction cannot be a sell.")
@@ -235,12 +235,12 @@ class Investment:
                     raise RuntimeError("Balance changed without buy/sell action.")
 
                 if trans_quantity[idx] > 1e-9:
-                    raise RuntimeError("Only sell or buy transactions may provide a quantity."
-                                       "Transaction-Nr: " + repr(idx + 1))
+                    raise RuntimeError(f"Only sell or buy transactions may provide a quantity."
+                                       f"Transaction-Nr: {(idx + 1):d}")
             if trans_actions[idx] == self.config.STRING_INVSTMT_ACTION_UPDATE:
                 if trans_quantity[idx] > 1e-9 or trans_cost[idx] > 1e-9 or trans_payout[idx] > 1e-9:
-                    raise RuntimeError("Update-actions may not have quantity, cost or payout, only price."
-                                       "Transaction-Nr: " + repr(idx + 1))
+                    raise RuntimeError(f"Update-actions may not have quantity, cost or payout, only price."
+                                       f"Transaction-Nr: {(idx + 1):d}")
         # Do some further checks:
         # Check every transaction:
         for idx, _ in enumerate(trans_dates):
@@ -248,16 +248,16 @@ class Investment:
                     trans_actions[idx] == self.config.STRING_INVSTMT_ACTION_SELL or \
                     trans_actions[idx] == self.config.STRING_INVSTMT_ACTION_SPLIT:
                 if trans_payout[idx] > 1e-9:
-                    raise RuntimeError("Buy, sell or split-transactions may not encode a payout. "
-                                       "Transaction-Nr: " + repr(idx + 1))
+                    raise RuntimeError(f"Buy, sell or split-transactions may not encode a payout. "
+                                       f"Transaction-Nr: {(idx + 1):d}")
             if trans_actions[idx] == self.config.STRING_INVSTMT_ACTION_PAYOUT:
                 if trans_quantity[idx] > 1e-9 or trans_price[idx] > 1e-9:
-                    raise RuntimeError("Payout-transactions may not have quantities or prices. "
-                                       "Transaction-Nr: " + repr(idx + 1))
+                    raise RuntimeError(f"Payout-transactions may not have quantities or prices. "
+                                       f"Transaction-Nr: {(idx + 1):d}")
             if trans_actions[idx] == self.config.STRING_INVSTMT_ACTION_COST:
                 if trans_quantity[idx] > 1e-9 or trans_price[idx] > 1e-9 or trans_payout[idx] > 1e-9:
-                    raise RuntimeError("Cost-transactions may not have quantities, prices or payouts. "
-                                       "Transaction-Nr: " + repr(idx + 1))
+                    raise RuntimeError(f"Cost-transactions may not have quantities, prices or payouts. "
+                                       f"Transaction-Nr: {(idx + 1):d}")
         return True
 
     def __populate_full_list(self, trans_dates, trans_amounts, datelist, sum_ident_days=False):
@@ -626,37 +626,37 @@ class Investment:
     def get_analysis_datelist(self):
         """Return the list of dates of the analysis-data (dates as strings)"""
         if self.analysis_data_done is False:
-            raise RuntimeError("Cannot return analysis datelist. Set analysis data first. Account ID: " + self.id)
+            raise RuntimeError(f"Cannot return analysis datelist. Set analysis data first. ID: {self.id}")
         return list(self.analysis_dates)
 
     def get_analysis_valuelist(self):
         """Return the list of values of the analysis-data (floats)"""
         if self.analysis_data_done is False:
-            raise RuntimeError("Cannot return analysis valuelist. Set analysis data first. Account ID: " + self.id)
+            raise RuntimeError(f"Cannot return analysis valuelist. Set analysis data first. ID: {self.id}")
         return list(self.analysis_values)
 
     def get_analysis_costlist(self):
         """Return the list of costs of the analysis-data (floats)"""
         if self.analysis_data_done is False:
-            raise RuntimeError("Cannot return analysis costlist. Set analysis data first. Account ID: " + self.id)
+            raise RuntimeError(f"Cannot return analysis costlist. Set analysis data first. ID: {self.id}")
         return list(self.analysis_costs)
 
     def get_analysis_payoutlist(self):
         """Return the list of payouts of the analysis-data (floats)"""
         if self.analysis_data_done is False:
-            raise RuntimeError("Cannot return analysis payoutlist. Set analysis data first. Account ID: " + self.id)
+            raise RuntimeError(f"Cannot return analysis payoutlist. Set analysis data first. ID: {self.id}")
         return list(self.analysis_payouts)
 
     def get_analysis_inflowlist(self):
         """Return the list of inflows of the analysis-data (floats)"""
         if self.analysis_data_done is False:
-            raise RuntimeError("Cannot return analysis inflowlist. Set analysis data first. Account ID: " + self.id)
+            raise RuntimeError(f"Cannot return analysis inflowlist. Set analysis data first. ID: {self.id}")
         return list(self.analysis_inflows)
 
     def get_analysis_outflowlist(self):
         """Return the list of outflows of the analysis-data (floats)"""
         if self.analysis_data_done is False:
-            raise RuntimeError("Cannot return analysis outflowlist. Set analysis data first. Account ID: " + self.id)
+            raise RuntimeError(f"Cannot return analysis outflowlist. Set analysis data first. ID: {self.id}")
         return list(self.analysis_outflows)
 
     def get_dateformat(self):

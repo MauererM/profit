@@ -152,7 +152,7 @@ def create_stackedplot(xlist, ylists, legendlist, colorlist, titlestring, xlabel
     # Sanity-Check:
     for y in ylists:
         if len(xlist) != len(y):
-            raise RuntimeError("Can only create stacked plot with equally sized data. Plot-filename: " + fname)
+            raise RuntimeError(f"Can only create stacked plot with equally sized data. Plot-filename: {fname}")
 
     configure_stackedplot(config)
 
@@ -236,8 +236,8 @@ def open_plot(fname):
     """
     # Windows:
     if os.name == "nt":
-        os.system("start " + fname)
+        os.system(f"start {fname}")
     # Linux:
     elif os.name == "posix":
-        name = "/usr/bin/xdg-open " + fname
+        name = f"/usr/bin/xdg-open {fname}"
         os.system(name)

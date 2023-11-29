@@ -25,7 +25,7 @@ def plot_asset_values_indices(assetlist, indexlist, fname, titlestr, analyzer, c
     fname = plotting.modify_plot_path(config.PLOTS_FOLDER, fname)
     # Sanity Check:
     if len(assetlist) == 0:
-        print("No assets given for plot: " + fname)
+        print(f"No assets given for plot: {fname}")
         return
 
     # The date-range of the analysis-period (should be identical in all assets)
@@ -42,7 +42,7 @@ def plot_asset_values_indices(assetlist, indexlist, fname, titlestr, analyzer, c
         raise RuntimeError("The summed list(s) and date-list must all correspond in length.")
 
     if helper.list_all_zero(sumlist) is True:
-        print("All summed asset values are zero. Not plotting. File: " + fname)
+        print(f"All summed asset values are zero. Not plotting. File: {fname}")
         return
 
     # Subtract/Add the in/outflows to the summed value. Like this, there are not spikes in the value, and the
@@ -114,7 +114,7 @@ def plot_asset_values_indices(assetlist, indexlist, fname, titlestr, analyzer, c
         ax.text(x[-1], val[-1], last_val)
         # Also plot the moving average:
         x_ma, y_ma = analysis.calc_moving_avg(x, val, config.WINLEN_MA)
-        label_ma = indexname[i] + ", Moving Avg"
+        label_ma = f"{indexname[i]}, Moving Avg"
         ax.plot(x_ma, y_ma, alpha=1.0, zorder=3, clip_on=False, color=config.PLOTS_COLORS[i + 1], marker='',
                 label=label_ma, dashes=config.DASHES_MA)
 
@@ -149,7 +149,7 @@ def plot_asset_values_cost_payout_individual(assetlist, fname, analyzer, config)
     fname = plotting.modify_plot_path(config.PLOTS_FOLDER, fname)
     # Sanity Check:
     if len(assetlist) == 0:
-        print("No assets given for plot: " + fname)
+        print(f"No assets given for plot: {fname}")
         return
 
     # Only plot assets with some value during the analysis period:
@@ -174,7 +174,7 @@ def plot_asset_values_cost_payout_individual(assetlist, fname, analyzer, config)
     print(f"Plotting the asset-values with {num_sheets:d} figure-sheet(s). Filename: {fname.name}")
 
     xlabel = "Date"
-    ylabel = "Value (" + config.BASECURRENCY + ")"
+    ylabel = f"Value ({config.BASECURRENCY})"
 
     for sheet_num, assets in enumerate(assetlists_sheet):
 

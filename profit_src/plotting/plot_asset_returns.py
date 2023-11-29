@@ -24,7 +24,7 @@ def plot_asset_total_absolute_returns_accumulated(dates, returns, fname, analyze
     fname = plotting.modify_plot_path(config.PLOTS_FOLDER, fname)
     # Sanity Check:
     if len(returns) == 0:
-        print("No assets given for plot: " + fname)
+        print(f"No assets given for plot: {fname}")
         return
 
     if len(dates) != len(returns):

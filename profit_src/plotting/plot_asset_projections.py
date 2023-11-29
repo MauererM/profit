@@ -26,11 +26,11 @@ def plot_asset_projections(assetlist, interest, num_years, fname, titlestr, anal
     fname = plotting.modify_plot_path(config.PLOTS_FOLDER, fname)
     # Sanity Check:
     if len(assetlist) == 0:
-        print("No assets given for plot: " + fname)
+        print(f"No assets given for plot: {fname}")
         return
 
     if num_years < 1:
-        print("Cannot project less than 1 year in advance. Plot: " + fname)
+        print(f"Cannot project less than 1 year in advance. Plot: {fname}")
         return
 
     # The date-range of the analysis-period (should be identical in all assets)
@@ -42,7 +42,7 @@ def plot_asset_projections(assetlist, interest, num_years, fname, titlestr, anal
         raise RuntimeError("The summed list and date-list must correspond in length.")
 
     if helper.list_all_zero(sumlist) is True:
-        print("All summed asset values are zero. Not plotting. File: " + fname)
+        print(f"All summed asset values are zero. Not plotting. File: {fname}")
         return
 
     datelist_fut, vallist_fut_base = analysis.project_values(datelist, sumlist, num_years, interest, config.FORMAT_DATE)

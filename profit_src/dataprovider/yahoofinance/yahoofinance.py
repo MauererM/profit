@@ -67,8 +67,8 @@ class DataproviderYahoo(DataProvider):
         p1 = int(time.mktime(startdate_dt.timetuple()))
         p2 = int(time.mktime(stopdate_dt.timetuple()))
 
-        curr_str = sym_a + sym_b
-        curr_str = curr_str + "=X"
+        curr_str = f"{sym_a}{sym_b}"
+        curr_str = f"{curr_str}=X"
         param = {}
         param['period1'] = str(p1)
         param['period2'] = str(p2)

@@ -97,8 +97,8 @@ class Account:
         """
         # Sanity checks:
         if len(trans_dates) != len(trans_actions) and len(trans_dates) != len(trans_amounts):
-            raise RuntimeError("Lists of transaction-dates, actions and amounts must be of equal length. "
-                               "Account ID: " + self.id)
+            raise RuntimeError(f"Lists of transaction-dates, actions and amounts must be of equal length. "
+                               f"Account ID: {self.id}")
 
         # Convert to datetime objects:
         datelist_dt = [self.analyzer.str2datetime(x) for x in datelist]
@@ -106,8 +106,8 @@ class Account:
 
         # Check if the date-list covers the full range of the transactions:
         if datelist_dt[0] != trans_dates_dt[0] or datelist_dt[-1] != trans_dates_dt[-1]:
-            raise RuntimeError("Boundary-entries of transaction-dates do not match with provided list of dates. "
-                               "Account ID: " + self.id)
+            raise RuntimeError(f"Boundary-entries of transaction-dates do not match with provided list of dates. "
+                               f"Account ID: {self.id}")
 
         value_list = []
         # Iterate through all dates and check if there are any matches with the trigger string
@@ -137,7 +137,7 @@ class Account:
         if self.currency != self.basecurrency:
             # Sanity check: The forex-object must have the correct currency:
             if forex_obj.get_currency() != self.currency or forex_obj.get_basecurrency() != self.basecurrency:
-                raise RuntimeError("Currencies of forex-object do not match the asset. Account-ID: " + self.id)
+                raise RuntimeError(f"Currencies of forex-object do not match the asset. Account-ID: {self.id}")
             self.forex_obj = forex_obj
             self.forex_data_given = True
 

@@ -84,15 +84,15 @@ class MarketDataMain:
         for f in fnames:
             if f[0:5] == "forex":
                 if self.__is_string_valid_format(f, self.FORMAT_FOREX) is False:
-                    raise RuntimeError("Misformatted string for " + f)
+                    raise RuntimeError(f"Misformatted string for {f}")
                 self.filesdict["forex"].append(self.storage_folder_path.joinpath(f))
             elif f[0:5] == "stock":
                 if self.__is_string_valid_format(f, self.FORMAT_STOCK) is False:
-                    raise RuntimeError("Misformatted string for " + f)
+                    raise RuntimeError(f"Misformatted string for {f}")
                 self.filesdict["stock"].append(self.storage_folder_path.joinpath(f))
             elif f[0:5] == "index":
                 if self.__is_string_valid_format(f, self.FORMAT_INDEX) is False:
-                    raise RuntimeError("Misformatted string for " + f)
+                    raise RuntimeError(f"Misformatted string for {f}")
                 self.filesdict["index"].append(self.storage_folder_path.joinpath(f))
             else:
                 raise RuntimeError(f"Detected faulty file name in marketdata storage: {f}."
@@ -180,7 +180,7 @@ class MarketDataMain:
                 vals.append(v)
 
         if len(dates) != len(vals):
-            raise RuntimeError("Dates and values must have same length. File: " + fname)
+            raise RuntimeError(f"Dates and values must have same length. File: {fname}")
         if dateoperations.check_date_order(dates, self.analyzer, allow_ident_days=False) is False and len(dates) > 0:
             raise RuntimeError(f"The dates in a stock-storage file must be in order! File: {fname}. Data corrupted?")
         if id_ is None:

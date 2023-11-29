@@ -24,7 +24,7 @@ def plot_asset_purposes(assetlist, fname, titlestr, analyzer, config):
     fname = plotting.modify_plot_path(config.PLOTS_FOLDER, fname)
     # Sanity Check:
     if len(assetlist) == 0:
-        print("No assets given for plot: " + fname)
+        print(f"No assets given for plot: {fname}")
         return
 
     # Nr. of different purposes:
