@@ -38,9 +38,11 @@ def read_crop_string_delimited(string, delim):
     :return: tuple, of the result, which is the string that contains the beginning of the input string until
     the delimiter, and the remainder of the string
     """
+    if not isinstance(string, str) or not isinstance(delim, str):
+        raise RuntimeError("Received a non-string object to crop, or non-string delimiter.")
     delim_idx = string.find(delim)
     if delim_idx > 0:
-        # Read the string until the first semicolon:
+        # Read the string until the first delimiter:
         result = string[0:delim_idx]
         string = string[delim_idx + 1:]  # Crop the remainder of the string
         return result, string

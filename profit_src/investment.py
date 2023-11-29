@@ -14,41 +14,38 @@ from .timedomaindata import StockTimeDomainData
 class Investment:
     """Implements an investment. Parses transactions, provides analysis-data, performs currency conversions"""
 
-    def __init__(self, id_str, type_str, purpose_str, currency_str, basecurrency_str, symbol_str, exchange_str,
-                 filename_str, transactions_dict, dateformat_str, dataprovider, analyzer, assetpurposes, storage,
-                 config):
+    def __init__(self, investment_dict, basecurrency, filename, transactions_dict, dataprovider, analyzer,
+                 assetpurposes, storage, parsing_config):
         """Investment constructor
         Use the function parse_investment_file to obtain the necessary information from an investment file.
         It sets up all internal data structures and analyzes the transactions, and creates some basic data
-        :param id_str: String containing the account ID
-        :param type_str: String containing the type of asset
-        :param purpose_str: String containing the purpose of the account
-        :param currency_str: String of the account currency
-        :param basecurrency_str: String of the basecurrency
-        :param symbol_str: String of the investment's symbol, e.g., "AAPL"
-        :param exchange_str: String of the exchange, where the investment is traded, e.g., "NASDAQ"
-        :param filename_str: Filename associated with this account which info was obtained
-        :param transactions_dict: Dictionary with the transactions-data, as lists for the individual keys
-        :param dateformat_str: String that encodes the format of the dates, e.g. "%d.%m.%Y"
-        :param dataprovider: Object of the data provider class, e.g., dataprovider_yahoofinance
+        :param investment_dict: The metadata-dict from parsing
+        :param basecurrency: String of the basecurrency
+        :param filename: File-path associated with this investment
+        :param transactions_dict: Dictionary with the transactions-data, as lists for the individual keys, from parsing
+        :param dataprovider: Object of the data provider class
+        :param analyzer: The analyzer object (for caching)
+        :param assetpurposes: The purpose-groups from the main PROFIT config
+        :param storage: The storage-object that manages the stored market data
+        :param parsing_config: The configuration-instance of the parsing configuration
         """
-        self.id = id_str
-        self.type = type_str
-        self.purpose = purpose_str
-        self.currency = currency_str
-        self.basecurrency = basecurrency_str
-        self.symbol = symbol_str
-        self.exchange = exchange_str
-        self.filename = filename_str
+        self.config = parsing_config
+        self.id = investment_dict[self.config.STRING_ID]
+        self.type = investment_dict[self.config.STRING_TYPE]
+        self.purpose = investment_dict[self.config.STRING_PURPOSE]
+        self.currency = investment_dict[self.config.STRING_CURRENCY]
+        self.symbol = investment_dict[self.config.STRING_SYMBOL]
+        self.exchange = investment_dict[self.config.STRING_EXCHANGE]
+        self.basecurrency = basecurrency
+        self.filename = filename
         self.transactions = transactions_dict
-        self.dateformat = dateformat_str
+        self.analyzer = analyzer
+        self.dateformat = self.analyzer.get_dateformat()
+        self.provider = dataprovider
+        self.storage = storage
+        # Data not known yet:
         self.analysis_data_done = False  # Analysis data is not yet prepared
         self.forex_data_given = False
-        self.provider = dataprovider
-        self.analyzer = analyzer
-        self.storage = storage
-        self.config = config
-        # Data not known yet:
         self.forex_obj = None
         self.analysis_dates = None
         self.analysis_balances = None

@@ -105,7 +105,6 @@ class ProfitConfig:
     Do not provide the file-extension; PDF files will be created.
     The plots are stored in the "plots" folder
     """
-    # Todo: These should be strings here. Are they converted to Path objects when used?
     # Todo: Should these names live closer to the plotting-class?
     # Values of all assets, stacked:
     FILENAME_STACKPLOT_ASSET_VALUES = "Asset_Values_Stacked"
@@ -141,63 +140,3 @@ class ProfitConfig:
     FILENAME_CURRENCIES_LINE = "Asset_Values_Currencies_Line"
     # Projected investment values:
     FILENAME_INVESTMENT_PROJECTIONS = "Investments_Values_Projected"
-
-    # Todo These configs below should be better placed in the asset-parser class(es)...
-    # String that identify asset types:
-    STRING_ASSET_ACCOUNT = "Account"
-    # Only when an investment is a security is it attempted to obtain online market data/prices.
-    STRING_ASSET_SECURITY = "Security"
-
-    # Strings that identify account action types:
-    STRING_ACCOUNT_ACTION_COST = "Fee"
-    STRING_ACCOUNT_ACTION_INTEREST = "Interest"
-    STRING_ACCOUNT_ACTION_UPDATE = "Update"
-
-    # Strings that identify investment action types:
-    STRING_INVSTMT_ACTION_BUY = "Buy"
-    STRING_INVSTMT_ACTION_SELL = "Sell"
-    STRING_INVSTMT_ACTION_COST = "Fee"
-    STRING_INVSTMT_ACTION_PAYOUT = "Payout"
-    STRING_INVSTMT_ACTION_UPDATE = "Update"
-    STRING_INVSTMT_ACTION_SPLIT = "Split"
-
-    # Allowed actions in the corresponding account-transactions column:
-    ACCOUNT_ALLOWED_ACTIONS = [STRING_ACCOUNT_ACTION_COST, STRING_ACCOUNT_ACTION_INTEREST, STRING_ACCOUNT_ACTION_UPDATE]
-
-    # Allowed actions in the corresponding investment-transactions column:
-    INVSTMT_ALLOWED_ACTIONS = [STRING_INVSTMT_ACTION_BUY, STRING_INVSTMT_ACTION_SELL, STRING_INVSTMT_ACTION_COST,
-                               STRING_INVSTMT_ACTION_PAYOUT, STRING_INVSTMT_ACTION_UPDATE, STRING_INVSTMT_ACTION_SPLIT]
-
-    # Strings for asset transactions-headers:
-    # These are used for accounts and investments:
-    # This dateformat should be the same as the one specified above...
-    STRING_DATE = "Date(DD.MM.YYYY)"
-    STRING_ACTION = "Action"
-    STRING_AMOUNT = "Amount"
-    STRING_BALANCE = "Balance"
-    STRING_NOTES = "Notes"
-    # These are only used for investments:
-    STRING_QUANTITY = "Quantity"
-    STRING_PRICE = "Price"
-    STRING_COST = "Cost"
-    STRING_PAYOUT = "Payout"
-
-    # Naming of dictionary-keys (The dict stores transaction-data)
-    DICT_KEY_DATES = "dates"
-    DICT_KEY_ACTIONS = "actions"
-    DICT_KEY_AMOUNTS = "amounts"
-    DICT_KEY_BALANCES = "balances"
-    DICT_KEY_NOTES = "notes"
-    DICT_KEY_QUANTITY = "quantity"
-    DICT_KEY_PRICE = "price"
-    DICT_KEY_COST = "cost"
-    DICT_KEY_PAYOUT = "payout"
-
-    # Identification strings for the asset headers:
-    STRING_ID = "ID"
-    STRING_TYPE = "Type"
-    STRING_PURPOSE = "Purpose"
-    STRING_CURRENCY = "Currency"
-    STRING_SYMBOL = "Symbol"
-    STRING_EXCHANGE = "Exchange"
-    STRING_TRANSACTIONS = "Transactions"

@@ -8,8 +8,7 @@ Copyright (c) 2018 Mario Mauerer
 import datetime
 import logging
 from pathlib import Path
-from . import accountparser
-from . import investmentparser
+from . import parsing
 from . import files
 from . import stringoperations
 from . import dateoperations
@@ -69,34 +68,15 @@ def main(config):
     # Initialize the market data system.
     storage = MarketDataMain(storage_path, config.FORMAT_DATE, analyzer)
 
+    # Initialize the file parser config:
+    parsing_config = parsing.ParsingConfig()
+
     """
     Sanity checks:
     """
     if len(config.ASSET_GROUPNAMES) != len(config.ASSET_GROUPS):
         raise RuntimeError("ASSET_GROUPNAMES and ASSET_GROUPS (in the user configuration section of PROFIT_main) must "
                            "be lists with identical length.")
-
-    """
-    Parse Investments:
-    """
-    print("\nAcquiring and parsing investments")
-    invstmtfiles = files.get_file_list(investment_path, ".txt")
-    invstmtfiles.sort()  # Sort alphabetically
-    if len(invstmtfiles) > 0:
-        print(f"Found the following {len(invstmtfiles)} textfiles (.txt) in the investment-folder:")
-        for x in invstmtfiles: print(x.name)
-    else:
-        print(f"Found no investment files in folder {investment_path}")
-    # Parsing; also creates the investment-objects
-    investments = []
-    for file in invstmtfiles:
-        filepath = file.resolve()
-        investments.append(
-            investmentparser.parse_investment_file(filepath, config.FORMAT_DATE, provider, analyzer,
-                                                   config.BASECURRENCY,
-                                                   config.ASSET_PURPOSES, storage, config))
-    if len(investments) > 0:
-        print(f"Successfully parsed {len(investments)} investments.")
 
     """
     Parse Accounts:
@@ -113,11 +93,32 @@ def main(config):
     accounts = []
     for file in accountfiles:
         filepath = file.resolve()
-        accounts.append(
-            accountparser.parse_account_file(filepath, config.FORMAT_DATE, analyzer, config.BASECURRENCY,
-                                             config.ASSET_PURPOSES, config))
+        account_file = parsing.AccountFile(parsing_config, config, filepath, analyzer)
+        accounts.append(account_file.parse_account_file())
+
     if len(accounts) > 0:
         print(f"Successfully parsed {len(accounts)} accounts.")
+
+    """
+    Parse Investments:
+    """
+    print("\nAcquiring and parsing investments")
+    invstmtfiles = files.get_file_list(investment_path, ".txt")
+    invstmtfiles.sort()  # Sort alphabetically
+    if len(invstmtfiles) > 0:
+        print(f"Found the following {len(invstmtfiles)} textfiles (.txt) in the investment-folder:")
+        for x in invstmtfiles: print(x.name)
+    else:
+        print(f"Found no investment files in folder {investment_path}")
+    # Parsing; also creates the investment-objects
+    investments = []
+    for file in invstmtfiles:
+        filepath = file.resolve()
+        investment_file = parsing.InvestmentFile(parsing_config, config, filepath, analyzer, provider, storage)
+        investments.append(investment_file.parse_investment_file())
+
+    if len(investments) > 0:
+        print(f"Successfully parsed {len(investments)} investments.")
 
     # Combine accounts and investments into assets:
     assets = accounts + investments

@@ -12,30 +12,29 @@ from . import dateoperations
 class Account:
     """Implements an account. Parses transactions, provides analysis-data, performs currency conversions"""
 
-    def __init__(self, ident_str, type_str, purpose_str, currency_str, basecurrency_str, filename_str,
-                 transactions_dict, dateformat_str, analyzer, assetpurposes, config):
+    def __init__(self, account_dict, basecurrency, filename, transactions_dict, analyzer, assetpurposes,
+                 parsing_config):
         """Account constructor
         Use the function parse_account_file to obtain the necessary information from an account file.
         It sets up all internal data structures and analyzes the transactions.
         It also creates some basic data, e.g., it creates complete balance lists
-        :param ident_str: String containing the account ID
-        :param type_str: String containing the type of asset
-        :param purpose_str: String containing the purpose of the account
-        :param currency_str: String of the account currency
-        :param filename_str: String of the filename associated with this account
-        :param transactions_dict: Dictionary with the transactions-data.
-        :param dateformat_str: String that encodes the format of the dates, e.g. "%d.%m.%Y"
+        :param account_dict: The account-metadata-dict from parsing
+        :param filename: Path-Object of the filename associated with this account
+        :param transactions_dict: Dictionary with the transactions-data, from parsing
+        :assetpurposes: List of strings of asset purposes, from the PROFIT config.py
+        :parsing_config: The parsing configuration class
         """
-        self.id = ident_str
-        self.type = type_str
-        self.purpose = purpose_str
-        self.currency = currency_str
-        self.basecurrency = basecurrency_str
-        self.filename = filename_str # Todo: This should already be a Path-object...
+        self.config = parsing_config
+        self.id = account_dict[self.config.STRING_ID]
+        self.type = account_dict[self.config.STRING_TYPE]
+        self.purpose = account_dict[self.config.STRING_PURPOSE]
+        self.currency = account_dict[self.config.STRING_CURRENCY]
+        self.basecurrency = basecurrency
+        self.filename = filename
         self.transactions = transactions_dict
-        self.dateformat = dateformat_str
         self.analyzer = analyzer
-        self.config = config
+        self.dateformat = self.analyzer.get_dateformat()
+
         # Analysis data is not yet prepared:
         self.analysis_data_done = False
         # Forex data has not yet been obtained:
@@ -54,7 +53,7 @@ class Account:
             raise RuntimeError(f"Transaction-dates are not in temporal order. But: identical successive dates are "
                                f"allowed. Filename: {self.filename}")
 
-        # Check, if the transactions-actions-column only contains allowed strings:
+        # Check, if the transactions-actions-column only contains allowed strings: # Todo: Remove this, this is already done in the parser
         if stringoperations.check_allowed_strings(self.transactions[self.config.DICT_KEY_ACTIONS],
                                                   self.config.ACCOUNT_ALLOWED_ACTIONS) is False:
             raise RuntimeError(f"Actions-column contains faulty strings. Filename: {self.filename}")
