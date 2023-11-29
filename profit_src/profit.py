@@ -8,7 +8,7 @@ Copyright (c) 2018 Mario Mauerer
 import datetime
 import logging
 from pathlib import Path
-from . import accountparser
+from . import parsing
 from . import investmentparser
 from . import files
 from . import stringoperations
@@ -69,12 +69,36 @@ def main(config):
     # Initialize the market data system.
     storage = MarketDataMain(storage_path, config.FORMAT_DATE, analyzer)
 
+    # Initialize the file parser config:
+    parsing_config = parsing.ParsingConfig()
+
     """
     Sanity checks:
     """
     if len(config.ASSET_GROUPNAMES) != len(config.ASSET_GROUPS):
         raise RuntimeError("ASSET_GROUPNAMES and ASSET_GROUPS (in the user configuration section of PROFIT_main) must "
                            "be lists with identical length.")
+
+    """
+    Parse Accounts:
+    """
+    print("\nAcquiring and parsing account files")
+    accountfiles = files.get_file_list(account_path, ".txt")
+    accountfiles.sort()  # Sort alphabetically
+    if len(accountfiles) > 0:
+        print(f"Found the following {len(accountfiles)} textfiles (.txt) in the account-folder:")
+        for x in accountfiles: print(x.name)
+    else:
+        print(f"Found no account files in folder {account_path}")
+    # Parsing; also creates the account-objects
+    accounts = []
+    for file in accountfiles:
+        filepath = file.resolve()
+        account_file = parsing.AccountFile(parsing_config, config, filepath, analyzer)
+        accounts.append(account_file.parse_account_file())
+
+    if len(accounts) > 0:
+        print(f"Successfully parsed {len(accounts)} accounts.")
 
     """
     Parse Investments:
@@ -97,27 +121,6 @@ def main(config):
                                                    config.ASSET_PURPOSES, storage, config))
     if len(investments) > 0:
         print(f"Successfully parsed {len(investments)} investments.")
-
-    """
-    Parse Accounts:
-    """
-    print("\nAcquiring and parsing account files")
-    accountfiles = files.get_file_list(account_path, ".txt")
-    accountfiles.sort()  # Sort alphabetically
-    if len(accountfiles) > 0:
-        print(f"Found the following {len(accountfiles)} textfiles (.txt) in the account-folder:")
-        for x in accountfiles: print(x.name)
-    else:
-        print(f"Found no account files in folder {account_path}")
-    # Parsing; also creates the account-objects
-    accounts = []
-    for file in accountfiles:
-        filepath = file.resolve()
-        accounts.append(
-            accountparser.parse_account_file(filepath, config.FORMAT_DATE, analyzer, config.BASECURRENCY,
-                                             config.ASSET_PURPOSES, config))
-    if len(accounts) > 0:
-        print(f"Successfully parsed {len(accounts)} accounts.")
 
     # Combine accounts and investments into assets:
     assets = accounts + investments

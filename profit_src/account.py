@@ -13,7 +13,7 @@ class Account:
     """Implements an account. Parses transactions, provides analysis-data, performs currency conversions"""
 
     def __init__(self, ident_str, type_str, purpose_str, currency_str, basecurrency_str, filename_str,
-                 transactions_dict, dateformat_str, analyzer, assetpurposes, config):
+                 transactions_dict, dateformat_str, analyzer, assetpurposes, config): # Todo some variables here are redundant/given already in the config...
         """Account constructor
         Use the function parse_account_file to obtain the necessary information from an account file.
         It sets up all internal data structures and analyzes the transactions.
@@ -54,7 +54,7 @@ class Account:
             raise RuntimeError(f"Transaction-dates are not in temporal order. But: identical successive dates are "
                                f"allowed. Filename: {self.filename}")
 
-        # Check, if the transactions-actions-column only contains allowed strings:
+        # Check, if the transactions-actions-column only contains allowed strings: # Todo: Remove this, this is already done in the parser
         if stringoperations.check_allowed_strings(self.transactions[self.config.DICT_KEY_ACTIONS],
                                                   self.config.ACCOUNT_ALLOWED_ACTIONS) is False:
             raise RuntimeError(f"Actions-column contains faulty strings. Filename: {self.filename}")
