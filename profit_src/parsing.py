@@ -252,7 +252,7 @@ class AccountFile:
             # Parse the action:
             trans_act, line_val = stringoperations.read_crop_string_delimited(line_val, self.profit_conf.DELIMITER)
             if trans_act not in self.parsing_conf.ACCOUNT_ALLOWED_ACTIONS:
-                raise RuntimeError(f"Actions-column contains faulty strings. Filename: {self.filename}")
+                raise RuntimeError(f"Actions-column contains faulty strings. Filename: {self.filepath}")
             action.append(trans_act)
 
             # Parse the amount:
@@ -452,7 +452,7 @@ class InvestmentFile:
             # Parse the action:
             trans_act, line_val = stringoperations.read_crop_string_delimited(line_val, self.profit_conf.DELIMITER)
             if trans_act not in self.parsing_conf.INVSTMT_ALLOWED_ACTIONS:
-                raise RuntimeError(f"Actions-column contains faulty strings. Filename: {self.filename}")
+                raise RuntimeError(f"Actions-column contains faulty strings. Filename: {self.filepath}")
             action.append(trans_act)
 
             # Parse the quantity:
