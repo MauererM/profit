@@ -19,11 +19,14 @@ from .storage.storage import MarketDataMain
 from .timedomaindata import ForexTimeDomainData
 from .timedomaindata import StockMarketIndicesData
 
+# Version of PROFIT:
+PROFIT_VERSION = 1.4
+
 
 def main(config):
     """The main entry-point of PROFIT"""
     # Print the current version of the tool
-    print(f"PROFIT v{config.PROFIT_VERSION:.1f} starting")
+    print(f"PROFIT v{PROFIT_VERSION:.1f} starting")
 
     # Folder-paths for the outputs of PROFIT:
     storage_path = Path(config.STORAGE_FOLDER).resolve()

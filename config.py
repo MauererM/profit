@@ -97,9 +97,6 @@ class ProfitConfig:
     # Date-format used throughout PROFIT
     FORMAT_DATE = "%d.%m.%Y"
 
-    # Version of PROFIT:
-    PROFIT_VERSION = 1.4 # Todo: Does not belong here
-
     """
     The following strings name the files of the different plots that will be generated.
     Do not provide the file-extension; PDF files will be created.
