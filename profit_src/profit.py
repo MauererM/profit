@@ -9,7 +9,6 @@ import datetime
 import logging
 from pathlib import Path
 from . import parsing
-from . import investmentparser
 from . import files
 from . import stringoperations
 from . import dateoperations
@@ -115,10 +114,9 @@ def main(config):
     investments = []
     for file in invstmtfiles:
         filepath = file.resolve()
-        investments.append(
-            investmentparser.parse_investment_file(filepath, config.FORMAT_DATE, provider, analyzer,
-                                                   config.BASECURRENCY,
-                                                   config.ASSET_PURPOSES, storage, config))
+        investment_file = parsing.InvestmentFile(parsing_config, config, filepath, analyzer, provider, storage)
+        investments.append(investment_file.parse_investment_file())
+
     if len(investments) > 0:
         print(f"Successfully parsed {len(investments)} investments.")
 
