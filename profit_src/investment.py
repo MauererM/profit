@@ -14,20 +14,19 @@ from .timedomaindata import StockTimeDomainData
 class Investment:
     """Implements an investment. Parses transactions, provides analysis-data, performs currency conversions"""
 
-    def __init__(self, investment_dict, basecurrency, filename, transactions_dict, dataprovider, analyzer,
-                 assetpurposes, storage, parsing_config):
+    def __init__(self, investment_dict, filename, transactions_dict, dataprovider, analyzer, storage, parsing_config,
+                 profit_config):
         """Investment constructor
         Use the function parse_investment_file to obtain the necessary information from an investment file.
         It sets up all internal data structures and analyzes the transactions, and creates some basic data
         :param investment_dict: The metadata-dict from parsing
-        :param basecurrency: String of the basecurrency
         :param filename: File-path associated with this investment
         :param transactions_dict: Dictionary with the transactions-data, as lists for the individual keys, from parsing
         :param dataprovider: Object of the data provider class
         :param analyzer: The analyzer object (for caching)
-        :param assetpurposes: The purpose-groups from the main PROFIT config
         :param storage: The storage-object that manages the stored market data
         :param parsing_config: The configuration-instance of the parsing configuration
+        :param profit_config: The main config-class/instance of PROFIT
         """
         self.config = parsing_config
         self.id = investment_dict[self.config.STRING_ID]
@@ -36,13 +35,14 @@ class Investment:
         self.currency = investment_dict[self.config.STRING_CURRENCY]
         self.symbol = investment_dict[self.config.STRING_SYMBOL]
         self.exchange = investment_dict[self.config.STRING_EXCHANGE]
-        self.basecurrency = basecurrency
+        self.basecurrency = profit_config.BASECURRENCY
         self.filename = filename
         self.transactions = transactions_dict
         self.analyzer = analyzer
         self.dateformat = self.analyzer.get_dateformat()
         self.provider = dataprovider
         self.storage = storage
+        self.assetpurposes = profit_config.ASSET_PURPOSES
         # Data not known yet:
         self.analysis_data_done = False  # Analysis data is not yet prepared
         self.forex_data_given = False
@@ -62,29 +62,26 @@ class Investment:
             raise RuntimeError(f"Transaction-dates are not in temporal order "
                                f"(Note: Identical successive dates are allowed). Filename: {self.filename}")
 
-        # Check, if the transactions-actions-column only contains allowed strings:
-        if stringoperations.check_allowed_strings(self.transactions[self.config.DICT_KEY_ACTIONS],
-                                                  self.config.INVSTMT_ALLOWED_ACTIONS) is False:
-            raise RuntimeError(f"Actions-column contains faulty strings. Filename: {self.filename}")
-
         # Check, if the purpose-string only contains allowed purposes:
-        if stringoperations.check_allowed_strings([self.purpose], assetpurposes) is False:
+        if stringoperations.check_allowed_strings([self.purpose], self.assetpurposes) is False:
             raise RuntimeError(f"Purpose of investment is not recognized. Filename: {self.filename}")
 
         # Perform sanity-checks with the transactions.
-        self.transactions_sanity_check(self.transactions[self.config.DICT_KEY_DATES],
-                                       self.transactions[self.config.DICT_KEY_ACTIONS],
-                                       self.transactions[self.config.DICT_KEY_QUANTITY],
-                                       self.transactions[self.config.DICT_KEY_PRICE],
-                                       self.transactions[self.config.DICT_KEY_COST],
-                                       self.transactions[self.config.DICT_KEY_PAYOUT],
-                                       self.transactions[self.config.DICT_KEY_BALANCES])
+        self.__transactions_sanity_check(self.transactions[self.config.DICT_KEY_DATES],
+                                         self.transactions[self.config.DICT_KEY_ACTIONS],
+                                         self.transactions[self.config.DICT_KEY_QUANTITY],
+                                         self.transactions[self.config.DICT_KEY_PRICE],
+                                         self.transactions[self.config.DICT_KEY_COST],
+                                         self.transactions[self.config.DICT_KEY_PAYOUT],
+                                         self.transactions[self.config.DICT_KEY_BALANCES])
 
         # Check for stock splits and adjust the balances, prices accordingly
-        prices_mod, balances_mod, quantities_mod = self.adjust_splits(self.transactions[self.config.DICT_KEY_ACTIONS],
-                                                                      self.transactions[self.config.DICT_KEY_PRICE],
-                                                                      self.transactions[self.config.DICT_KEY_BALANCES],
-                                                                      self.transactions[self.config.DICT_KEY_QUANTITY])
+        prices_mod, balances_mod, quantities_mod = self.__adjust_splits(self.transactions[self.config.DICT_KEY_ACTIONS],
+                                                                        self.transactions[self.config.DICT_KEY_PRICE],
+                                                                        self.transactions[
+                                                                            self.config.DICT_KEY_BALANCES],
+                                                                        self.transactions[
+                                                                            self.config.DICT_KEY_QUANTITY])
         self.transactions[self.config.DICT_KEY_PRICE] = prices_mod
         self.transactions[self.config.DICT_KEY_BALANCES] = balances_mod
         self.transactions[self.config.DICT_KEY_QUANTITY] = quantities_mod
@@ -101,37 +98,38 @@ class Investment:
 
         # The cost and payouts does not need interpolation. Lists are populated (corresponding to datelist), that
         # contain the transactions.
-        self.costlist = self.populate_full_list(self.transactions[self.config.DICT_KEY_DATES],
-                                                self.transactions[self.config.DICT_KEY_COST],
-                                                self.datelist, sum_ident_days=True)
-        self.payoutlist = self.populate_full_list(self.transactions[self.config.DICT_KEY_DATES],
-                                                  self.transactions[self.config.DICT_KEY_PAYOUT],
+        self.costlist = self.__populate_full_list(self.transactions[self.config.DICT_KEY_DATES],
+                                                  self.transactions[self.config.DICT_KEY_COST],
                                                   self.datelist, sum_ident_days=True)
+        self.payoutlist = self.__populate_full_list(self.transactions[self.config.DICT_KEY_DATES],
+                                                    self.transactions[self.config.DICT_KEY_PAYOUT],
+                                                    self.datelist, sum_ident_days=True)
         # This list holds the prices that are recorded with the transactions:
-        # Careful: Prices may not be summed up! The last price of a given day is taken (if there are multiple transactions per day(date)
-        self.pricelist = self.populate_full_list(self.transactions[self.config.DICT_KEY_DATES],
-                                                 self.transactions[self.config.DICT_KEY_PRICE],
-                                                 self.datelist, sum_ident_days=False)
+        # Careful: Prices may not be summed up! The last price of a given day is taken
+        # (if there are multiple transactions per day(date)
+        self.pricelist = self.__populate_full_list(self.transactions[self.config.DICT_KEY_DATES],
+                                                   self.transactions[self.config.DICT_KEY_PRICE],
+                                                   self.datelist, sum_ident_days=False)
 
         # This list contains inflows into the investment (e.g., "Buy"-values). The values are in the currency of
         # the investment.
-        self.inflowlist = self.get_inoutflow_value(self.transactions[self.config.DICT_KEY_DATES],
-                                                   self.transactions[self.config.DICT_KEY_ACTIONS],
-                                                   self.transactions[self.config.DICT_KEY_QUANTITY],
-                                                   self.transactions[self.config.DICT_KEY_PRICE],
-                                                   self.config.STRING_INVSTMT_ACTION_BUY,
-                                                   self.datelist)
+        self.inflowlist = self.__get_inoutflow_value(self.transactions[self.config.DICT_KEY_DATES],
+                                                     self.transactions[self.config.DICT_KEY_ACTIONS],
+                                                     self.transactions[self.config.DICT_KEY_QUANTITY],
+                                                     self.transactions[self.config.DICT_KEY_PRICE],
+                                                     self.config.STRING_INVSTMT_ACTION_BUY,
+                                                     self.datelist)
 
         # This list contains outflows of the investment (e.g., "Sell"-values). The values are in the currency of
         # the investment.
-        self.outflowlist = self.get_inoutflow_value(self.transactions[self.config.DICT_KEY_DATES],
-                                                    self.transactions[self.config.DICT_KEY_ACTIONS],
-                                                    self.transactions[self.config.DICT_KEY_QUANTITY],
-                                                    self.transactions[self.config.DICT_KEY_PRICE],
-                                                    self.config.STRING_INVSTMT_ACTION_SELL,
-                                                    self.datelist)
+        self.outflowlist = self.__get_inoutflow_value(self.transactions[self.config.DICT_KEY_DATES],
+                                                      self.transactions[self.config.DICT_KEY_ACTIONS],
+                                                      self.transactions[self.config.DICT_KEY_QUANTITY],
+                                                      self.transactions[self.config.DICT_KEY_PRICE],
+                                                      self.config.STRING_INVSTMT_ACTION_SELL,
+                                                      self.datelist)
 
-    def adjust_splits(self, trans_actions, trans_price, trans_balance, trans_quantity):
+    def __adjust_splits(self, trans_actions, trans_price, trans_balance, trans_quantity):
         """A split affects the price and balance.
         This is needed as online data provider usually provide historical data that reflects the newest value after
         all splits. Thus, for the obtained data to match, the recorded data must be adjusted accordingly.
@@ -171,9 +169,8 @@ class Investment:
                 quant_mod[idx] = trans_quantity[idx] * float(split_factor)
         return price_mod, bal_mod, quant_mod
 
-    # Todo: Some of these functions need the dunder?
-    def transactions_sanity_check(self, trans_dates, trans_actions, trans_quantity, trans_price, trans_cost,
-                                  trans_payout, trans_balance):
+    def __transactions_sanity_check(self, trans_dates, trans_actions, trans_quantity, trans_price, trans_cost,
+                                    trans_payout, trans_balance):
         """Checks, if the recorded balances of the transactions are in order and match with the "sell" and "buy" entries
         :param trans_dates: List of strings of transaction-dates
         :param trans_actions: List of strings of actions, e.g, "sell" or "buy" (transactions)
@@ -247,9 +244,9 @@ class Investment:
         # Do some further checks:
         # Check every transaction:
         for idx, _ in enumerate(trans_dates):
-            if trans_actions[idx] == self.config.STRING_INVSTMT_ACTION_BUY or trans_actions[idx] \
-                    == self.config.STRING_INVSTMT_ACTION_SELL or trans_actions[
-                idx] == self.config.STRING_INVSTMT_ACTION_SPLIT:
+            if trans_actions[idx] == self.config.STRING_INVSTMT_ACTION_BUY or \
+                    trans_actions[idx] == self.config.STRING_INVSTMT_ACTION_SELL or \
+                    trans_actions[idx] == self.config.STRING_INVSTMT_ACTION_SPLIT:
                 if trans_payout[idx] > 1e-9:
                     raise RuntimeError("Buy, sell or split-transactions may not encode a payout. "
                                        "Transaction-Nr: " + repr(idx + 1))
@@ -263,7 +260,7 @@ class Investment:
                                        "Transaction-Nr: " + repr(idx + 1))
         return True
 
-    def populate_full_list(self, trans_dates, trans_amounts, datelist, sum_ident_days=False):
+    def __populate_full_list(self, trans_dates, trans_amounts, datelist, sum_ident_days=False):
         """Populates a list of len(datelist) with amounts of certain transactions, that correspond to the dates in
         datelist and trans_dates.
         All values (trans_amounts) on a given day can be summed up and added to the list.
@@ -310,8 +307,8 @@ class Investment:
         value_list = [float(x) for x in value_list]
         return value_list
 
-    def get_inoutflow_value(self, trans_dates, trans_actions, trans_quantity, trans_prices, action_trigger_str,
-                            datelist):
+    def __get_inoutflow_value(self, trans_dates, trans_actions, trans_quantity, trans_prices, action_trigger_str,
+                              datelist):
         """Determines the inflow or outflow into an investment from the transactions.
         The buy/sell transactions are selected and the corresponding value obtained (=quantity*price)
         The data is then also populated onto a full date-list, such that it corresponds to the dates in datelist
@@ -337,7 +334,7 @@ class Investment:
             trans_flow_dates.append(datelist[0])
             trans_flow_values.append(0.0)
         # Extend the lists to the full range
-        values = self.populate_full_list(trans_flow_dates, trans_flow_values, datelist, sum_ident_days=True)
+        values = self.__populate_full_list(trans_flow_dates, trans_flow_values, datelist, sum_ident_days=True)
         return values
 
     def get_values(self, trans_actions, trans_price, trans_balance, str_action_buy, str_action_sell,
@@ -457,45 +454,10 @@ class Investment:
             stockdata = StockTimeDomainData(self.symbol, self.exchange, self.currency, (startdate_prices, date_stop),
                                             self.analyzer, self.storage, self.provider)
             full_dates, full_prices = stockdata.get_price_data()
-            write_to_file = stockdata.storage_to_update()
-
-            # Todo: Put this also into timedomaindata, like it is done for forex, and merge with the forex-code?
-            # Write the fused provider- and storge-data back to file:
-            if write_to_file is True:
-                self.storage.write_data_to_storage(stockdata.get_storageobj(), (full_dates, full_prices))
 
             if full_dates is not None:
-                # If only 3 days are missing until "today", then extrapolate forward
-                # (avoid having to manually enter data)
-                lastdate_dt = self.analyzer.str2datetime(full_dates[-1])
-                duration = stopdate_analysis_dt - lastdate_dt
-                duration = duration.days
-                if duration <= 3:
-                    full_dates, full_prices = dateoperations.extend_data_future(full_dates, full_prices,
-                                                                                date_stop,
-                                                                                self.analyzer,
-                                                                                zero_padding=False)
-
                 # Store the latest available price and date, for the holding-period return analysis
                 self.latestpricedata = (full_dates[-1], full_prices[-1])
-
-                # Interpolate the data to get a consecutive list (this only fills holes, and does not
-                # extrapolate over the given date-range):
-                full_dates, full_prices = dateoperations.interpolate_data(full_dates, full_prices, self.analyzer)
-
-                # The available market-data (from the dataprovider and the database) might not reach back to the
-                # desired analysis range startdate! Check it:
-                full_dates_start = self.analyzer.str2datetime(full_dates[0])
-                full_dates_stop = self.analyzer.str2datetime(full_dates[-1])
-                if full_dates_start > startdate_analysis_dt:
-                    print(f"Available prices (provider and stored data) are only available from the {full_dates[0]} "
-                          f"onwards. Earliest available data will be extrapolated backwards and merged with the "
-                          f"manually entered prices. \nSymbol: {self.symbol}, exchange: {self.exchange}")
-                if full_dates_stop < stopdate_analysis_dt:
-                    print(f"Available prices (data provider and stored market-data) are only available until "
-                          f"the {full_dates[-1]}. Latest available data will be extrapolated forwards and merged with "
-                          f"the manually entered prices.\nSymbol: {self.symbol}, exchange: {self.exchange}."
-                          f"\nUpdate the storage data file or transactions-list for correct returns calculation")
 
                 # The provided market-data can be incomplete. It is consecutive, but might not span the entire
                 # analysis-range. We must merge it with the transactions-data and potentially extrapolate forwards and
@@ -541,7 +503,7 @@ class Investment:
                     else:
                         self.analysis_values.append(0.0)
 
-            if full_dates is None:  # Transactions-data needed!
+            elif full_dates is None:  # Transactions-data needed!
                 print(f"No financial data available for {self.symbol}")
                 print(f"Provide an update-transaction to deliver the most recent price of the asset. "
                       "Otherwise, the holding period returns cannot be calculated.")
