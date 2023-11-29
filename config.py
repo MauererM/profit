@@ -9,7 +9,8 @@ class ProfitConfig:
     # Data is always analyzed a certain number of days into the past, from today
     DAYS_ANALYSIS = 2000
 
-    # All asset values are calculated in the base currency. Provide the commonly used string like "CHF", "USD", "HKD" etc.
+    # All asset values are calculated in the base currency.
+    # Provide the commonly used string like "CHF", "USD", "HKD" etc.
     BASECURRENCY = "CHF"
 
     """
@@ -23,8 +24,8 @@ class ProfitConfig:
 
     """
     Asset Purpose-Groups:
-    The different assets can be grouped according to their purpose, which is used for some plots and provides some insight
-    into the distribution of asset values.
+    The different assets can be grouped according to their purpose, which is used for some plots and provides 
+    some insight into the distribution of asset values.
     The groups are given below as list of strings (with arbitrary names).
     However, the overall list of lists that collects the groups must be named "ASSET_GROUPS".
     """
@@ -49,8 +50,8 @@ class ProfitConfig:
 
     """
     Stockmarket-Indices. They are also obtained from the dataprovider.
-    They are given in the following as dicts, with a Name, Symbol and Exchange, whereas the latter two are required by the
-    data-provider tool.
+    They are given in the following as dicts, with a Name, Symbol and Exchange, 
+    whereas the latter two are required by the data-provider tool.
     """
     # Todo: Update this dict/format to the newest system that is used. Also, when obtaining them, output the name in the terminal (not the symbol)?
     # Dow Jones industrial average:
@@ -69,10 +70,12 @@ class ProfitConfig:
 
     # Number of years to project the values of the investments into the future.
     NUM_YEARS_INVEST_PROJECTION = 20
+
     # Assumed interest rate (annual compounding) for the projection, in percent
     INTEREST_PROJECTION_PERCENT = 6.0
 
-    # This switch determines whether the plots are opened after creation or not. If set to True, many PDFs will be opened.
+    # This switch determines whether the plots are opened after creation or not.
+    # If set to True, many PDFs will be opened.
     OPEN_PLOTS = False
 
     # Select, if existing plots are deleted before new ones are created.
@@ -96,44 +99,3 @@ class ProfitConfig:
 
     # Date-format used throughout PROFIT
     FORMAT_DATE = "%d.%m.%Y"
-
-    """
-    The following strings name the files of the different plots that will be generated.
-    Do not provide the file-extension; PDF files will be created.
-    The plots are stored in the "plots" folder
-    """
-    # Todo: Should these names live closer to the plotting-class?
-    # Values of all assets, stacked:
-    FILENAME_STACKPLOT_ASSET_VALUES = "Asset_Values_Stacked"
-    # Values of all investments, stacked:
-    FILENAME_STACKPLOT_INVESTMENT_VALUES = "Investment_Values_Stacked"
-    # Values of all accounts, stacked:
-    FILENAME_STACKPLOT_ACCOUNT_VALUES = "Account_Values_Stacked"
-    # Returns of all investments, for different time periods:
-    FILENAME_TOTAL_INVESTMENT_RETURNS = "Investments_Total_Returns"
-    # Returns of individual investments, multiple plots per sheet:
-    FILENAME_INVESTMENT_RETURNS = "Investments_Returns"
-    # Absolute returns of individual investments, multiple plots per sheet:
-    FILENAME_INVESTMENT_RETURNS_ABSOLUTE = "Investments_Returns_Absolute"
-    # Absolute returns of all investments, summed up:
-    FILENAME_INVESTMENT_RETURNS_ABSOLUTE_TOTAL = "Investments_Returns_Absolute_Summed"
-    # Values of individual investments, multiple plots per sheet:
-    FILENAME_INVESTMENT_VALUES = "Investments_Values"
-    # Values of individual accounts, multiple plots per sheet:
-    FILENAME_ACCOUNT_VALUES = "Accounts_Values"
-    # Value of all investments, compared to some indices:
-    FILENAME_INVESTMENT_VALUES_INDICES = "Investment_Values_Indices"
-    # Value of all assets, sorted according to their purpose:
-    FILENAME_ASSETS_VALUES_PURPOSE = "Assets_Values_Purpose"
-    # Value of the groups of assets (see below for groups), two plots are done; one line, one stacked
-    FILENAME_ASSETS_VALUES_GROUPS_STACKED = "Assets_Values_Groups_Stacked"
-    FILENAME_ASSETS_VALUES_GROUPS_LINE = "Assets_Values_Groups_Line"
-    # Forex rates:
-    FILENAME_FOREX_RATES = "Forex_Rates"
-    # Plots of the groups (can be multiple plots), will be extended with the corresponding group name.
-    FILENAME_PLOT_GROUP = "Group"
-    # Plots of asset values according to currency:
-    FILENAME_CURRENCIES_STACKED = "Asset_Values_Currencies_Stacked"
-    FILENAME_CURRENCIES_LINE = "Asset_Values_Currencies_Line"
-    # Projected investment values:
-    FILENAME_INVESTMENT_PROJECTIONS = "Investments_Values_Projected"

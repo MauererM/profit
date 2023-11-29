@@ -1,16 +1,56 @@
-"""Auxiliary functions for plotting
+"""Classes and functions for plotting
 
 PROFIT - Python-Based Return on Investment and Financial Investigation Tool
 MIT License
-Copyright (c) 2018 Mario Mauerer
+Copyright (c) 2018-2023 Mario Mauerer
 """
 
 import os
 import matplotlib
 import matplotlib.pyplot as plt
 import pylab
-from . import files
+from .. import files
 
+
+class PlottingConfig:
+    """The following strings name the files of the different plots that will be generated.
+    Do not provide the file-extension; PDF files will be created.
+    The plots are stored in the "plots" folder
+    """
+    # Values of all assets, stacked:
+    FILENAME_STACKPLOT_ASSET_VALUES = "Asset_Values_Stacked"
+    # Values of all investments, stacked:
+    FILENAME_STACKPLOT_INVESTMENT_VALUES = "Investment_Values_Stacked"
+    # Values of all accounts, stacked:
+    FILENAME_STACKPLOT_ACCOUNT_VALUES = "Account_Values_Stacked"
+    # Returns of all investments, for different time periods:
+    FILENAME_TOTAL_INVESTMENT_RETURNS = "Investments_Total_Returns"
+    # Returns of individual investments, multiple plots per sheet:
+    FILENAME_INVESTMENT_RETURNS = "Investments_Returns"
+    # Absolute returns of individual investments, multiple plots per sheet:
+    FILENAME_INVESTMENT_RETURNS_ABSOLUTE = "Investments_Returns_Absolute"
+    # Absolute returns of all investments, summed up:
+    FILENAME_INVESTMENT_RETURNS_ABSOLUTE_TOTAL = "Investments_Returns_Absolute_Summed"
+    # Values of individual investments, multiple plots per sheet:
+    FILENAME_INVESTMENT_VALUES = "Investments_Values"
+    # Values of individual accounts, multiple plots per sheet:
+    FILENAME_ACCOUNT_VALUES = "Accounts_Values"
+    # Value of all investments, compared to some indices:
+    FILENAME_INVESTMENT_VALUES_INDICES = "Investment_Values_Indices"
+    # Value of all assets, sorted according to their purpose:
+    FILENAME_ASSETS_VALUES_PURPOSE = "Assets_Values_Purpose"
+    # Value of the groups of assets (see below for groups), two plots are done; one line, one stacked
+    FILENAME_ASSETS_VALUES_GROUPS_STACKED = "Assets_Values_Groups_Stacked"
+    FILENAME_ASSETS_VALUES_GROUPS_LINE = "Assets_Values_Groups_Line"
+    # Forex rates:
+    FILENAME_FOREX_RATES = "Forex_Rates"
+    # Plots of the groups (can be multiple plots), will be extended with the corresponding group name.
+    FILENAME_PLOT_GROUP = "Group"
+    # Plots of asset values according to currency:
+    FILENAME_CURRENCIES_STACKED = "Asset_Values_Currencies_Stacked"
+    FILENAME_CURRENCIES_LINE = "Asset_Values_Currencies_Line"
+    # Projected investment values:
+    FILENAME_INVESTMENT_PROJECTIONS = "Investments_Values_Projected"
 
 def configure_plot_common(config):
     """Set plot-configurations that are common to all plots:
@@ -137,8 +177,7 @@ def create_stackedplot(xlist, ylists, legendlist, colorlist, titlestring, xlabel
     ax.set_ylabel(ylabel)
 
     # Add a comma to separate thousands:
-    ax.get_yaxis().set_major_formatter(
-        pylab.matplotlib.ticker.FuncFormatter(lambda x, p: format(int(x), ',')))
+    ax.get_yaxis().set_major_formatter(pylab.matplotlib.ticker.FuncFormatter(lambda x, p: format(int(x), ',')))
     plt.title(titlestring)
 
     # Revert the order of the legend entries, such that they correspond to the position in the stacked plot:
