@@ -39,6 +39,11 @@ def main(config):
     # Print the current version of the tool
     print(f"PROFIT v{PROFIT_VERSION:.1f} starting")
 
+    # Set logging:
+    logging.basicConfig(level=logging.WARNING)
+    matplotlib_logger = logging.getLogger('matplotlib')
+    matplotlib_logger.setLevel(logging.INFO)  # Exclude matplotlib's debug-messages, as they otherwise spam a lot.
+
     # Folder-paths for the outputs of PROFIT:
     storage_path = Path(config.STORAGE_FOLDER).resolve()
     plot_path = Path(config.PLOTS_FOLDER).resolve()
@@ -55,11 +60,6 @@ def main(config):
         logging.warning(f"Folder for accounts ({account_path}) not found. Will not parse accounts.")
     if not is_investment_folder:
         logging.warning(f"Folder for investments ({investment_path}) not found. Will not parse investments.")
-
-    # Set logging:
-    logging.basicConfig(level=logging.WARNING)
-    matplotlib_logger = logging.getLogger('matplotlib')
-    matplotlib_logger.setLevel(logging.INFO)  # Exclude matplotlib's debug-messages, as they otherwise spam a lot.
 
     # Initialize the caching datetime/string converter class (used in analyzer below):
     datetimeconverter = stringoperations.DateTimeConversion()

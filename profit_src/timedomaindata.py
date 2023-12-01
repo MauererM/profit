@@ -280,12 +280,12 @@ class StockTimeDomainData:
             if full_dates_start > startdate_analysis_dt:
                 print(f"Available prices (provider and stored data) are only available from the {self.full_dates[0]} "
                       f"onwards. Earliest available data will be extrapolated backwards and merged with the "
-                      f"manually entered prices. \nSymbol: {self.symbol}, exchange: {self.exchange}")
+                      f"manually entered prices.")
             if full_dates_stop < stopdate_analysis_dt:
                 print(f"Available prices (data provider and stored market-data) are only available until "
                       f"the {self.full_dates[-1]}. Latest available data will be extrapolated forwards and merged with "
-                      f"the manually entered prices.\nSymbol: {self.symbol}, exchange: {self.exchange}."
-                      f"\nUpdate the storage data file or transactions-list for correct returns calculation")
+                      f"the manually entered prices."
+                      f"\nUpdate the storage data file or transactions-list for correct returns calculation.") # Todo: Only output this if the balance is nonzero?
 
     def __create_new_stock_storage_file(self):
         self.storageobj = self.storage.create_new_storage_file("stock", (self.symbol, self.exchange, self.currency))
@@ -396,7 +396,7 @@ def obtain_data_from_storage_and_provider(startdate_dataprovider, stopdate_datap
                 storagedates, storageprices = ret
                 if len(storagedates) != len(storageprices):
                     raise RuntimeError("Lists should be of identical length")
-                print("Obtained some data from storage.")
+                logging.debug("Obtained some data from storage.")
                 debuglen = min(len(storagedates), 5)
                 logging.debug("Obtained data from storage. First few entries:")
                 for i in range(debuglen):

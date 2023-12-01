@@ -57,8 +57,9 @@ class DataproviderYahoo(DataProvider):
         :param startdate: stopdate: Strings for the date-interval of the desired historic data.
         :return: Two lists, one a list of strings (dates) and the corresponding forex values (list of floats)
          """
-        # Wait for the API/homepage to cool down (frequent requests are not allowed)
-        print(f"Waiting {self.cooldown:.1f}s for API cooldown")
+        # Wait for the API/homepage to cool down (frequent requests are likely not allowed/result in bans)
+        if self.cooldown > 1.0:
+            print(f"Waiting {self.cooldown:.1f}s for API cooldown")
         time.sleep(self.cooldown)
 
         startdate_dt = stringoperations.str2datetime(startdate, self.dateformat)
@@ -111,8 +112,9 @@ class DataproviderYahoo(DataProvider):
         is encoded in the symbol (e.g., CSGN.SW)
         :return: Two lists, one a list of strings (dates) and the corresponding stock values (list of floats)
         """
-        # Wait for the API/Yahoo finance to cool down (frequent requests are likely not allowed)
-        print(f"Waiting {self.cooldown:.1f}s for API cooldown")
+        # Wait for the API/homepage to cool down (frequent requests are likely not allowed/result in bans)
+        if self.cooldown > 1.0:
+            print(f"Waiting {self.cooldown:.1f}s for API cooldown")
         time.sleep(self.cooldown)
 
         startdate_dt = stringoperations.str2datetime(startdate, self.dateformat)
