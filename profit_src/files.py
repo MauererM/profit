@@ -91,7 +91,7 @@ def clean_string(s):
     """Remove non-alphanumeric characters from a string such that it
     can be used for a filename. The dot (".") is allowed.
     """
-    return re.sub(r'[^a-zA-Z0-9.]', '', s)
+    return re.sub(r'[^a-zA-Z0-9._]', '', s)
 
 
 def get_file_lines(filepath):

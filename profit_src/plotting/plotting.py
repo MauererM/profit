@@ -23,10 +23,6 @@ class PlottingConfig:
     FILENAME_STACKPLOT_INVESTMENT_VALUES = "Investment_Values_Stacked"
     # Values of all accounts, stacked:
     FILENAME_STACKPLOT_ACCOUNT_VALUES = "Account_Values_Stacked"
-    # Returns of all investments, for different time periods:
-    FILENAME_TOTAL_INVESTMENT_RETURNS = "Investments_Total_Returns"
-    # Returns of individual investments, multiple plots per sheet:
-    FILENAME_INVESTMENT_RETURNS = "Investments_Returns"
     # Absolute returns of individual investments, multiple plots per sheet:
     FILENAME_INVESTMENT_RETURNS_ABSOLUTE = "Investments_Returns_Absolute"
     # Absolute returns of all investments, summed up:

@@ -378,6 +378,7 @@ def get_returns_asset_analysisperiod(asset, analyzer):
     # We analyze the return over the full analysis period:
     period = len(datelist)
     # Get the return - Only a single value should be returned, as our analysis-period spans the whole range
+    # Todo does the whole-block situation of the holding period analysis also apply here, in calc_returns_period?
     dates, returns = calc_returns_period(datelist, valuelist, costlist, payoutlist, inflowlist, outflowlist, period,
                                          analyzer)
     if len(dates) != 1:

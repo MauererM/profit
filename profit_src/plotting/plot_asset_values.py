@@ -12,6 +12,7 @@ from . import plotting
 from .. import analysis
 from .. import helper
 from .. import files
+from .. import investment
 
 
 def plot_asset_values_indices(assetlist, indexlist, fname, titlestr, analyzer, config):
@@ -221,6 +222,20 @@ def plot_asset_values_cost_payout_individual(assetlist, fname, analyzer, config)
                 values_payouts_cost = helper.diff_lists(values_payouts, costs_accu)
                 ax.plot(x, values_payouts_cost, alpha=1.0, zorder=3, clip_on=False, color=config.PLOTS_COLORS[2],
                         marker='d', label="Asset Value, with Payouts and Costs", markevery=marker_div)
+
+            if isinstance(asset, investment.Investment):
+                # Obtain the asset's return of the whole analysis-period:
+                ret_a = analysis.get_returns_asset_analysisperiod(asset, analyzer)
+                # Obtain the asset's holding period return:
+                ret_h = analysis.get_return_asset_holdingperiod(asset)
+                if ret_h is not None:
+                    ret_str = f"Analysis Period Return: {ret_a:.1f}%\nHolding Period Return: {ret_h:.1f}%"
+                else:
+                    ret_str = f"Analysis Period Return: {ret_a:.1f}%\nHolding Period Return: N/A (missing price of today)"
+                # Place the text relative to the axes:
+                plt.text(0.05, 0.78, ret_str, horizontalalignment='left', verticalalignment='center',
+                         transform=ax.transAxes, fontsize=7, bbox=dict(facecolor='w', edgecolor='k', boxstyle='round'))
+
 
             plt.legend(fancybox=True, shadow=True, ncol=1, framealpha=1.0, loc='best')
 
