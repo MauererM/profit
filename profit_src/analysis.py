@@ -13,6 +13,8 @@ from . import helper
 
 class AnalysisRange:
     """Stores data related to the analysis-data-range, which is often used across various functions
+    Used to implement caching for frequent datetime conversions, and provides access to commonly
+    used configs (e.g., dateformat).
     """
 
     def __init__(self, startdate, stopdate, dateformat_str, datetime_converter):
@@ -60,11 +62,11 @@ def project_values(datelist, valuelist, num_years, interest_percent, dateformat)
     # Find the end-date:
     date_end = dateoperations.add_years(datelist[-1], num_years, dateformat)
     # Create a datelist for the days of the projection:
-    datelist_fut = dateoperations.create_datelist(date_start, date_end, None, dateformat)
+    datelist_fut = dateoperations.create_datelist(date_start, date_end, None, dateformat) # Todo Could the analyzer be used here?
     interest_day = (interest_percent / 100.0) / 365.0  # The daily interest rate. Annual compounding is assumed.
     vallist_fut = list(valuelist)
     for _ in datelist_fut:
-        vallist_fut.append(vallist_fut[-1] * (1 + interest_day))
+        vallist_fut.append(vallist_fut[-1] * (1 + interest_day)) # Todo: Do this more elegantly? No appending?
     # Concat the date lists to get one continuous list:
     datelist_fut = datelist + datelist_fut
     # Sanity check:
@@ -73,7 +75,7 @@ def project_values(datelist, valuelist, num_years, interest_percent, dateformat)
     return datelist_fut, vallist_fut
 
 
-def calc_moving_avg(xlist, ylist, winlen):
+def calc_moving_avg(xlist, ylist, winlen): # Todo: Remove without replacement, then re-lint this file.
     """Calculates the moving-average of a XY data-set. The correspondingly filtered tuple is returned
     (which might be of a shorter length, if winlen > 1) ==> Values are only added, once the moving window is full of
     samples.
@@ -133,7 +135,7 @@ def get_asset_values_summed(assets):
     return sumval
 
 
-def get_asset_inflows_summed(assets):
+def get_asset_inflows_summed(assets): # Todo this function looks like the one above?! Combine/improve! See also the one(s) below!
     """Sum the daily inflows of the given assets
     :param assets: List of asset-objects
     :return: List of values, corresponding to the length of the analysis-period
