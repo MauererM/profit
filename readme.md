@@ -1,21 +1,17 @@
 # PROFIT
 ##### Python-Based Return On Investment and Financial Investigation Tool
-
+The core idea of PROFIT is to aggregate financial data from different sources (e.g., different banks, accounts, portfolios) in order to provide an overview of one's holistic financial situation. 
 ### Features
 * Data aggregation: Accounts, investments, cash etc.
 * Long-term financial data analysis, tracking and plotting
-	- Asset values and returns
-	- Payouts and fees
-	- Consideration of different asset purposes (e.g., retirement, liquidity etc.)
-* Focus on long-term maintainability, scalability and simplicity
-	- Python-based
-	- Simple, local data storage (human readable text files): No privacy issues
+    - Asset values and returns
+    - Payouts and fees
+    - Consideration of different asset purposes (e.g., retirement, liquidity etc.)
+    - Note: Debt is not (yet) supported
 * Automatic gathering of market prices and foreign exchange rates
 	- Data can also be provided manually
 * MIT License
 * Uses Yahoo Finance (or others; configurable via plugin/subpackage) for automatic data retrieval
-
-PROFIT is a simple aggregation and analysis tool for personal finance. It provides a comprehensive overview of the tracked assets. This is usually complicated by the fact that assets are commonly held in different banks and accounts, with numerous currencies. PROFIT is simple and focuses on long-term maintainability and simplicity.
 
 All data is stored and manipulated locally, using simple text files that are human-readable. Hence, there are no privacy concerns and no complex databases. 
 

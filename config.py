@@ -44,9 +44,9 @@ class ProfitConfig:
     # PROFIT's output plots/PDFs:
     PLOTS_FOLDER = "plots"
     # The accounts that PROFIT should parse:
-    ACCOUNT_FOLDER = "accounts_examples"
+    ACCOUNT_FOLDER = "accounts"
     # The investments that PROFIT should parse:
-    INVESTMENT_FOLDER = "investments_examples"
+    INVESTMENT_FOLDER = "investments"
 
     """
     Stockmarket-Indices. They are also obtained from the dataprovider.
