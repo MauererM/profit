@@ -232,11 +232,11 @@ def plot_asset_returns_individual(assetlist, fname, analyzer, config):
             # Obtain the asset's return of the whole analysis-period:
             ret_a = analysis.get_returns_asset_analysisperiod(asset, analyzer)
             # Obtain the asset's holding period return:
-            ret_h = analysis.get_return_asset_holdingperiod(asset, dateformat)
+            ret_h = analysis.get_return_asset_holdingperiod(asset)
             # String for displaying in the plot:
             # Check, if the holding period return is irreasonably negative. Then, the holding period return calc. was
             # not possible due to missing price-data of today.
-            if ret_h > -1e9:
+            if ret_h is not None:
                 ret_str = f"Analysis Period Return: {ret_a:.2f}\nHolding Period Return: {ret_h:.2f}"
             else:
                 ret_str = f"Analysis Period Return: {ret_a:.2f}\nHolding Period Return: N/A (missing price of today)"

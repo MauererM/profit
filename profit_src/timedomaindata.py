@@ -226,7 +226,7 @@ class ForexTimeDomainData:
 class StockTimeDomainData:
     """Manages time-domain data for stocks from the data provider and/or storage-system."""
 
-    def __init__(self, symbol, exchange, currency, analysis_interval, analyzer, storage, provider):
+    def __init__(self, symbol, exchange, currency, analysis_interval, analyzer, storage, provider, has_value_today):
         self.symbol = symbol
         self.exchange = exchange
         self.currency = currency
@@ -236,6 +236,7 @@ class StockTimeDomainData:
         self.provider = provider
         self.full_dates = None
         self.full_prices = None
+        self.has_value_today = has_value_today
 
         # Gather and process the data:
         self.storageobj = self.__get_stock_storage_object()
@@ -284,8 +285,9 @@ class StockTimeDomainData:
             if full_dates_stop < stopdate_analysis_dt:
                 print(f"Available prices (data provider and stored market-data) are only available until "
                       f"the {self.full_dates[-1]}. Latest available data will be extrapolated forwards and merged with "
-                      f"the manually entered prices."
-                      f"\nUpdate the storage data file or transactions-list for correct returns calculation.") # Todo: Only output this if the balance is nonzero?
+                      f"the manually entered prices.")
+                if self.has_value_today is True:
+                    logging.warning(f"Update the storage data file or transactions-list for correct returns calculation!")
 
     def __create_new_stock_storage_file(self):
         self.storageobj = self.storage.create_new_storage_file("stock", (self.symbol, self.exchange, self.currency))
