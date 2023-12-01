@@ -5,6 +5,7 @@ MIT License
 Copyright (c) 2018 Mario Mauerer
 """
 
+import logging
 from pathlib import Path
 import re
 
@@ -126,7 +127,7 @@ def check_create_folder(folderpath, create_if_missing=False):
     if not folderpath.is_dir():
         if create_if_missing is True:
             folderpath.mkdir(parents=True, exist_ok=True)
-            print(f"Created the folder {folderpath} as it was missing.")
+            logging.warning(f"Created the folder {folderpath} as it was missing.")
             return True
         return False
     return True
@@ -162,9 +163,9 @@ def delete_file(path):
         else:
             raise RuntimeError("File does not exist.")
     except PermissionError:
-        print("No permission to delete file.")
+        logging.error("No permission to delete file.")
     except IsADirectoryError:
-        print("The path specified is a directory, not a file.")
+        logging.error("The path specified is a directory, not a file.")
 
 
 def get_file_list(folderpath, extension):

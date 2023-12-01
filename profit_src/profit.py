@@ -101,7 +101,7 @@ def main(config):
         for x in accountfiles:
             print(x.name)
     else:
-        print(f"Found no account files in folder {account_path}")
+        logging.warning(f"Found no account files in folder {account_path}")
     accounts = []
     for file in accountfiles:
         filepath = file.resolve()
@@ -120,7 +120,7 @@ def main(config):
         for x in invstmtfiles:
             print(x.name)
     else:
-        print(f"Found no investment files in folder {investment_path}")
+        logging.warning(f"Found no investment files in folder {investment_path}")
     investments = []
     for file in invstmtfiles:
         filepath = file.resolve()
@@ -132,7 +132,7 @@ def main(config):
     # Combine accounts and investments into assets:
     assets = accounts + investments
     if len(assets) < 1:
-        print("\nNo accounts or investments found. Terminating.")
+        logging.error("\nNo accounts or investments found. Terminating.")
         sys.exit(0)
 
     # Collect the currencies of all assets, and the corresponding exchange-rates

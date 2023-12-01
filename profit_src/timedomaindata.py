@@ -165,11 +165,12 @@ class ForexTimeDomainData:
         dates_full_start = self.analyzer.str2datetime(self.full_dates[0])
         dates_full_stop = self.analyzer.str2datetime(self.full_dates[-1])
         if dates_full_start > self.analysis_startdate_dt:
-            print(f"Available rates (data provider and stored market-data) are only available from "
-                  f"the {self.full_dates[0]} onwards. Earliest available data will be extrapolated backwards.")
+            logging.warning(f"Available rates (data provider and stored market-data) are only available from "
+                            f"the {self.full_dates[0]} onwards. "
+                            f"Earliest available data will be extrapolated backwards.")
         if dates_full_stop < self.analysis_stopdate_dt:
-            print(f"Available rates (data provider and stored market-data) are only available until "
-                  f"the {self.full_dates[-1]}. Latest available data will be extrapolated forwards.")
+            logging.warning(f"Available rates (data provider and stored market-data) are only available until "
+                            f"the {self.full_dates[-1]}. Latest available data will be extrapolated forwards.")
 
         # Crop the data to the desired period:
         self.full_dates, self.full_prices = dateoperations.format_datelist(self.full_dates, self.full_prices,
@@ -279,15 +280,16 @@ class StockTimeDomainData:
             full_dates_start = self.analyzer.str2datetime(self.full_dates[0])
             full_dates_stop = self.analyzer.str2datetime(self.full_dates[-1])
             if full_dates_start > startdate_analysis_dt:
-                print(f"Available prices (provider and stored data) are only available from the {self.full_dates[0]} "
-                      f"onwards. Earliest available data will be extrapolated backwards and merged with the "
-                      f"manually entered prices.")
+                logging.warning(f"Available prices (provider and stored data) are only available "
+                                f"from the {self.full_dates[0]} onwards. Earliest available data will be "
+                                f"extrapolated backwards and merged with the manually entered prices.")
             if full_dates_stop < stopdate_analysis_dt:
-                print(f"Available prices (data provider and stored market-data) are only available until "
-                      f"the {self.full_dates[-1]}. Latest available data will be extrapolated forwards and merged with "
-                      f"the manually entered prices.")
+                logging.warning(f"Available prices (data provider and stored market-data) are only available until "
+                                f"the {self.full_dates[-1]}. Latest available data will be extrapolated forwards "
+                                f"and merged with the manually entered prices.")
                 if self.has_value_today is True:
-                    logging.warning(f"Update the storage data file or transactions-list for correct returns calculation!")
+                    logging.warning(f"Update the storage data file or transactions-list "
+                                    f"for correct returns calculation!")
 
     def __create_new_stock_storage_file(self):
         self.storageobj = self.storage.create_new_storage_file("stock", (self.symbol, self.exchange, self.currency))
@@ -327,8 +329,8 @@ def get_provider_storage_ranges(storageobj, storage, analyzer, analysis_startdat
             stopdate_dataprovider = analyzer.datetime2str(stopdate_analysis_dt)
             startdate_from_storage = None
             stopdate_from_storage = None
-            print(f"Holes in the data of the storage object for {storageobj.get_filename()} detected. "
-                  f"Will pull all data from provider.")
+            logging.warning(f"Holes in the data of the storage object for {storageobj.get_filename()} detected. "
+                            f"Will pull all data from provider.")
         # The analysis-interval is fully contained in the market-data: No online retrieval necessary.
         elif startdate_storage_dt <= startdate_analysis_dt and stopdate_analysis_dt <= stopdate_storage_dt:
             startdate_dataprovider = None
@@ -430,11 +432,11 @@ def obtain_data_from_storage_and_provider(startdate_dataprovider, stopdate_datap
                 if ret is not None:
                     print(f"Obtained some provider data for the stock market index {symbol}")
             else:
-                print("Not implemented yet!")
+                logging.error("Not implemented yet!")
             if ret is not None:
                 providerdates, providerprices = ret
                 if len(providerdates) != len(providerprices):
-                    print("Lists should be of identical length. Will throw an error.")
+                    logging.error("Lists should be of identical length. Will throw an error.")
                     raise Exception()  # Raise without statement to trigger the try-catch loop, print the message above.
                 logging.debug("Obtained data from an online provider. First few data-points:")
                 debuglen = min(len(providerdates), 5)
@@ -449,7 +451,7 @@ def obtain_data_from_storage_and_provider(startdate_dataprovider, stopdate_datap
             else:
                 logging.debug("Did not obtain provider-data.")
         except:
-            print("Failed to obtain provider data. An (unknown?) error has occurred.")
+            logging.error("Failed to obtain provider data. An (unknown?) error has occurred.")
     return storagedates, storageprices, providerdates, providerprices
 
 

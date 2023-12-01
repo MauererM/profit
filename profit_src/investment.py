@@ -159,7 +159,8 @@ class Investment:
             if trans_actions[idx] == self.config.STRING_INVSTMT_ACTION_SPLIT:
                 if idx == 0:
                     raise RuntimeError("The first transaction is a split?! This should have been caught earlier!")
-                print(f"Split detected. Stock: {self.symbol}. Double-check that data from dataprovider reflects this.")
+                logging.warning(f"Split detected. Stock: {self.symbol}. Double-check that data from dataprovider "
+                                f"reflects this correctly.")
                 if trans_balance[idx - 1] > 1e-9:  # Derive the ratio from the provided balance-entry
                     r = trans_balance[idx] / trans_balance[idx - 1]
                 else:  # Balance is 0 (i.e., all stock sold): Derive ratio from the quantity-column
@@ -229,10 +230,10 @@ class Investment:
                     split_ratio = trans_quantity[idx]
 
                 if split_ratio > 150:
-                    print("Split ratio > 150 detected. Sensible?")
+                    logging.warning("Split ratio > 150 detected. Sensible?")
 
                 if split_ratio < 1.0 / 150:
-                    print("Split ratio < 1/150 detected. Sensible?")
+                    logging.warning("Split ratio < 1/150 detected. Sensible?")
 
                 if trans_price[idx] < 1e-9:
                     raise RuntimeError("The new price must be given for a split-transaction!")

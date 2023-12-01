@@ -5,6 +5,7 @@ MIT License
 Copyright (c) 2020-2023 Mario Mauerer
 """
 
+import logging
 import pkgutil
 import inspect
 import importlib
@@ -40,7 +41,7 @@ class DataproviderMain:
                 except ImportError:
                     print(f"Could not load module {name}.")
         if len(loaded_modules) == 0:
-            print("Could not discover any dataprovider subpackage. Is the package-discovery working correctly?")
+            logging.error("Could not discover any dataprovider subpackage. Is the package-discovery working correctly?")
 
         # Find all classes that inherit from the provider's ABC. These are our entry points.
         classes = []  # Find the classes in the discovered modules that inherit the ABC for the dataprovider.
@@ -69,11 +70,12 @@ class DataproviderMain:
                 self.active_provider = p
                 print(f"Data provider {p.get_name()} successfully initialized")
                 break
-            print(f"Failed to initialize provider {p.get_name()}")
+            logging.warning(f"Failed to initialize provider {p.get_name()}")
         # Now, we either have a functioning provider initialized, or the Empty-provider (which will trigger
         # the falling functions to fall back to alternative means, making the data-source selection somewhat automatic)
         if self.active_provider is None:
-            print("Failed to initialize any data provider. Will rely on transactions-data or stored market data.")
+            logging.warning(
+                "Failed to initialize any data provider. Will rely on transactions-data or stored market data.")
 
     def __find_package(self, package_name, path=None, parent_name=''):
         """
@@ -97,7 +99,8 @@ class DataproviderMain:
 
     def get_stock_data(self, sym_stock, sym_exchange, startdate, stopdate):
         """Provides stock-prices (values at closing-time of given days; historic data).
-        Note: The returned data might not be of sufficient length into the past (e.g., might not reach back to startdate!)
+        Note: The returned data might not be of sufficient length into the past (e.g., might not reach back to
+        startdate!)
         This is done on purpose, the caller has to deal with this, he can then take appropriate action. This keeps this
         function as simple as possible.
         But: missing data in the returned interval is interpolated, so the returned dates and rates are consecutive and
@@ -106,9 +109,9 @@ class DataproviderMain:
         :param sym_exchange: String encoding the name of the exchange, e.g., "SWX"
         :param startdate: String encoding the day for the first price
         :param stopdate: String encoding the day of the last price
-        :return: Tuple of two lists: the first is a list of strings of _consecutive_ dates, and the second is a list of the
-        corresponding strock prices. Some data might be interpolated/extrapolated, as the API does not
-        always return data for consecutive days (public holidays, weekends etc.) # Todo: Instead of two lists, rather return/use a dict throughout PROFIT? Worth the effort?
+        :return: Tuple of two lists: the first is a list of strings of _consecutive_ dates, and the second is a list
+        of the corresponding strock prices. Some data might be interpolated/extrapolated, as the API does not
+        always return data for consecutive days (public holidays, weekends etc.)
         """
         if self.active_provider is None:
             return None
@@ -119,7 +122,7 @@ class DataproviderMain:
         if res is not None:
             pricedates, stockprices = res  # List of strings and floats
         else:
-            print(f"Failed to obtain data for stock symbol: {sym_stock}")
+            logging.warning(f"Failed to obtain data for stock symbol: {sym_stock}")
             return None
 
         res = self.__post_process_dataprovider_data(pricedates, stockprices, startdate, stopdate)
@@ -135,8 +138,8 @@ class DataproviderMain:
         :param startdate: String encoding the day for the first rate
         :param stopdate: String encoding the day of the last rate
         :param dateformat: String that encodes the format of the dates, e.g. "%d.%m.%Y"
-        :return: Tuple of two lists: the first is a list of strings of consecutive dates, and the second is a list of the
-        corresponding foreign exchange rates. Some data might be interpolated/extrapolated, as the API does not
+        :return: Tuple of two lists: the first is a list of strings of consecutive dates, and the second is a list
+        of the corresponding foreign exchange rates. Some data might be interpolated/extrapolated, as the API does not
         always return data for consecutive days (public holidays etc...)
         """
         if self.active_provider is None:
@@ -148,7 +151,7 @@ class DataproviderMain:
         if res is not None:
             forexdates, forexrates = res  # List of strings and floats
         else:
-            print(f"Failed to obtain exchange rates for: {sym_a} and {sym_b}")
+            logging.warning(f"Failed to obtain exchange rates for: {sym_a} and {sym_b}")
             return None
 
         res = self.__post_process_dataprovider_data(forexdates, forexrates, startdate, stopdate)
@@ -162,7 +165,8 @@ class DataproviderMain:
         Sanity-checks the dates. Raises errors if something is wrong.
         :param startdate: String encoding the day for the first rate
         :param stopdate: String encoding the day of the last rate
-        :return: The epoch values p1, p2 that correspond to start- and stopdate, adn the datetime-objects of start- and stopdate.
+        :return: The epoch values p1, p2 that correspond to start- and stopdate,
+        and the datetime-objects of start- and stopdate.
         """
         # Use datetime, and sanity check:
         startdate_dt = self.analyzer.str2datetime(startdate)
@@ -182,14 +186,14 @@ class DataproviderMain:
         :param startdate: String of (desired) startdate
         :param stopdate: String of (desired) stopdate
         :param stopdate_dt: Datetime-obj relating to stopdate
-        :return: Tuple of two lists: the first is a list of strings of _consecutive_ dates, and the second is a list of the
-        corresponding values. Some data might be interpolated/extrapolated, as the data provider does not
-        always return data for consecutive days (public holidays etc...)
+        :return: Tuple of two lists: the first is a list of strings of _consecutive_ dates, and the
+        second is a list of the corresponding values. Some data might be interpolated/extrapolated, as
+        the data provider does not always return data for consecutive days (public holidays etc...)
         """
 
         # Sanity check:
         if len(dates) != len(values):
-            print("Returned time- and value-data is of unequal length. Will not use provided data.")
+            logging.warning("Returned time- and value-data is of unequal length. Will not use provided data.")
             return None
 
         stopdate_dt = self.analyzer.str2datetime(stopdate)
@@ -219,7 +223,8 @@ class DataproviderMain:
 
         # Check if there is still data left:
         if len(values) < 1:
-            print("Data unavailable for desired interval. Maybe change analysis period. Will not use provided data.")
+            logging.warning("Data unavailable for desired interval. "
+                            "Maybe change analysis period. Will not use provided data.")
             return None
 
         # Fill in missing data in the vector
