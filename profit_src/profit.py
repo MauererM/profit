@@ -40,7 +40,7 @@ def main(config):
     print(f"PROFIT v{PROFIT_VERSION:.1f} starting")
 
     # Set logging:
-    logging.basicConfig(level=logging.WARNING)
+    logging.basicConfig(format='%(levelname)s - %(message)s', level=logging.INFO)
     matplotlib_logger = logging.getLogger('matplotlib')
     matplotlib_logger.setLevel(logging.INFO)  # Exclude matplotlib's debug-messages, as they otherwise spam a lot.
 

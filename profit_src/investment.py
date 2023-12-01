@@ -258,6 +258,28 @@ class Investment:
                 if trans_quantity[idx] > 1e-9 or trans_price[idx] > 1e-9 or trans_payout[idx] > 1e-9:
                     raise RuntimeError(f"Cost-transactions may not have quantities, prices or payouts. "
                                        f"Transaction-Nr: {(idx + 1):d}")
+
+        # Check, if there are multiple transactions on the same date; This is in some cases (sadly) not allowed,
+        # due to the 1-day assumed minimal granularity of PROFIT.
+        duplicates = sorted(helper.find_duplicate_indices(trans_dates))
+        if not duplicates:
+            return True
+        sequences = helper.extract_sequences(duplicates)
+        for sequence in sequences:
+            if len(sequence) < 2:
+                raise RuntimeError("Something went wrong in calculating duplicates; "
+                                   "There should always be a duplicate at this point")
+            actions = trans_actions[sequence[0]:sequence[-1]+1]
+            if (self.config.STRING_INVSTMT_ACTION_BUY in actions and
+                self.config.STRING_INVSTMT_ACTION_SELL in actions) or \
+                    (self.config.STRING_INVSTMT_ACTION_BUY in actions and
+                     self.config.STRING_INVSTMT_ACTION_SPLIT in actions) or \
+                    (self.config.STRING_INVSTMT_ACTION_SELL in actions and
+                     self.config.STRING_INVSTMT_ACTION_SPLIT in actions):
+                raise RuntimeError(
+                    "In PROFIT, it is (sadly) not allowed to have Buy, or Sell, or Split "
+                    "transactions on the same date.")
+
         return True
 
     def __populate_full_list(self, trans_dates, trans_amounts, datelist, sum_ident_days=False):

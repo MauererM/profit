@@ -4,6 +4,8 @@ PROFIT - Python-Based Return on Investment and Financial Investigation Tool
 MIT License
 Copyright (c) 2018 Mario Mauerer
 """
+
+import logging
 from . import dateoperations
 from . import stringoperations
 from . import helper
@@ -198,6 +200,7 @@ def get_asset_costs_summed(assets):
     sumval = assets[0].get_analysis_costlist()
     return sumval
 
+
 def get_return_holdingperiod_full_block(asset, dates, balances, costs, payouts, prices, inflows, outflows):
     """Calculate the holding period of an asset for a full valid "block" (meaning: without containing periods
     where the asset was fully sold. The asset may still be held today. The first balance must be nonzero.
@@ -224,14 +227,7 @@ def get_return_holdingperiod_full_block(asset, dates, balances, costs, payouts, 
     # and calculate the price of that point (the last sell-transaction). Go backwards through the balance, find where
     # it is zero for the last time (going backwards). This is the last sell-transaction that resulted in a zero-balance.
     if balances[-1] < 1e-9:
-        trans_idx_of_first_nonzero_balance_from_the_back = None
-        for i, val in enumerate(reversed(balances)):
-            if val > 1e-9:
-                trans_idx_of_first_nonzero_balance_from_the_back = len(balances) - i
-                break
-        if trans_idx_of_first_nonzero_balance_from_the_back is None:
-            raise RuntimeError("Somehow found no zoer-entry balance? Can this be?!")
-        val2 = 0.0  # No balance of today ==> No value. # Todo do we then even need the index? Is this whole check even needed, given we get a full "block" of balances anyways?
+        val2 = 0.0  # No balance of today ==> No value.
 
     else:  # There is still a balance today.
         today_dt = dateoperations.get_date_today(asset.get_dateformat(), datetime_obj=True)
@@ -257,15 +253,14 @@ def get_return_holdingperiod_full_block(asset, dates, balances, costs, payouts, 
             if latest_date_trans >= today_dt and prices[-1] > 1e-9:
                 val2 = prices[-1] * balances[-1]
             else:
-                print(f"WARNING: Cannot calculate holding period return of {asset.get_filename()} (with nonzero "
-                      f"balance as of today) due to unavailable price of today. Update the assets marketdata storage file "
-                      f"or transactions-data with values from today.")
-                # Return a seemingly impossible (negative!) value:
-                return -1e10
+                logging.warning(f"Cannot calculate holding period return of {asset.get_filename()} "
+                                f"(with nonzero balance as of today) due to unavailable price of today. "
+                                f"Update the assets marketdata storage file or transactions-data with "
+                                f"values from today.")
+                return None
 
     # Val1 is the first value of the transactions. As the first transaction is a "buy", the first inflow has to be
     # omitted for the correct calculation of the return (it happened in the "previous" period...)
-    # Todo: Is this still true, even in this case, where we split the blocks? Likely: Yes, but take care that the blocks are properly split.
     val1 = prices[0] * balances[0]
     inflows[0] = 0.0
     cost = sum(costs)
@@ -279,17 +274,11 @@ def get_return_asset_holdingperiod(asset):
     """Calculates the holding period return of an asset
     It considers _all_ asset-transactions, and not just the analysis-data.
     The holding period ends _today_, i.e., on the day this function is executed. Hence, price data must be avilable
-    today. # Todo: What if the balance today is 0? Then, the last price/balance is sufficient, no?! Yes!
-    # Todo double-check if this also works if there are multiple buy-sell (with 0 balances) loops inside an asset?
-    # Todo is this then also wrong in the final printout of PROFIT? "The return of the investments of the considered analysis-period..."?
-    # Todo There is a bug/special case here: If the transactions contain several blocks of nonzero balances (e.g., the stock has been bought and fully sold more than once), this is not working properly!
+    today, if there is still a balance today.
     Forex-rates might have to be obtained further back than the analysis-data-range
-    For this to be correct, make sure that either:
-        - The asset can get the most recent prices from the dataprovider
-        - The market-data-files contain the most recent price
-        - Or there is an "update" transaction in the asset-transactions recently, that defines the price of the asset.
+    If there are several isolated blocks of asset-ownership, the holding period return of each block is calculated,
+    and this function returns the average of the returns of each block.
     :param asset: Asset-object
-    :param dateformat: String that encodes the format of the dates, e.g. "%d.%m.%Y"
     :return: The holding period return of the asset, in %
     """
     # Get the full transaction-data:
@@ -314,10 +303,61 @@ def get_return_asset_holdingperiod(asset):
     # (i.e., several periods where the asset was held, but also fully sold inbetween).
     # We separate these blocks, calculate the holding period returns individually, and in the end, average the returns
     # of the different periods.
+
+    # All transactions- indices, where the balance is zero
+    zero_balance_idx = [i for i, val in enumerate(balancelist) if val < 1e-9]
+    # All indices where the balance is nonzero - used to find the transition between zero- and nonzero balances.
+    nonzero_balance_idx = [i for i, val in enumerate(balancelist) if val > 1e-9]
+
+    if 0 in zero_balance_idx:
+        raise RuntimeError("Balance-list may not start with zero-balance.")
+
+    # Only a single block of asset-ownership, and asset has not been (fully) sold yet (i.e., all balances are >0)
+    if len(zero_balance_idx) == 0 or (len(zero_balance_idx) == 1 and balancelist[-1] < 1e-9):
+        return get_return_holdingperiod_full_block(asset, datelist, balancelist, costlist, payoutlist, pricelist,
+                                                   inflowlist, outflowlist)
+
+    logging.info(f"Found multiple distinct blocks of asset-ownership in {asset.get_filename()}. Will average their "
+                 f"respective holding period returns. ")
+
+    idx_start = 0
     returns = []
-    # Todo continue here.
+    for idx in zero_balance_idx:
+        if idx_start > 0 and (idx - 1) not in nonzero_balance_idx:
+            # If this is the case, we encountered several subsequent entries with balance=0, e.g., because an update-
+            # transaction follows a fully sold block, prior to the next buy-block. Or, more naturally, if there are
+            # several days between the last sell and first buy action.
+            # This essentially detects a transition from zero-balance back to nonzero balance (a repeat-buy condition).
+            idx_start = idx_start + 1
+            continue
+        balances_block = balancelist[idx_start:idx + 1]
+        dates_block = datelist[idx_start:idx + 1]
+        costs_block = costlist[idx_start:idx + 1]
+        payouts_block = payoutlist[idx_start:idx + 1]
+        prices_block = pricelist[idx_start:idx + 1]
+        inflows_block = inflowlist[idx_start:idx + 1]
+        outflows_block = outflowlist[idx_start:idx + 1]
+        returns.append(get_return_holdingperiod_full_block(asset, dates_block, balances_block, costs_block,
+                                                           payouts_block, prices_block, inflows_block, outflows_block))
+        idx_start = idx + 1
+    # If the last block of ownership is still "ongoing", i.e., assets are still owned, we need to calculate the last
+    # holding period return, too.
+    if balancelist[-1] > 1e-9:
+        idx_start = zero_balance_idx[-1]+1
+        idx_stop = nonzero_balance_idx[-1]+1
+        balances_block = balancelist[idx_start:idx_stop]
+        dates_block = datelist[idx_start:idx_stop]
+        costs_block = costlist[idx_start:idx_stop]
+        payouts_block = payoutlist[idx_start:idx_stop]
+        prices_block = pricelist[idx_start:idx_stop]
+        inflows_block = inflowlist[idx_start:idx_stop]
+        outflows_block = outflowlist[idx_start:idx_stop]
+        returns.append(get_return_holdingperiod_full_block(asset, dates_block, balances_block, costs_block,
+                                                           payouts_block, prices_block, inflows_block, outflows_block))
 
-
+    if None in returns:
+        return None
+    return sum(returns) / len(returns)  # Build the average of all returns
 
 
 def get_returns_asset_analysisperiod(asset, analyzer):
@@ -348,7 +388,7 @@ def get_returns_assets_accumulated_analysisperiod(assets, analyzer):
     The values of the assets are summed up (daily) and the return is calculated for the accumulated values.
     The analysis-data-range of each asset must be identical (in date and size)
     :param assets: List of asset-objects
-    :param dateformat: String that encodes the format of the dates, e.g. "%d.%m.%Y"
+    :param analyzer: Analyzer-instance, for cached date-conversions.
     :return: Return of considered analysis-period, in percent.
     """
     datelist = list(assets[0].get_analysis_datelist())
@@ -389,8 +429,8 @@ def get_returns_assets_accumulated(assets, period, analyzer):
     The data is intended to be provided with a granularity of days.
     The analysis-data-range of each asset must be identical (in date and size)
     :param assets: List of assets (e.g., Account of Investment-Objects)
-    :param period: The period over which the return is calculated. Must be integer.
-    :param dateformat: String that specifies the format of the date-strings
+    :param period: The period over which the return is calculated. Must be integer (number of days).
+    :param analyzer: Analyzer-object for cached datetime conversions.
     :return: Tuple of two lists: (dates, returns). The returns of the periods in the datelist. They correspond to the
     returned dates, whereas the last date of the analysis-interval is given. The return is in percent.
     """
@@ -449,14 +489,17 @@ def calc_returns_period(datelist, valuelist, costlist, payoutlist, inflowlist, o
     :param period: Number of days for which the return is calculated. Must be integer. If len(datelist) > period,
     the return is calculated for each block within the full date list. This is used by the plotting-functions, which
     plot different returns for different time periods.
-    :param dateformat: String that specifies the format of the date-strings
+    :param analyzer: Analyzer-object for cached datetime conversions.
     :return: Tuple of two lists: (date, return). The returns of the periods in the datelist. They correspond to the
     returned dates, whereas the last date of the analysis-interval is given. The return is in percent.
+    # Todo: Is this function also working correctly if there are "value-holes" in the list(s) of values? E.g.,
+    # If the values go to zero,and then back to some value, during the analyzed period? Is this the same case as for the
+    # holding period analysis, where individual blocks of ownership had to have the return calculated individually?
     """
     # Sanity-checks:
     if dateoperations.check_dates_consecutive(datelist, analyzer) is False:
         raise RuntimeError("datelist must contain consecutive days.")
-    # Check the length of all lists - they must be identical:
+    # Check the length of all lists - they must be identical: # Todo this could go into its own function, and be replaced everywhere this gets used.
     totlist = [datelist, valuelist, costlist, payoutlist, inflowlist, outflowlist]
     n = len(datelist)
     if all(len(x) == n for x in totlist) is False:
@@ -660,4 +703,3 @@ def partition_list(inlist, blocksize):
     # Make sure we are dealing with integers:
     blocksize = int(round(blocksize, 0))
     return [inlist[i:i + blocksize] for i in range(0, len(inlist), blocksize)]
-

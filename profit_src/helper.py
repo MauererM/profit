@@ -106,6 +106,46 @@ def create_dict_from_list(string_list):
             raise RuntimeError("Received duplicate date when trying to create date-dict. This is likely not OK.")
     return d
 
+def find_duplicate_indices(list):
+    """From a list, return (a list of) all indices at which duplicates (e.g., duplicate dates) have been found."""
+    occurrences = {}
+
+    for index, item in enumerate(list):
+        if item in occurrences:
+            occurrences[item]['count'] += 1
+            occurrences[item]['indices'].append(index)
+        else:
+            occurrences[item] = {'count': 1, 'indices': [index]}
+
+    duplicate_indices = []
+    for item in occurrences.values():
+        if item['count'] > 1:
+            duplicate_indices.extend(item['indices'])
+
+    return duplicate_indices
+
+def extract_sequences(indices, distance=1):
+    """Finds the blocks of subsequent indices in a sorted list of indices, and returns a list of lists of the blocks."""
+    if not indices:
+        return []
+
+    sequences = []
+    current_sequence = [indices[0]]
+
+    for i in range(1, len(indices)):
+        if indices[i] == indices[i-1] + distance:
+            # Continuation of the current sequence
+            current_sequence.append(indices[i])
+        else:
+            # End of the current sequence, start a new one
+            sequences.append(current_sequence)
+            current_sequence = [indices[i]]
+
+    # Add the last sequence
+    sequences.append(current_sequence)
+    return sequences
+
+
 
 """
     Stand-alone execution for testing:
