@@ -33,15 +33,39 @@ from .plotting.plot_forex_rates import plot_forex_rates
 # Version of PROFIT:
 PROFIT_VERSION = 1.4
 
+# Configure the logger to output different colors to the terminal:
+COLORS = {
+    'WARNING': '\033[33m',  # Yellow
+    'INFO': '\033[37m',  # White
+    'DEBUG': '\033[34m',  # Blue
+    'CRITICAL': '\033[35m',  # Magenta
+    'ERROR': '\033[31m',  # Red
+}
+
+
+class ColoredFormatter(logging.Formatter):
+    def format(self, record):
+        levelname = record.levelname
+        if levelname in COLORS:
+            color = COLORS[levelname]
+            record.msg = color + str(record.msg) + '\033[0m'  # Colorize the message text
+            record.levelname = color + levelname + '\033[0m'  # Colorize the level name
+        return logging.Formatter.format(self, record)
 
 
 def main(config):
     """The main entry-point of PROFIT"""
 
     # Set logging:
-    logging.basicConfig(format='%(levelname)s - %(message)s', level=logging.INFO)
+    logger = logging.getLogger()
+    handler = logging.StreamHandler()
+    formatter = ColoredFormatter('%(levelname)s: %(message)s')
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
+    logger.setLevel(logging.INFO)
     matplotlib_logger = logging.getLogger('matplotlib')
     matplotlib_logger.setLevel(logging.INFO)  # Exclude matplotlib's debug-messages, as they otherwise spam a lot.
+    sys.stderr = sys.stdout  # Synchronize print() and logging-messages (use same output/buffering)
 
     # Print the current version of the tool
     print(f"PROFIT v{PROFIT_VERSION:.1f} starting")
