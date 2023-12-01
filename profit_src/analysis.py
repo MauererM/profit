@@ -203,13 +203,15 @@ def get_return_asset_holdingperiod(asset, dateformat):
     """Calculates the holding period return of an asset
     It considers _all_ asset-transactions, and not just the analysis-data.
     The holding period ends _today_, i.e., on the day this function is executed. Hence, price data must be avilable
-    today.
-    Hence, forex-rates might have to be obtained further back than the analysis-data-range
+    today. # Todo: What if the balance today is 0? Then, the last price/balance is sufficient, no?! Yes!
+    # Todo double-check if this also works if there are multiple buy-sell (with 0 balances) loops inside an asset?
+    # Todo is this then also wrong in the final printout of PROFIT? "The return of the investments of the considered analysis-period..."?
+    # Todo There is a bug/special case here: If the transactions contain several blocks of nonzero balances (e.g., the stock has been bought and fully sold more than once), this is not working properly!
+    Forex-rates might have to be obtained further back than the analysis-data-range
     For this to be correct, make sure that either:
         - The asset can get the most recent prices from the dataprovider
         - The market-data-files contain the most recent price
         - Or there is an "update" transaction in the asset-transactions recently, that defines the price of the asset.
-    The value of the asset of today is used to obtain the holding period return.
     :param asset: Asset-object
     :param dateformat: String that encodes the format of the dates, e.g. "%d.%m.%Y"
     :return: The holding period return of the asset, in %
@@ -231,40 +233,54 @@ def get_return_asset_holdingperiod(asset, dateformat):
     if asset.get_currency() != asset.get_basecurrency():
         forex_obj = asset.get_forex_obj()
 
-    # If there is an asset-price available, get the latest possible one that is recorded:
-    ret = asset.get_latest_price_date()
-    if ret is not None:
-        latest_date, latest_price = ret
-        latest_date_dt = stringoperations.str2datetime(latest_date, dateformat)
-        # The value can be determined from most recent price!
-        if latest_date_dt >= today_dt:
-            val2 = balancelist[-1] * latest_price  # The latest recorded balance is still valid
-            # Forex conversion required:
-            if asset.get_currency() != asset.get_basecurrency():
-                val2 = forex_obj.perform_conversion([latest_date], [val2])
-                val2 = val2[0]
-            transact_price_necessary = False  # We have a price
-        else:
-            transact_price_necessary = True
-    else:  # No market- or provider data was available.
-        transact_price_necessary = True
+    # If the balance of the asset of today is zero, then find the last entry where the balance was nonzero,
+    # and calculate the price of that point (the last sell-transaction). Go backwards through the balance, find where
+    # it is zero for the last time (going backwards). This is the last sell-transaction that resulted in a zero-balance.
+    if balancelist[-1] < 1e-9:
+        trans_idx_of_first_nonzero_balance_from_the_back = None
+        for i, val in enumerate(reversed(balancelist)):
+            if val > 1e-9:
+                trans_idx_of_first_nonzero_balance_from_the_back = len(balancelist) - i
+                break
+        if trans_idx_of_first_nonzero_balance_from_the_back is None:
+            raise RuntimeError("Somehow found no zoer-entry balance? Can this be?!")
+        val2 = 0.0 # No balance of today ==> No value. # Todo do we then even need the index?
 
-    # Price must be derived from transaction-data:
-    if transact_price_necessary is True:
-        # Try to obtain the price from the transactions:
-        latest_date_trans = stringoperations.str2datetime(datelist[-1], dateformat)
-        # Only allow if the transactions contain data from today:
-        if latest_date_trans >= today_dt and pricelist[-1] > 1e-9:
-            val2 = pricelist[-1] * balancelist[-1]
-            if asset.get_currency() != asset.get_basecurrency():
-                val2 = forex_obj.perform_conversion([datelist[-1]], [val2])
-                val2 = val2[0]
-        else:
-            print(f"WARNING: Cannot calculate holding period return of {asset.get_filename()} due to unavailable "
-                  f"and missing price of today. Update the assets marketdata-file with values from today or add a "
-                  f"price-defining update-transaction of today.")
-            # Return a seemingly impossible (negative!) value:
-            return -1e10
+    else: # There is still a balance today.
+        # If there is an asset-price available, get the latest possible one that is recorded:
+        ret = asset.get_latest_price_date()
+        if ret is not None:
+            latest_date, latest_price = ret
+            latest_date_dt = stringoperations.str2datetime(latest_date, dateformat)
+            # The value can be determined from most recent price!
+            if latest_date_dt >= today_dt:
+                val2 = balancelist[-1] * latest_price  # The latest recorded balance is still valid
+                # Forex conversion required:
+                if asset.get_currency() != asset.get_basecurrency():
+                    val2 = forex_obj.perform_conversion([latest_date], [val2])
+                    val2 = val2[0]
+                transact_price_necessary = False  # We have a price
+            else:
+                transact_price_necessary = True
+        else:  # No market- or provider data was available.
+            transact_price_necessary = True
+
+        # Price must be derived from transaction-data:
+        if transact_price_necessary is True:
+            # Try to obtain the price from the transactions:
+            latest_date_trans = stringoperations.str2datetime(datelist[-1], dateformat)
+            # Only allow if the transactions contain data from today:
+            if latest_date_trans >= today_dt and pricelist[-1] > 1e-9:
+                val2 = pricelist[-1] * balancelist[-1]
+                if asset.get_currency() != asset.get_basecurrency():
+                    val2 = forex_obj.perform_conversion([datelist[-1]], [val2])
+                    val2 = val2[0]
+            else:
+                print(f"WARNING: Cannot calculate holding period return of {asset.get_filename()} (with nonzero "
+                      f"balance as of today) due to unavailable price of today. Update the assets marketdata storage file "
+                      f"or transactions-data with values from today.")
+                # Return a seemingly impossible (negative!) value:
+                return -1e10
 
     # If the asset is with a foreign currency, the values must be adapted:
     if asset.get_currency() != asset.get_basecurrency():
@@ -283,7 +299,8 @@ def get_return_asset_holdingperiod(asset, dateformat):
     inflow = sum(inflowlist)
     outflow = sum(outflowlist)
 
-    return calc_return(val1, val2, outflow, inflow, payout, cost)
+    r = calc_return(val1, val2, outflow, inflow, payout, cost)
+    return r
 
 
 def get_returns_asset_analysisperiod(asset, analyzer):
@@ -627,46 +644,3 @@ def partition_list(inlist, blocksize):
     blocksize = int(round(blocksize, 0))
     return [inlist[i:i + blocksize] for i in range(0, len(inlist), blocksize)]
 
-
-"""
-    Stand-alone execution for testing:
-"""
-if __name__ == '__main__':
-    dateformat = "%d.%m.%Y"
-    datelist = ["01.01.2000", "02.01.2000", "03.01.2000", "04.01.2000", "05.01.2000", "06.01.2000"]
-    valuelist = [1, 100, 105, 105, 55, -80]
-    costlist = [0, 10, 0, 0, 0, 0]
-    payoutlist = [0, 10, 0, 0, 0, 0]
-    inflowlist = [0, 99, 0, 0, 0, 0]
-    outflowlist = [0, 5, 0, 0, 160, 5]
-
-    # print(calc_return_absolute(valuelist[0], valuelist[-1], sum(outflowlist), sum(inflowlist), sum(payoutlist), sum(costlist)))
-    # print(calc_returns_daily_absolute(datelist, valuelist, costlist, payoutlist, inflowlist, outflowlist, dateformat))
-
-    # xfilt, yfilt = calc_median_filt(datelist, valuelist, 3)
-    # print(xfilt)
-    # print(yfilt)
-
-    # print(dates)
-    # print(ror)
-    # xvals = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
-    # yvals = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100]
-    # winlen = 8
-
-    # xfilt, yfilt = calc_moving_avg(xvals, yvals, winlen)
-    # print(repr(yvals))
-    # print(repr(xfilt))
-    # print(repr(yfilt))
-
-    # lista = [1, 3, 4]
-    # listb = [2, 3, 5]
-    # sum1 = [x + y for x, y in zip(lista, listb)]
-    # listc = [3, 5, 5]
-    # sum1 = [x + y for x, y in zip(sum1, listc)]
-    # print(sum1)
-
-    # l = ["a", 1, 2, 3, 4, 5, 6, 7, 8]
-    # n =3
-    # test = partition_list(l, n)
-    # print(test)
-    # print(test[1][-1])
