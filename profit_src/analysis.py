@@ -198,8 +198,84 @@ def get_asset_costs_summed(assets):
     sumval = assets[0].get_analysis_costlist()
     return sumval
 
+def get_return_holdingperiod_full_block(asset, dates, balances, costs, payouts, prices, inflows, outflows):
+    """Calculate the holding period of an asset for a full valid "block" (meaning: without containing periods
+    where the asset was fully sold. The asset may still be held today. The first balance must be nonzero.
+    :param asset: Asset-object
+    :param dates: List of dates of the currently analyzed/given stock-ownership-block
+    :param balances: List of balances of the currently analyzed stock-ownership-block
+    :param costs: List of costs of the currently analyzed stock-ownership-block
+    :param payouts: List of payouts of the currently analyzed stock-ownership-block
+    :param prices: List of prices of the currently analyzed stock-ownership-block
+    :param inflows: List of inflows of the currently analyzed stock-ownership-block
+    :param outflows: List of outflows of the currently analyzed stock-ownership-block
+    :return: The holding period return of the given holding period-block
+    """
+    # Here, only the last balance may (or may not) be zero, there may not be any zero-balances within the interval that
+    # we analyze here.
+    if any(x < 1e-9 for x in balances[0:-1]):
+        raise RuntimeError("This function can only deal with contiguous balance-intervals, i.e., "
+                           "no balance may be zero within this interval. Something went wrong elsewhere.")
+    if balances[0] < 1e-9:
+        raise RuntimeError("This can not be the case, the first balance must come from a buy-transaction. "
+                           "Something went wrong elsewhere. Are the balance-blocks being correctly split up?")
 
-def get_return_asset_holdingperiod(asset, dateformat):
+    # If the balance of the asset of today is zero, then find the last entry where the balance was nonzero,
+    # and calculate the price of that point (the last sell-transaction). Go backwards through the balance, find where
+    # it is zero for the last time (going backwards). This is the last sell-transaction that resulted in a zero-balance.
+    if balances[-1] < 1e-9:
+        trans_idx_of_first_nonzero_balance_from_the_back = None
+        for i, val in enumerate(reversed(balances)):
+            if val > 1e-9:
+                trans_idx_of_first_nonzero_balance_from_the_back = len(balances) - i
+                break
+        if trans_idx_of_first_nonzero_balance_from_the_back is None:
+            raise RuntimeError("Somehow found no zoer-entry balance? Can this be?!")
+        val2 = 0.0  # No balance of today ==> No value. # Todo do we then even need the index? Is this whole check even needed, given we get a full "block" of balances anyways?
+
+    else:  # There is still a balance today.
+        today_dt = dateoperations.get_date_today(asset.get_dateformat(), datetime_obj=True)
+        # If there is an asset-price available, get the latest possible one that is recorded:
+        ret = asset.get_latest_price_date()
+        if ret is not None:
+            latest_date, latest_price = ret
+            latest_date_dt = stringoperations.str2datetime(latest_date, asset.get_dateformat())
+            # The value can be determined from most recent price!
+            if latest_date_dt >= today_dt:
+                val2 = balances[-1] * latest_price  # The latest recorded balance is still valid
+                transact_price_necessary = False  # We have a price
+            else:
+                transact_price_necessary = True
+        else:  # No market- or provider data was available.
+            transact_price_necessary = True
+
+        # Price must be derived from transaction-data:
+        if transact_price_necessary is True:
+            # Try to obtain the price from the transactions:
+            latest_date_trans = stringoperations.str2datetime(dates[-1], asset.get_dateformat())
+            # Only allow if the transactions contain data from today:
+            if latest_date_trans >= today_dt and prices[-1] > 1e-9:
+                val2 = prices[-1] * balances[-1]
+            else:
+                print(f"WARNING: Cannot calculate holding period return of {asset.get_filename()} (with nonzero "
+                      f"balance as of today) due to unavailable price of today. Update the assets marketdata storage file "
+                      f"or transactions-data with values from today.")
+                # Return a seemingly impossible (negative!) value:
+                return -1e10
+
+    # Val1 is the first value of the transactions. As the first transaction is a "buy", the first inflow has to be
+    # omitted for the correct calculation of the return (it happened in the "previous" period...)
+    # Todo: Is this still true, even in this case, where we split the blocks? Likely: Yes, but take care that the blocks are properly split.
+    val1 = prices[0] * balances[0]
+    inflows[0] = 0.0
+    cost = sum(costs)
+    payout = sum(payouts)
+    inflow = sum(inflows)
+    outflow = sum(outflows)
+    return calc_return(val1, val2, outflow, inflow, payout, cost)
+
+
+def get_return_asset_holdingperiod(asset):
     """Calculates the holding period return of an asset
     It considers _all_ asset-transactions, and not just the analysis-data.
     The holding period ends _today_, i.e., on the day this function is executed. Hence, price data must be avilable
@@ -225,82 +301,23 @@ def get_return_asset_holdingperiod(asset, dateformat):
     inflowlist = asset.get_trans_inflowlist()
     outflowlist = asset.get_trans_outflowlist()
 
-    # The value of the asset of today must be known, otherwise, errors are thrown, as the holding period return is
-    # otherwise not very meaningful.
-    today_dt = dateoperations.get_date_today(dateformat, datetime_obj=True)
-
     # If the asset is with a foreign currency, the values must be adapted:
     if asset.get_currency() != asset.get_basecurrency():
         forex_obj = asset.get_forex_obj()
-
-    # If the balance of the asset of today is zero, then find the last entry where the balance was nonzero,
-    # and calculate the price of that point (the last sell-transaction). Go backwards through the balance, find where
-    # it is zero for the last time (going backwards). This is the last sell-transaction that resulted in a zero-balance.
-    if balancelist[-1] < 1e-9:
-        trans_idx_of_first_nonzero_balance_from_the_back = None
-        for i, val in enumerate(reversed(balancelist)):
-            if val > 1e-9:
-                trans_idx_of_first_nonzero_balance_from_the_back = len(balancelist) - i
-                break
-        if trans_idx_of_first_nonzero_balance_from_the_back is None:
-            raise RuntimeError("Somehow found no zoer-entry balance? Can this be?!")
-        val2 = 0.0 # No balance of today ==> No value. # Todo do we then even need the index?
-
-    else: # There is still a balance today.
-        # If there is an asset-price available, get the latest possible one that is recorded:
-        ret = asset.get_latest_price_date()
-        if ret is not None:
-            latest_date, latest_price = ret
-            latest_date_dt = stringoperations.str2datetime(latest_date, dateformat)
-            # The value can be determined from most recent price!
-            if latest_date_dt >= today_dt:
-                val2 = balancelist[-1] * latest_price  # The latest recorded balance is still valid
-                # Forex conversion required:
-                if asset.get_currency() != asset.get_basecurrency():
-                    val2 = forex_obj.perform_conversion([latest_date], [val2])
-                    val2 = val2[0]
-                transact_price_necessary = False  # We have a price
-            else:
-                transact_price_necessary = True
-        else:  # No market- or provider data was available.
-            transact_price_necessary = True
-
-        # Price must be derived from transaction-data:
-        if transact_price_necessary is True:
-            # Try to obtain the price from the transactions:
-            latest_date_trans = stringoperations.str2datetime(datelist[-1], dateformat)
-            # Only allow if the transactions contain data from today:
-            if latest_date_trans >= today_dt and pricelist[-1] > 1e-9:
-                val2 = pricelist[-1] * balancelist[-1]
-                if asset.get_currency() != asset.get_basecurrency():
-                    val2 = forex_obj.perform_conversion([datelist[-1]], [val2])
-                    val2 = val2[0]
-            else:
-                print(f"WARNING: Cannot calculate holding period return of {asset.get_filename()} (with nonzero "
-                      f"balance as of today) due to unavailable price of today. Update the assets marketdata storage file "
-                      f"or transactions-data with values from today.")
-                # Return a seemingly impossible (negative!) value:
-                return -1e10
-
-    # If the asset is with a foreign currency, the values must be adapted:
-    if asset.get_currency() != asset.get_basecurrency():
         pricelist = forex_obj.perform_conversion(datelist, pricelist)
         costlist = forex_obj.perform_conversion(datelist, costlist)
         payoutlist = forex_obj.perform_conversion(datelist, payoutlist)
         inflowlist = forex_obj.perform_conversion(datelist, inflowlist)
         outflowlist = forex_obj.perform_conversion(datelist, outflowlist)
 
-    # Val1 is the first value of the transactions. As the first transaction is a "buy", the first inflow has to be
-    # omitted for the correct calculation of the return (it happened in the "previous" period...)
-    val1 = pricelist[0] * balancelist[0]
-    inflowlist[0] = 0.0
-    cost = sum(costlist)
-    payout = sum(payoutlist)
-    inflow = sum(inflowlist)
-    outflow = sum(outflowlist)
+    # We need to check if there are several "blocks" of asset-ownership, separated by periods of zero balances
+    # (i.e., several periods where the asset was held, but also fully sold inbetween).
+    # We separate these blocks, calculate the holding period returns individually, and in the end, average the returns
+    # of the different periods.
+    returns = []
+    # Todo continue here.
 
-    r = calc_return(val1, val2, outflow, inflow, payout, cost)
-    return r
+
 
 
 def get_returns_asset_analysisperiod(asset, analyzer):
