@@ -62,60 +62,18 @@ def project_values(datelist, valuelist, num_years, interest_percent, dateformat)
     # Find the end-date:
     date_end = dateoperations.add_years(datelist[-1], num_years, dateformat)
     # Create a datelist for the days of the projection:
-    datelist_fut = dateoperations.create_datelist(date_start, date_end, None, dateformat) # Todo Could the analyzer be used here?
+    datelist_fut = dateoperations.create_datelist(date_start, date_end, None,
+                                                  dateformat)  # Todo Could the analyzer be used here?
     interest_day = (interest_percent / 100.0) / 365.0  # The daily interest rate. Annual compounding is assumed.
     vallist_fut = list(valuelist)
     for _ in datelist_fut:
-        vallist_fut.append(vallist_fut[-1] * (1 + interest_day)) # Todo: Do this more elegantly? No appending?
+        vallist_fut.append(vallist_fut[-1] * (1 + interest_day))  # Todo: Do this more elegantly? No appending?
     # Concat the date lists to get one continuous list:
     datelist_fut = datelist + datelist_fut
     # Sanity check:
     if len(datelist_fut) != len(vallist_fut):
         raise RuntimeError('Lists are of unequal length')
     return datelist_fut, vallist_fut
-
-
-def calc_moving_avg(xlist, ylist, winlen): # Todo: Remove without replacement, then re-lint this file.
-    """Calculates the moving-average of a XY data-set. The correspondingly filtered tuple is returned
-    (which might be of a shorter length, if winlen > 1) ==> Values are only added, once the moving window is full of
-    samples.
-    If the list is shorter than the window, the average of the list is returned, together with the last entry in xlist
-    :param xlist: List of x-values
-    :param ylist: List of to-be-filtered y-values
-    :param winlen: Length of the window, must be >= 1
-    :return: tuple of filtered x,y values
-    """
-    if winlen < 1:
-        raise RuntimeError("Window length of moving average filter must be >= 1")
-    if len(xlist) != len(ylist):
-        raise RuntimeError("X, Y lists of moving-avg filter must be of same length")
-
-    # make sure the winlen is an integer:
-    n = int(round(winlen, 0))
-    if n == 1:
-        return xlist, ylist
-
-    # If the data is shorter than the window: simply return the averaged ylist
-    if len(xlist) <= n:
-        yfilt = sum(ylist) / len(ylist)
-        # Get the middle index of the list:
-        mididx = int(round(len(xlist) / 2.0)) - 1
-        xfilt = xlist[mididx]
-        return xfilt, yfilt
-
-    # Window shorter than data lists:
-    xfilt = []
-    yfilt = []
-    # Middle index:
-    mididx = int(round(n / 2.0))
-    for i, _ in enumerate(ylist, start=n):  # Todo: The start=n here seems to crash Pylint...
-        if i == len(ylist) + 1:
-            break
-        win = ylist[i - n:i]
-        avg = sum(win) / n
-        xfilt.append(xlist[i - n + mididx - 1])
-        yfilt.append(avg)
-    return xfilt, yfilt
 
 
 def get_asset_values_summed(assets):
@@ -135,7 +93,8 @@ def get_asset_values_summed(assets):
     return sumval
 
 
-def get_asset_inflows_summed(assets): # Todo this function looks like the one above?! Combine/improve! See also the one(s) below!
+def get_asset_inflows_summed(
+        assets):  # Todo this function looks like the one above?! Combine/improve! See also the one(s) below!
     """Sum the daily inflows of the given assets
     :param assets: List of asset-objects
     :return: List of values, corresponding to the length of the analysis-period
@@ -345,8 +304,8 @@ def get_return_asset_holdingperiod(asset):
     # If the last block of ownership is still "ongoing", i.e., assets are still owned, we need to calculate the last
     # holding period return, too.
     if balancelist[-1] > 1e-9:
-        idx_start = zero_balance_idx[-1]+1
-        idx_stop = nonzero_balance_idx[-1]+1
+        idx_start = zero_balance_idx[-1] + 1
+        idx_stop = nonzero_balance_idx[-1] + 1
         balances_block = balancelist[idx_start:idx_stop]
         dates_block = datelist[idx_start:idx_stop]
         costs_block = costlist[idx_start:idx_stop]
@@ -403,29 +362,7 @@ def get_returns_assets_accumulated_analysisperiod(assets, analyzer):
     return returns[0]
 
 
-def get_returns_asset(asset, period, analyzer):
-    """Calculates the returns of a given asset, in the given periods.
-    It's the holding period return of the specified periods, see: https://en.wikipedia.org/wiki/Holding_period_return)
-    The data is intended to be provided with a granularity of days.
-    :param asset: Asset-object
-    :param period: The period over which the return is calculated. Must be integer.
-    :param dateformat: String that specifies the format of the date-strings
-    :return: Tuple of two lists: (date, return). The returns of the periods in the datelist. They correspond to the
-    returned dates, whereas the last date of the analysis-interval is given. The return is in percent.
-    """
-    # Create new copies - just to be sure (the get-functions should already return copies)
-    datelist = list(asset.get_analysis_datelist())
-    valuelist = list(asset.get_analysis_valuelist())
-    costlist = list(asset.get_analysis_costlist())
-    payoutlist = list(asset.get_analysis_payoutlist())
-    inflowlist = list(asset.get_analysis_inflowlist())
-    outflowlist = list(asset.get_analysis_outflowlist())
-
-    dates, returns = calc_returns_period(datelist, valuelist, costlist, payoutlist, inflowlist, outflowlist,
-                                         period, analyzer)
-    return dates, returns
-
-
+# Todo fuse this and the function above together?
 def get_returns_assets_accumulated(assets, period, analyzer):
     """Calculates the returns of all given assets (the asset values are summed daily), in the given periods.
     It's the holding period return of the specified periods, see: https://en.wikipedia.org/wiki/Holding_period_return)
