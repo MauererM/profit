@@ -33,15 +33,18 @@ from .plotting.plot_forex_rates import plot_forex_rates
 # Version of PROFIT:
 PROFIT_VERSION = 1.4
 
+
+
 def main(config):
     """The main entry-point of PROFIT"""
-    # Print the current version of the tool
-    print(f"PROFIT v{PROFIT_VERSION:.1f} starting")
 
     # Set logging:
     logging.basicConfig(format='%(levelname)s - %(message)s', level=logging.INFO)
     matplotlib_logger = logging.getLogger('matplotlib')
     matplotlib_logger.setLevel(logging.INFO)  # Exclude matplotlib's debug-messages, as they otherwise spam a lot.
+
+    # Print the current version of the tool
+    print(f"PROFIT v{PROFIT_VERSION:.1f} starting")
 
     # Folder-paths for the outputs of PROFIT:
     storage_path = Path(config.STORAGE_FOLDER).resolve()

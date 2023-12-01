@@ -359,13 +359,14 @@ class MarketDataMain:
                 if helper.within_tol(price_csv, price_new, tolerance_percent / 100.0) is False:
                     if storage_is_groundtruth is True:
                         new_values[idx_new] = price_csv  # Adjust provider data to existing data
-                        logging.info("Found a mismatch between provider- and market data. Will prioritize market-data")
+                        logging.warning("Found a mismatch between provider- and market data. "
+                                        "Will prioritize market-data")
                         logging.info(f"Date: {date_cur}\tStorage Value: {price_csv:.2f}\t"
                                      f"Provider Value: {price_new:.2f}")
                     else:
                         values_merged[idx] = price_new  # Take the new/provider-data to write back to file
-                        logging.info("Found a mismatch between provider- and market data. "
-                                     "Will prioritize provider-data")
+                        logging.warning("Found a mismatch between provider- and market data. "
+                                        "Will prioritize provider-data")
                         logging.info(f"Date: {date_cur}\tStorage Value: {price_csv:.2f}\t"
                                      f"Provider Value: {price_new:.2f}")
                     # Record a string for later output:
@@ -374,13 +375,13 @@ class MarketDataMain:
         # Output the mismatching entries of the market data file:
         numentry = min(len(discrepancy_entries), 20)
         if len(discrepancy_entries) > 0:
-            print(f"WARNING: {len(discrepancy_entries)} obtained storage data entries do not match the recorded values "
-                  f"(tolerance is set to: {tolerance_percent:.1f}%).")
-            print(f"Storage data is ground truth is set to: {storage_is_groundtruth}")
-            print(f"File: {storage_obj.get_filename()}. Entries (listing only first {numentry} elements):")
-            print("Date;\tRecorded Price;\tObtained Price")
+            logging.warning(f"{len(discrepancy_entries):d} obtained storage data entries do not match the "
+                            f"recorded values (tolerance is set to: {tolerance_percent:.1f}%).")
+            logging.info(f"Storage data is ground truth is set to: {storage_is_groundtruth}")
+            logging.info(f"File: {storage_obj.get_filename()}. Entries (listing only first {numentry} elements):")
+            logging.info("Date;\tRecorded Price;\tObtained Price")
             for i in range(numentry):
-                print(discrepancy_entries[i])
+                logging.info(discrepancy_entries[i])
 
         # In the following: the new values are sorted into the existing storage-data
         dates_merged_dt = [self.analyzer.str2datetime(x) for x in dates_merged]
@@ -438,7 +439,6 @@ class MarketDataMain:
         if len(values) != len(dates):
             raise RuntimeError("Something went wrong in the split-calculation.")
         return dates, values
-
 
     def write_data_to_storage(self, storage_obj, data):
         """New (and existing) data is written to storage, i.e., the data is extended with the new data that was
