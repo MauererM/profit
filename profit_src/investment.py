@@ -5,6 +5,7 @@ MIT License
 Copyright (c) 2018 Mario Mauerer
 """
 
+import logging
 from . import dateoperations
 from . import stringoperations
 from . import helper
@@ -55,6 +56,7 @@ class Investment:
         self.analysis_costs = None
         self.analysis_payouts = None
         self.latestpricedata = None
+        self.has_value_today = None
 
         # Check, if the transaction-dates are in order. Allow identical successive days
         if dateoperations.check_date_order(self.transactions[self.config.DICT_KEY_DATES], self.analyzer,
@@ -95,6 +97,10 @@ class Investment:
         _, self.balancelist = dateoperations.interpolate_data(self.transactions[self.config.DICT_KEY_DATES],
                                                               self.transactions[self.config.DICT_KEY_BALANCES],
                                                               self.analyzer)
+        if self.balancelist[-1] < 1e-9:
+            self.has_value_today = False
+        else:
+            self.has_value_today = True
 
         # The cost and payouts does not need interpolation. Lists are populated (corresponding to datelist), that
         # contain the transactions.
@@ -269,7 +275,7 @@ class Investment:
             if len(sequence) < 2:
                 raise RuntimeError("Something went wrong in calculating duplicates; "
                                    "There should always be a duplicate at this point")
-            actions = trans_actions[sequence[0]:sequence[-1]+1]
+            actions = trans_actions[sequence[0]:sequence[-1] + 1]
             if (self.config.STRING_INVSTMT_ACTION_BUY in actions and
                 self.config.STRING_INVSTMT_ACTION_SELL in actions) or \
                     (self.config.STRING_INVSTMT_ACTION_BUY in actions and
@@ -474,7 +480,7 @@ class Investment:
 
             # Check if data is available from storage and/or obtain data via data provider:
             stockdata = StockTimeDomainData(self.symbol, self.exchange, self.currency, (startdate_prices, date_stop),
-                                            self.analyzer, self.storage, self.provider)
+                                            self.analyzer, self.storage, self.provider, self.has_value_today)
             full_dates, full_prices = stockdata.get_price_data()
 
             if full_dates is not None:
@@ -507,7 +513,7 @@ class Investment:
                         if record > 1e-6 and helper.within_tol(record, data, 5.0 / 100) is False:
                             mismatches.append((date, record, data))
                 if len(mismatches) > 0:
-                    print("Some obtained or stored prices deviate by >5% from the recorded transactions:")
+                    logging.warning("Some obtained or stored prices deviate by >5% from the recorded transactions:")
                     print("Date;\t\t\tRecorded Price;\tObtained Price")
                     for i, entry in enumerate(mismatches):
                         print(f"{entry[0]};\t\t{entry[1]:.2f};\t\t\t{entry[2]:.2f};")
@@ -527,8 +533,9 @@ class Investment:
 
             elif full_dates is None:  # Transactions-data needed!
                 print(f"No financial data available for {self.symbol}")
-                print("Provide an update-transaction to deliver the most recent price of the asset. "
-                      "Otherwise, the holding period returns cannot be calculated.")
+                if self.has_value_today is True:
+                    logging.warning("Provide an update-transaction to deliver the most recent price of the asset. "
+                                    "Otherwise, the holding period returns cannot be calculated.")
                 print("Deriving prices from transactions-data.")
                 trans_values_interp = self.__get_format_transactions_values()
                 # Crop the values to the desired analysis-range; in this case, we can not merge data with market-prices:

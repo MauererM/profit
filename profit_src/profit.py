@@ -33,7 +33,6 @@ from .plotting.plot_forex_rates import plot_forex_rates
 # Version of PROFIT:
 PROFIT_VERSION = 1.4
 
-
 def main(config):
     """The main entry-point of PROFIT"""
     # Print the current version of the tool
