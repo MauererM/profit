@@ -229,12 +229,10 @@ class DataproviderMain:
 
         # Fill in missing data in the vector
         dates_full, values_full = dateoperations.interpolate_data(dates, values,
-                                                                  self.analyzer)  # Todo: Introduce a check here that prevents massive interpolation?
+                                                                  self.analyzer)
+        MAX_PROVIDER_INTERPOLATION_DAYS = 10
+        if abs(len(dates_full) - len(dates)) > MAX_PROVIDER_INTERPOLATION_DAYS:
+            logging.warning(f"Interpolated more than {MAX_PROVIDER_INTERPOLATION_DAYS} days when retrieved "
+                            f"provider data.")
+
         return dates_full, values_full
-
-
-"""
-    Stand-alone execution for testing:
-"""
-if __name__ == '__main__':
-    pass
