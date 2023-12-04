@@ -175,10 +175,25 @@ def partition_list(inlist, blocksize):
     return [inlist[i:i + blocksize] for i in range(0, len(inlist), blocksize)]
 
 
-def contains_zeroes(inlist, exclude_trailing_zeroes=True, exclude_leading_zeroes=True, tol=1e-9):
+def contains_zeroes(inlist, trim_trailing_zeroes=True, trim_leading_zeroes=True, tol=1e-9):
     """Checks if a list of floats contains (near-) zero elements.
     Trailing or leading zeroes can be omitted/not considered.
     """
     if not isinstance(inlist, list):
         raise RuntimeError("Need to receive a list.")
 
+    def is_near_zero(val, t):
+        return -1.0 * t < val < t
+
+    trimmed = list(inlist)  # Modify the copy!
+    if trim_leading_zeroes is True:
+        while trimmed and is_near_zero(trimmed[0], tol):
+            del trimmed[0]
+
+    if trim_trailing_zeroes is True:
+        while trimmed and is_near_zero(trimmed[-1], tol):
+            del trimmed[-1]
+
+    return any(is_near_zero(val, tol) for val in trimmed)
+
+# Todo check if all functions here are actually used.

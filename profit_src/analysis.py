@@ -135,7 +135,7 @@ def calc_hpr_full_block(dateformat, filename, asset_data, latest_date_price, val
             raise RuntimeError("Balances and value list must be of identical length")
     # Here, only the last balance may (or may not) be zero, there may not be any zero-balances within the interval that
     # we analyze here.
-    if any(x < 1e-9 for x in balances[0:]):
+    if helper.contains_zeroes(balances, trim_trailing_zeroes=True, trim_leading_zeroes=True):
         raise RuntimeError("This function can only deal with contiguous balance-intervals, i.e., "
                            "no balance may be zero within this interval. Something went wrong elsewhere.")
     if balances[0] < 1e-9:
@@ -228,8 +228,7 @@ def calc_hpr_blocks(asset_data, dateformat, filename, latest_date_price, valueli
         raise RuntimeError("Balance-list may not start with zero-balance.")
 
     # Only a single block of asset-ownership. Asset may still be owned (or not, both is fine).
-    # Todo there is a bug here. LYINR is failing, due to obvious reasons. Fix it. Find holes properly!
-    if len(zero_balance_idx) == 0 or (len(zero_balance_idx) == 1 and balancelist[-1] < 1e-9):
+    if not helper.contains_zeroes(balancelist, trim_trailing_zeroes=True, trim_leading_zeroes=True):
         return calc_hpr_full_block(dateformat, filename, (datelist, balancelist, costlist,
                                                           payoutlist, pricelist, inflowlist,
                                                           outflowlist),
@@ -258,11 +257,15 @@ def calc_hpr_blocks(asset_data, dateformat, filename, latest_date_price, valueli
             prices_block = None
         inflows_block = inflowlist[idx_start:idx + 1]
         outflows_block = outflowlist[idx_start:idx + 1]
+        if valuelist is not None:
+            values_block = valuelist[idx_start:idx + 1]
+        else:
+            values_block = None
         returns.append(calc_hpr_full_block(dateformat, filename, (dates_block, balances_block,
                                                                   costs_block, payouts_block,
                                                                   prices_block, inflows_block,
                                                                   outflows_block),
-                                           latest_date_price, valuelist))
+                                           latest_date_price, values_block))
         idx_start = idx + 1
     # If the last block of ownership is still "ongoing", i.e., assets are still owned, we need to calculate the last
     # holding period return, too.
@@ -279,11 +282,15 @@ def calc_hpr_blocks(asset_data, dateformat, filename, latest_date_price, valueli
             prices_block = None
         inflows_block = inflowlist[idx_start:idx_stop]
         outflows_block = outflowlist[idx_start:idx_stop]
+        if values_block is not None:
+            values_block = valuelist[idx_start:idx_stop]
+        else:
+            values_block = None
         returns.append(calc_hpr_full_block(dateformat, filename, (dates_block, balances_block,
                                                                   costs_block, payouts_block,
                                                                   prices_block, inflows_block,
                                                                   outflows_block),
-                                           latest_date_price, valuelist))
+                                           latest_date_price, values_block))
     if None in returns:
         return None
     return sum(returns) / len(returns)  # Build the average of all returns
