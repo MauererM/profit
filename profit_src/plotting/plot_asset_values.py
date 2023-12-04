@@ -216,7 +216,7 @@ def plot_asset_values_cost_payout_individual(assetlist, fname, analyzer, config)
                 # Obtain the asset's holding period return:
                 ret_h = analysis.calc_hpr_return_asset_holdingperiod(asset)
                 if ret_h is not None:
-                    ret_str = f"Holding Period Return, Analysis Range: {ret_a:.1f}%\nHPR, Full Range: {ret_h:.1f}%"
+                    ret_str = f"Holding Period Return, Analysis Range: {ret_a:.1f}%\nHolding Period Return, Full Range: {ret_h:.1f}%"
                 else:
                     ret_str = f"Holding Period Return, Analysis Range: {ret_a:.1f}%\nHPR, Full Range: N/A (missing price of today)"
                 # Place the text relative to the axes:
