@@ -22,7 +22,7 @@ def isclose(a, b, rel_tol=1e-9, abs_tol=0.0):
 
 def isinteger(a, rel_tol=1e-9, abs_tol=0.0):
     """
-    Checks if a (float) number is an integer or not.
+    Checks if a (float) number is (representing) an integer or not.
     :param a: The float to be checked
     :param rel_tol: See isclose() above
     :param abs_tol: See isclose() above
@@ -52,7 +52,7 @@ def list_all_zero(vallist):
     return all(-1e-9 < x < 1e-9 for x in vallist)
 
 
-def accumulate_list(inlist):
+def accumulate_list(inlist): # Todo when done with plotting and analysis overhaul: Check which functions here are still needed in helper.py
     """Accumulates the values of a list
     :param inlist: List of values
     :return: List of identical lenght, with accumulated values
@@ -61,19 +61,30 @@ def accumulate_list(inlist):
         return inlist
     accu = [inlist[0]]
     for val in inlist[1:]:
-        accu.append(accu[-1] + val)
+        accu.append(accu[-1] + val) # Todo can this be done smarter, without appending?
     return accu
 
 
-def sum_lists(lista, listb):
+def sum_lists(lists): # Todo test what happens if a single list is supplied?
     """Sum the values of two lists piecewise
-    :param lista:
-    :param listb:
+    :param lists: List of lists to be piecewise summed. All sublists need to be of identical length.
     :return: List of summed values
     """
-    if len(lista) != len(listb):
-        raise RuntimeError("The two lists must be of identical length for summation.")
-    return [x + y for x, y in zip(lista, listb)]
+    if not isinstance(lists, list) and not all(isinstance(sublist, list) for sublist in lists):
+        raise RuntimeError("Did not receive a list of lists")
+    if not are_sublists_same_length(lists):
+        raise RuntimeError("Sublists are of varying length")
+    return [sum(values) for values in zip(*lists)]
+
+def are_sublists_same_length(lists): # Todo test what happens if a single list is supplied?
+    """Checks if all sublists in a list of lists are of same length"""
+    if not isinstance(lists, list) and not all(isinstance(sublist, list) for sublist in lists):
+        raise RuntimeError("Did not receive a list of lists")
+    lengths = [len(sublist) for sublist in lists]
+    if len(set(lengths)) != 1:
+        return False
+    return True
+
 
 
 def diff_lists(lista, listb):

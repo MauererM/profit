@@ -198,7 +198,7 @@ def plot_asset_values_cost_payout_individual(assetlist, fname, analyzer, config)
                     markevery=marker_div)
 
             if helper.list_all_zero(payouts_accu) is False:
-                values_payouts = helper.sum_lists(values, payouts_accu)
+                values_payouts = helper.sum_lists([values, payouts_accu])
                 ax.plot(x, values_payouts, alpha=1.0, zorder=3, clip_on=False, color=config.PLOTS_COLORS[1], marker='x',
                         label="Asset Value, with Payouts", markevery=marker_div)
             else:

@@ -462,7 +462,7 @@ class Investment:
         if self.type == self.config.STRING_ASSET_SECURITY:
             # The prices need only be obtained from a time period onwards, where the balance > 0:
             startidx = None
-            for idx, bal in enumerate(self.analysis_balances):
+            for idx, bal in enumerate(self.analysis_balances): # Todo can this be done prettier?
                 if bal > 1e-9:
                     startidx = idx
                     break
@@ -688,6 +688,12 @@ class Investment:
         if self.analysis_data_done is False:
             raise RuntimeError(f"Cannot return analysis outflowlist. Set analysis data first. ID: {self.id}")
         return list(self.analysis_outflows)
+
+    def get_analysis_balances(self):
+        """Return the list of balances of the analysis-data (floats)"""
+        if self.analysis_data_done is False:
+            raise RuntimeError(f"Cannot return analysis balance list. Set analysis data first. ID: {self.id}")
+        return list(self.analysis_balances) # Todo is the list-copy needed here?!
 
     def get_dateformat(self):
         """Return the dateformat"""

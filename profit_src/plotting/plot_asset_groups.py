@@ -69,10 +69,10 @@ def plot_asset_groups(assets, grouplist, groupnames, fname, titlestring, analyze
                 sumvals = [0] * len(datelist)
                 for idx in indexes:
                     values = assets[idx].get_analysis_valuelist()
-                    sumvals = helper.sum_lists(sumvals, values)
+                    sumvals = helper.sum_lists([sumvals, values])
 
                 # For the total of the group:
-                totsum = helper.sum_lists(totsum, sumvals)
+                totsum = helper.sum_lists([totsum, sumvals])
                 ax.plot(xlist, sumvals, alpha=1.0, zorder=3, clip_on=False, color=colorlist[k], marker='',
                         label=purpose)
                 plotted = True
