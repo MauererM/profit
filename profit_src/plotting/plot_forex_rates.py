@@ -8,7 +8,6 @@ Copyright (c) 2018-2023 Mario Mauerer
 import matplotlib
 import matplotlib.pyplot as plt
 from . import plotting
-from .. import analysis
 
 
 def plot_forex_rates(forexobjdict, fname, titlestr, analyzer, config):

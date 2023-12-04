@@ -470,5 +470,4 @@ def calc_hpr(val1, val2, outflow, inflow, payout, cost):
     # Avoid division by zero:
     if val1 < 1e-9:
         return 0.0
-    else:
-        return (val2 + outflow + payout - cost - inflow - val1) / val1 * 100.0
+    return (val2 + outflow + payout - cost - inflow - val1) / val1 * 100.0

@@ -288,8 +288,8 @@ class StockTimeDomainData:
                                 f"the {self.full_dates[-1]}. Latest available data will be extrapolated forwards "
                                 f"and merged with the manually entered prices.")
                 if self.has_value_today is True:
-                    logging.warning(f"Update the storage data file or transactions-list "
-                                    f"for correct returns calculation!")
+                    logging.warning("Update the storage data file or transactions-list "
+                                    "for correct returns calculation!")
 
     def __create_new_stock_storage_file(self):
         self.storageobj = self.storage.create_new_storage_file("stock", (self.symbol, self.exchange, self.currency))
