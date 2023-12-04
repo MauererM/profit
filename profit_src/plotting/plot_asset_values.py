@@ -12,6 +12,7 @@ from . import plotting
 from .. import analysis
 from .. import helper
 from .. import files
+from .. import investment
 
 
 def plot_asset_values_indices(assetlist, indexlist, fname, titlestr, analyzer, config):
@@ -96,10 +97,6 @@ def plot_asset_values_indices(assetlist, indexlist, fname, titlestr, analyzer, c
     # Label the last value:
     last_val = f"{sumlist_corr[-1]:.2f}"
     ax.text(x[-1], sumlist_corr[-1], last_val)
-    # Also plot the moving average:
-    x_ma, y_ma = analysis.calc_moving_avg(x, sumlist_corr, config.WINLEN_MA)
-    ax.plot(x_ma, y_ma, alpha=1.0, zorder=3, clip_on=False, color=config.PLOTS_COLORS[0], marker='',
-            label="Asset Value, Moving Avg", dashes=config.DASHES_MA, linewidth=1.6)
 
     # Plot the indexes:
     # Obtain some colors for the indexes:
@@ -112,11 +109,6 @@ def plot_asset_values_indices(assetlist, indexlist, fname, titlestr, analyzer, c
         # Label the last value:
         last_val = f"{val[-1]:.2f}"
         ax.text(x[-1], val[-1], last_val)
-        # Also plot the moving average:
-        x_ma, y_ma = analysis.calc_moving_avg(x, val, config.WINLEN_MA)
-        label_ma = f"{indexname[i]}, Moving Avg"
-        ax.plot(x_ma, y_ma, alpha=1.0, zorder=3, clip_on=False, color=config.PLOTS_COLORS[i + 1], marker='',
-                label=label_ma, dashes=config.DASHES_MA)
 
     plt.legend(fancybox=True, shadow=True, ncol=1, framealpha=1.0, loc='upper left',
                bbox_to_anchor=(0.01, 0.99))
@@ -169,7 +161,7 @@ def plot_asset_values_cost_payout_individual(assetlist, fname, analyzer, config)
                 raise RuntimeError("The dateformats of the assets must be identical.")
 
     # Get a list of asset-lists, whereas each top-level list contains 6 plots, for a single plot-sheet.
-    assetlists_sheet = analysis.partition_list(assetlist_plot, 6)
+    assetlists_sheet = helper.partition_list(assetlist_plot, 6)
     num_sheets = len(assetlists_sheet)
     print(f"Plotting the asset-values with {num_sheets:d} figure-sheet(s). Filename: {fname.name}")
 
@@ -204,13 +196,9 @@ def plot_asset_values_cost_payout_individual(assetlist, fname, analyzer, config)
             ax.plot(x, values, alpha=1.0, zorder=3, clip_on=False, color=config.PLOTS_COLORS[0], marker='o',
                     label="Asset Value",
                     markevery=marker_div)
-            # Also plot the moving average:
-            x_ma, y_ma = analysis.calc_moving_avg(x, values, config.WINLEN_MA)
-            ax.plot(x_ma, y_ma, alpha=1.0, zorder=3, clip_on=False, color='k', marker='',
-                    label="Asset Value, Moving Avg", dashes=config.DASHES_MA)
 
             if helper.list_all_zero(payouts_accu) is False:
-                values_payouts = helper.sum_lists(values, payouts_accu)
+                values_payouts = helper.sum_lists([values, payouts_accu])
                 ax.plot(x, values_payouts, alpha=1.0, zorder=3, clip_on=False, color=config.PLOTS_COLORS[1], marker='x',
                         label="Asset Value, with Payouts", markevery=marker_div)
             else:
@@ -221,6 +209,19 @@ def plot_asset_values_cost_payout_individual(assetlist, fname, analyzer, config)
                 values_payouts_cost = helper.diff_lists(values_payouts, costs_accu)
                 ax.plot(x, values_payouts_cost, alpha=1.0, zorder=3, clip_on=False, color=config.PLOTS_COLORS[2],
                         marker='d', label="Asset Value, with Payouts and Costs", markevery=marker_div)
+
+            if isinstance(asset, investment.Investment):
+                # Obtain the asset's return of the whole analysis-period:
+                ret_a = analysis.calc_hpr_return_assets_analysisperiod(asset)
+                # Obtain the asset's holding period return:
+                ret_h = analysis.calc_hpr_return_asset_holdingperiod(asset)
+                if ret_h is not None:
+                    ret_str = f"Holding Period Return, Analysis Range: {ret_a:.1f}%\nHolding Period Return, Full Range: {ret_h:.1f}%"
+                else:
+                    ret_str = f"Holding Period Return, Analysis Range: {ret_a:.1f}%\nHPR, Full Range: N/A (missing price of today)"
+                # Place the text relative to the axes:
+                plt.text(0.05, 0.78, ret_str, horizontalalignment='left', verticalalignment='center',
+                         transform=ax.transAxes, fontsize=7, bbox=dict(facecolor='w', edgecolor='k', boxstyle='round'))
 
             plt.legend(fancybox=True, shadow=True, ncol=1, framealpha=1.0, loc='best')
 

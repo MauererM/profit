@@ -63,8 +63,6 @@ class ProfitConfig:
     INDEX_SP = {"Name": "S&P500", "Symbol": "^GSPC"}
     # SMI:
     INDEX_SMI = {"Name": "SMI", "Symbol": "^SSMI"}
-
-    # This list collects the dictionaries, its name must be INDICES! # Todo Why?
     INDICES = [INDEX_DOW, INDEX_NASDAQ, INDEX_DAX, INDEX_SP, INDEX_SMI]
 
     # Number of years to project the values of the investments into the future.
@@ -80,15 +78,9 @@ class ProfitConfig:
     # Select, if existing plots are deleted before new ones are created.
     PURGE_OLD_PLOTS = True
 
-    # Window length (in days) of moving average filter. Some plots contain filtered data.
-    WINLEN_MA = 90
-
     # Some colors for plotting.
     # Determined using http://colorbrewer2.org/
     PLOTS_COLORS = ["#d7191c", "#fdae61", "#5e3c99", "#2c7bb6", "k", "r", "g", "b"]
-
-    # Dashes for moving averages:
-    DASHES_MA = [4, 2]
 
     # Plotting-Settings:
     PLOTSIZE = (11.69, 8.27)  # Dimension of the plots, x,y, in inches

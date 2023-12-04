@@ -21,6 +21,8 @@ def plot_asset_projections(assetlist, interest, num_years, fname, titlestr, anal
     :param num_years: Nr. of years projected into the future.
     :param fname: String of filename of plot
     :param titlestr: String of plot-title
+    :param analyzer: Analyzer-instance to do cached conversions
+    :param config: Config-instance of profit
     """
     # Get the full path of the file:
     fname = plotting.modify_plot_path(config.PLOTS_FOLDER, fname)
@@ -45,15 +47,15 @@ def plot_asset_projections(assetlist, interest, num_years, fname, titlestr, anal
         print(f"All summed asset values are zero. Not plotting. File: {fname}")
         return
 
-    datelist_fut, vallist_fut_base = analysis.project_values(datelist, sumlist, num_years, interest, config.FORMAT_DATE)
+    datelist_fut, vallist_fut_base = analysis.project_values(datelist, sumlist, num_years, interest, analyzer)
     # Vary interest rates by +/- 10% and also show these values:
     tolband = 10.0
     fact_up = (tolband / 100.0) + 1.0
     fact_low = 1.0 - (tolband / 100.0)
     _, vallist_fut_upper = analysis.project_values(datelist, sumlist, num_years,
-                                                   interest * fact_up, config.FORMAT_DATE)
+                                                   interest * fact_up, analyzer)
     _, vallist_fut_lower = analysis.project_values(datelist, sumlist, num_years,
-                                                   interest * fact_low, config.FORMAT_DATE)
+                                                   interest * fact_low, analyzer)
 
     # Plot:
     plotting.configure_lineplot(config)

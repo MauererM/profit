@@ -5,7 +5,7 @@ MIT License
 Copyright (c) 2018 Mario Mauerer
 """
 
-import math
+import itertools
 
 
 def isclose(a, b, rel_tol=1e-9, abs_tol=0.0):
@@ -18,19 +18,6 @@ def isclose(a, b, rel_tol=1e-9, abs_tol=0.0):
     :return: True, if the numbers are "sufficiently equal"
     """
     return abs(a - b) <= max(rel_tol * max(abs(a), abs(b)), abs_tol)
-
-
-def isinteger(a, rel_tol=1e-9, abs_tol=0.0):
-    """
-    Checks if a (float) number is an integer or not.
-    :param a: The float to be checked
-    :param rel_tol: See isclose() above
-    :param abs_tol: See isclose() above
-    :return: True, if the number is "sufficiently" an integer
-    """
-    lower = math.floor(a)
-    upper = math.ceil(a)
-    return isclose(lower, a, rel_tol, abs_tol) or isclose(upper, a, rel_tol, abs_tol)
 
 
 def within_tol(a, b, tol):
@@ -55,25 +42,37 @@ def list_all_zero(vallist):
 def accumulate_list(inlist):
     """Accumulates the values of a list
     :param inlist: List of values
-    :return: List of identical lenght, with accumulated values
+    :return: List of identical length, with accumulated values
     """
-    if len(inlist) <= 1:
-        return inlist
-    accu = [inlist[0]]
-    for val in inlist[1:]:
-        accu.append(accu[-1] + val)
-    return accu
+    if not isinstance(inlist, list):
+        raise RuntimeError("Must receive a list")
+    return list(itertools.accumulate(inlist))
 
 
-def sum_lists(lista, listb):
-    """Sum the values of two lists piecewise
-    :param lista:
-    :param listb:
+def sum_lists(lists):
+    """Sum the values of the given list of lists piecewise
+    :param lists: List of lists to be piecewise summed. All sublists need to be of identical length.
     :return: List of summed values
     """
-    if len(lista) != len(listb):
-        raise RuntimeError("The two lists must be of identical length for summation.")
-    return [x + y for x, y in zip(lista, listb)]
+    if not isinstance(lists, list):
+        lists = [lists]
+    if not all(isinstance(sublist, list) for sublist in lists):
+        raise RuntimeError("Did not receive a list of lists")
+    if not are_sublists_same_length(lists):
+        raise RuntimeError("Sublists are of varying length")
+    return [sum(values) for values in zip(*lists)]
+
+
+def are_sublists_same_length(lists):
+    """Checks if all sublists in a list of lists are of same length"""
+    if not isinstance(lists, list):
+        lists = [lists]
+    if not all(isinstance(sublist, list) for sublist in lists):
+        raise RuntimeError("Did not receive a list of lists")
+    lengths = [len(sublist) for sublist in lists]
+    if len(set(lengths)) != 1:
+        return False
+    return True
 
 
 def diff_lists(lista, listb):
@@ -107,11 +106,11 @@ def create_dict_from_list(string_list):
     return d
 
 
-def find_duplicate_indices(list):
+def find_duplicate_indices(inlist):
     """From a list, return (a list of) all indices at which duplicates (e.g., duplicate dates) have been found."""
     occurrences = {}
 
-    for index, item in enumerate(list):
+    for index, item in enumerate(inlist):
         if item in occurrences:
             occurrences[item]['count'] += 1
             occurrences[item]['indices'].append(index)
@@ -146,3 +145,35 @@ def extract_sequences(indices, distance=1):
     # Add the last sequence
     sequences.append(current_sequence)
     return sequences
+
+
+def partition_list(inlist, blocksize):
+    """Partitions a list into several lists, of blocksize each (or smaller)
+    :param inlist: Input list
+    :param blocksize: Size of desired blocks, integer
+    :return: List of partitioned lists, each sub-list of length blocksize
+    """
+    blocksize = int(blocksize)
+    return [inlist[i:i + blocksize] for i in range(0, len(inlist), blocksize)]
+
+
+def contains_zeroes(inlist, trim_trailing_zeroes=True, trim_leading_zeroes=True, tol=1e-9):
+    """Checks if a list of floats contains (near-) zero elements.
+    Trailing or leading zeroes can be omitted/not considered.
+    """
+    if not isinstance(inlist, list):
+        raise RuntimeError("Need to receive a list.")
+
+    def is_near_zero(val, t):
+        return -1.0 * t < val < t
+
+    trimmed = list(inlist)  # Modify the copy!
+    if trim_leading_zeroes is True:
+        while trimmed and is_near_zero(trimmed[0], tol):
+            del trimmed[0]
+
+    if trim_trailing_zeroes is True:
+        while trimmed and is_near_zero(trimmed[-1], tol):
+            del trimmed[-1]
+
+    return any(is_near_zero(val, tol) for val in trimmed)

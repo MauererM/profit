@@ -8,7 +8,6 @@ Copyright (c) 2018-2023 Mario Mauerer
 import matplotlib
 import matplotlib.pyplot as plt
 from . import plotting
-from .. import analysis
 
 
 def plot_forex_rates(forexobjdict, fname, titlestr, analyzer, config):
@@ -27,8 +26,8 @@ def plot_forex_rates(forexobjdict, fname, titlestr, analyzer, config):
     ax = fig.add_subplot(111)  # Only one plot
 
     colorlist = plotting.create_colormap("rainbow", len(forexobjdict), False)
-    i = 0
     # Iterate through the dictionary, only plot foreign currencies:
+    i = 0
     for key, obj in forexobjdict.items():
         # Only plot foreign rates:
         if key != config.BASECURRENCY:
@@ -39,11 +38,6 @@ def plot_forex_rates(forexobjdict, fname, titlestr, analyzer, config):
             # Label the last value:
             last_val = f"{rate[-1]:.2f}"
             ax.text(xlist[-1], rate[-1], last_val)
-            # Also plot the moving average:
-            x_ma, y_ma = analysis.calc_moving_avg(xlist, rate, config.WINLEN_MA)
-            linelabel = f"{obj.get_currency()} Moving Avg"
-            ax.plot(x_ma, y_ma, alpha=1.0, zorder=3, clip_on=False, color=colorlist[i], marker='',
-                    label=linelabel, dashes=config.DASHES_MA)
         i += 1
 
     plt.legend(fancybox=True, shadow=True, ncol=1, framealpha=1.0, loc='best')

@@ -22,8 +22,7 @@ from .plotting.plotting import PlottingConfig
 from .plotting.plot_asset_groups import plot_asset_groups
 from .plotting.plot_asset_projections import plot_asset_projections
 from .plotting.plot_asset_purposes import plot_asset_purposes
-from .plotting.plot_asset_returns import plot_asset_total_absolute_returns_accumulated, plot_assets_returns_total, \
-    plot_asset_returns_individual, plot_asset_returns_individual_absolute
+from .plotting.plot_asset_returns import plot_asset_total_absolute_returns_accumulated, plot_asset_returns_individual_absolute
 from .plotting.plot_asset_values import plot_asset_values_indices, plot_asset_values_cost_payout_individual, \
     plot_asset_values_stacked
 from .plotting.plot_assets_grouped import plot_assets_grouped
@@ -243,8 +242,6 @@ def main(config):
         # Plot the values of all investments:
         plot_asset_values_cost_payout_individual(investments, plotting_config.FILENAME_INVESTMENT_VALUES, analyzer,
                                                  config)
-        # Plot the returns of all investmets, for different periods:
-        plot_asset_returns_individual(investments, plotting_config.FILENAME_INVESTMENT_RETURNS, analyzer, config)
         # Plot the daily absolute returns of all investmets:
         d, ret_total = plot_asset_returns_individual_absolute(investments,
                                                               plotting_config.FILENAME_INVESTMENT_RETURNS_ABSOLUTE,
@@ -256,17 +253,14 @@ def main(config):
         # Plot all investments:
         plot_asset_values_stacked(investments, plotting_config.FILENAME_STACKPLOT_INVESTMENT_VALUES,
                                   "Value: All Investments", analyzer, config)
-        # Plot the returns of all investments accumulated, for the desired period:
-        plot_assets_returns_total(investments, plotting_config.FILENAME_TOTAL_INVESTMENT_RETURNS,
-                                  "Returns of Investments", analyzer, config)
         # Project the value of the investments into the future:
         plot_asset_projections(investments, config.INTEREST_PROJECTION_PERCENT,
                                config.NUM_YEARS_INVEST_PROJECTION,
                                plotting_config.FILENAME_INVESTMENT_PROJECTIONS,
                                "Future Value of All Investments, Compounded Annual Interest", analyzer, config)
         # Calculate the return of all investments, for the considered analysis-period:
-        tot_return = analysis.get_returns_assets_accumulated_analysisperiod(investments, analyzer)
-        print(f"\nThe return of the investments of the considered analysis-period "
+        tot_return = analysis.calc_hpr_return_assets_analysisperiod(investments)
+        print(f"\nThe holding period return of the investments of the considered analysis-period "
               f"(past {config.DAYS_ANALYSIS:d} days) is: {tot_return:.2f}%")
 
     if len(assets) > 0:

@@ -43,7 +43,7 @@ def plot_currency_values(assetlist, fname, titlestring, analyzer, config, drawst
         for idx, asset in enumerate(assetlist):
             if curlist[idx] == currency:
                 values = asset.get_analysis_valuelist()
-                sumvals = helper.sum_lists(sumvals, values)
+                sumvals = helper.sum_lists([sumvals, values])
         curvals.append(sumvals)
 
     colorlist = plotting.create_colormap("rainbow", len(curset), False)
