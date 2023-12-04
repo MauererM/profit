@@ -202,25 +202,25 @@ class Account:
         """Return the list of dates of the analysis-data (dates as strings)"""
         if self.analysis_data_done is False:
             raise RuntimeError(f"Cannot return analysis datelist. Set analysis data first. Account ID: {self.id}")
-        return list(self.analysis_dates)
+        return self.analysis_dates
 
     def get_analysis_valuelist(self):
         """Return the list of values of the analysis-data (floats)"""
         if self.analysis_data_done is False:
             raise RuntimeError(f"Cannot return analysis datelist. Set analysis data first. Account ID: {self.id}")
-        return list(self.analysis_balances)
+        return self.analysis_balances
 
     def get_analysis_costlist(self):
         """Return the list of costs of the analysis-data (floats)"""
         if self.analysis_data_done is False:
             raise RuntimeError(f"Cannot return analysis costlist. Set analysis data first. Account ID: {self.id}")
-        return list(self.analysis_costs)
+        return self.analysis_costs
 
     def get_analysis_payoutlist(self):
         """Return the list of payouts/interest of the analysis-data (floats)"""
         if self.analysis_data_done is False:
             raise RuntimeError(f"Cannot return analysis payoutlist. Set analysis data first. Account ID: {self.id}")
-        return list(self.analysis_interests)
+        return self.analysis_interests
 
     def get_filename(self):
         """Returns the filename (as string) of the corresponding account-file"""

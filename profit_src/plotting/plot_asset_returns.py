@@ -113,7 +113,7 @@ def plot_asset_returns_individual_absolute(assetlist, fname, analyzer, config):
             plotidx = idx + 1
             ax = fig.add_subplot(2, 3, plotidx)
             try:
-                dates, returns = analysis.get_returns_asset_daily_absolute_analysisperiod(asset, dateformat, analyzer)
+                dates, returns = analysis.calc_returns_asset_daily_absolute_analysisperiod(asset, analyzer)
                 returns_total = [a + b for a, b in zip(returns, returns_total)]
                 if helper.list_all_zero(returns) is False:
                     x = [analyzer.str2datetime(i) for i in dates]

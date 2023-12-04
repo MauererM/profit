@@ -461,11 +461,7 @@ class Investment:
         # the value
         if self.type == self.config.STRING_ASSET_SECURITY:
             # The prices need only be obtained from a time period onwards, where the balance > 0:
-            startidx = None
-            for idx, bal in enumerate(self.analysis_balances): # Todo can this be done prettier?
-                if bal > 1e-9:
-                    startidx = idx
-                    break
+            startidx = next((idx for idx, val in enumerate(self.analysis_balances) if val > 1e-9), None)
             # If the balances are zero all the time (in the analysis-period)
             if startidx is None:
                 # Set the startidx equal to the stop-idx:
@@ -657,43 +653,43 @@ class Investment:
         """Return the list of dates of the analysis-data (dates as strings)"""
         if self.analysis_data_done is False:
             raise RuntimeError(f"Cannot return analysis datelist. Set analysis data first. ID: {self.id}")
-        return list(self.analysis_dates)
+        return self.analysis_dates
 
     def get_analysis_valuelist(self):
         """Return the list of values of the analysis-data (floats)"""
         if self.analysis_data_done is False:
             raise RuntimeError(f"Cannot return analysis valuelist. Set analysis data first. ID: {self.id}")
-        return list(self.analysis_values)
+        return self.analysis_values
 
     def get_analysis_costlist(self):
         """Return the list of costs of the analysis-data (floats)"""
         if self.analysis_data_done is False:
             raise RuntimeError(f"Cannot return analysis costlist. Set analysis data first. ID: {self.id}")
-        return list(self.analysis_costs)
+        return self.analysis_costs
 
     def get_analysis_payoutlist(self):
         """Return the list of payouts of the analysis-data (floats)"""
         if self.analysis_data_done is False:
             raise RuntimeError(f"Cannot return analysis payoutlist. Set analysis data first. ID: {self.id}")
-        return list(self.analysis_payouts)
+        return self.analysis_payouts
 
     def get_analysis_inflowlist(self):
         """Return the list of inflows of the analysis-data (floats)"""
         if self.analysis_data_done is False:
             raise RuntimeError(f"Cannot return analysis inflowlist. Set analysis data first. ID: {self.id}")
-        return list(self.analysis_inflows)
+        return self.analysis_inflows
 
     def get_analysis_outflowlist(self):
         """Return the list of outflows of the analysis-data (floats)"""
         if self.analysis_data_done is False:
             raise RuntimeError(f"Cannot return analysis outflowlist. Set analysis data first. ID: {self.id}")
-        return list(self.analysis_outflows)
+        return self.analysis_outflows
 
     def get_analysis_balances(self):
         """Return the list of balances of the analysis-data (floats)"""
         if self.analysis_data_done is False:
             raise RuntimeError(f"Cannot return analysis balance list. Set analysis data first. ID: {self.id}")
-        return list(self.analysis_balances) # Todo is the list-copy needed here?!
+        return self.analysis_balances
 
     def get_dateformat(self):
         """Return the dateformat"""
