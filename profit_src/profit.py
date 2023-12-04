@@ -259,8 +259,8 @@ def main(config):
                                plotting_config.FILENAME_INVESTMENT_PROJECTIONS,
                                "Future Value of All Investments, Compounded Annual Interest", analyzer, config)
         # Calculate the return of all investments, for the considered analysis-period:
-        tot_return = analysis.get_hpr_return_assets_accumulated_analysisperiod(investments, analyzer)
-        print(f"\nThe return of the investments of the considered analysis-period "
+        tot_return = analysis.calc_hpr_return_assets_analysisperiod(investments)
+        print(f"\nThe holding period return of the investments of the considered analysis-period "
               f"(past {config.DAYS_ANALYSIS:d} days) is: {tot_return:.2f}%")
 
     if len(assets) > 0:

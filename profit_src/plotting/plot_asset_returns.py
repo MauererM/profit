@@ -93,7 +93,7 @@ def plot_asset_returns_individual_absolute(assetlist, fname, analyzer, config):
                 raise RuntimeError("The dateformats of the assets must be identical.")
 
     # Get a list of asset-lists, whereas each top-level list contains 6 plots, for a single plot-sheet.
-    assetlists_sheet = analysis.partition_list(assetlist_plot, 6)
+    assetlists_sheet = helper.partition_list(assetlist_plot, 6)
     num_sheets = len(assetlists_sheet)
     print(f"Plotting the asset-values with {num_sheets:d} figure-sheet(s). Filename: {fname.name}")
 

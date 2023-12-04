@@ -157,3 +157,14 @@ def extract_sequences(indices, distance=1):
     # Add the last sequence
     sequences.append(current_sequence)
     return sequences
+
+
+def partition_list(inlist, blocksize):
+    """Partitions a list into several lists, of blocksize each (or smaller)
+    :param inlist: Input list
+    :param blocksize: Size of desired blocks, integer
+    :return: List of partitioned lists, each sub-list of length blocksize
+    """
+    # Make sure we are dealing with integers:
+    blocksize = int(round(blocksize, 0))
+    return [inlist[i:i + blocksize] for i in range(0, len(inlist), blocksize)]

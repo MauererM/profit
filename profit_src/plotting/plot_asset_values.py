@@ -161,7 +161,7 @@ def plot_asset_values_cost_payout_individual(assetlist, fname, analyzer, config)
                 raise RuntimeError("The dateformats of the assets must be identical.")
 
     # Get a list of asset-lists, whereas each top-level list contains 6 plots, for a single plot-sheet.
-    assetlists_sheet = analysis.partition_list(assetlist_plot, 6)
+    assetlists_sheet = helper.partition_list(assetlist_plot, 6)
     num_sheets = len(assetlists_sheet)
     print(f"Plotting the asset-values with {num_sheets:d} figure-sheet(s). Filename: {fname.name}")
 
@@ -212,13 +212,13 @@ def plot_asset_values_cost_payout_individual(assetlist, fname, analyzer, config)
 
             if isinstance(asset, investment.Investment):
                 # Obtain the asset's return of the whole analysis-period:
-                ret_a = analysis.get_returns_asset_analysisperiod(asset, analyzer)
+                ret_a = analysis.calc_hpr_return_assets_analysisperiod(asset)
                 # Obtain the asset's holding period return:
-                ret_h = analysis.get_return_asset_holdingperiod(asset)
+                ret_h = analysis.calc_hpr_return_asset_holdingperiod(asset)
                 if ret_h is not None:
-                    ret_str = f"Analysis Period Return: {ret_a:.1f}%\nHolding Period Return: {ret_h:.1f}%"
+                    ret_str = f"Holding Period Return, Analysis Range: {ret_a:.1f}%\nHPR, Full Range: {ret_h:.1f}%"
                 else:
-                    ret_str = f"Analysis Period Return: {ret_a:.1f}%\nHolding Period Return: N/A (missing price of today)"
+                    ret_str = f"Holding Period Return, Analysis Range: {ret_a:.1f}%\nHPR, Full Range: N/A (missing price of today)"
                 # Place the text relative to the axes:
                 plt.text(0.05, 0.78, ret_str, horizontalalignment='left', verticalalignment='center',
                          transform=ax.transAxes, fontsize=7, bbox=dict(facecolor='w', edgecolor='k', boxstyle='round'))

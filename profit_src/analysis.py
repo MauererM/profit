@@ -119,7 +119,34 @@ def calc_return_holdingperiod_full_block(dateformat, filename, asset_data, lates
     or None
     :return: The holding period return of the given holding period-block
     # Todo finalize the documentation here
+    Calculates the returns of an asset over a set of time periods.
+    It's the holding period return of the specified periods, see: https://en.wikipedia.org/wiki/Holding_period_return
+    Note that this caluclates the return relative to the _initial_ investment (but subsequent top-offs are correctly
+    considered). # Todo time-weighted return might be interesting for PROFIT...?
+    The data is intended to be provided with a granularity of days.
+    Costs, payouts, inflows and outflows are to be given for the corresponding days (as given by datelist)
+    The values are always given for the end of the day.
+    The last analyzed block might not be a full period, as the period may not fit an integer-amount of times into the
+    datelist
+    :param datelist: List of strings of dates (days). The return of the data corresponding to this date-list is analyzed
+    :param valuelist: List of asset-values, corresponding to the days in datelist
+    :param costlist: List of costs, corresponding to the days in datelist
+    :param payoutlist: List of payouts, corresponding to the days in datelist
+    :param inflowlist: List of inflows into the investment (e.g., "Buy" transactions),
+    corresponding to the days in datelist
+    :param outflowlist: List of outflows of the investment (e.g., "Sell" transactions),
+    corresponding to the days in datelist
+    :param period: Number of days for which the return is calculated. Must be integer. If len(datelist) > period,
+    the return is calculated for each block within the full date list. This is used by the plotting-functions, which
+    plot different returns for different time periods.
+    :param analyzer: Analyzer-object for cached datetime conversions.
+    :return: Tuple of two lists: (date, return). The returns of the periods in the datelist. They correspond to the
+    returned dates, whereas the last date of the analysis-interval is given. The return is in percent.
+    # Todo: Is this function also working correctly if there are "value-holes" in the list(s) of values? E.g.,
+    # If the values go to zero,and then back to some value, during the analyzed period? Is this the same case as for the
+    # holding period analysis, where individual blocks of ownership had to have the return calculated individually?
     """
+
     dates, balances, costs, payouts, prices, inflows, outflows = asset_data
     if prices is None and valuelist is None:
         raise RuntimeError("Either prices or values must be given")
@@ -180,15 +207,16 @@ def calc_return_holdingperiod_full_block(dateformat, filename, asset_data, lates
     # Val1 is the first value of the transactions. As the first transaction is a "buy", the first inflow has to be
     # omitted for the correct calculation of the return.
     if valuelist is not None:
-        val1 = prices[0] * balances[0]
-    else:
         val1 = valuelist[0]
+    else:
+        val1 = prices[0] * balances[0]
+
     inflows[0] = 0.0
     cost = sum(costs)
     payout = sum(payouts)
     inflow = sum(inflows)
     outflow = sum(outflows)
-    return calc_return(val1, val2, outflow, inflow, payout, cost)
+    return calc_hpr(val1, val2, outflow, inflow, payout, cost)
 
 
 def calc_holding_period_return(asset_data, dateformat, filename, latest_date_price, valuelist=None):
@@ -313,49 +341,25 @@ def calc_hpr_return_asset_holdingperiod(asset):
     return calc_holding_period_return((datelist, balancelist, costlist, payoutlist, pricelist, inflowlist, outflowlist),
                                       asset.get_dateformat(), asset.get_filename(), asset.get_latest_price_date())
 
-
-# Todo fuse these two functions? Aren't they doing the same? Simply then pass either only one or multiple assets?
-def calc_hpr_return_asset_analysisperiod(asset):
-    """Calculates the total return (holding period return; HPR) for the given single asset over its analysis period
-    # Todo update documentation here, too. Holes are correctly being considered.
-    :param asset: Asset-object
-    :param analyzer: Analyzer-instance for cached datetime conversions
-    :return: Return of considered analysis-period, in percent.
-    """
-    # Obtain the analysis-data of the asset. This data is already forex-converted.
-    datelist = asset.get_analysis_datelist()
-    balancelist = asset.get_analysis_balances()
-    valuelist = asset.get_analysis_valuelist()
-    costlist = asset.get_analysis_costlist()
-    payoutlist = asset.get_analysis_payoutlist()
-    inflowlist = asset.get_analysis_inflowlist()
-    outflowlist = asset.get_analysis_outflowlist()
-
-    # Find the first nonzero balance. In the analysis period, the balances could have been extrapolated backwards.
-    idx_start = next((idx for idx, val in enumerate(balancelist) if val > 1e-9), None)
-    if idx_start is None:
-        raise RuntimeError("Could not find a balance >0.")
-    blocks = [list_[idx_start:] for list_ in [datelist, balancelist, valuelist, costlist,
-                                              payoutlist, inflowlist, outflowlist]]
-    dates, balances, values, costs, payouts, inflows, outflows = blocks
-    # Todo is this correct? Do the values contain values up until today in all cases? Test this.
-    return calc_holding_period_return((dates, balances, costs, payouts, None, inflows, outflows),
-                                      asset.get_dateformat(), asset.get_filename(), asset.get_latest_price_date(),
-                                      values)
-
-
-
-def get_hpr_return_assets_accumulated_analysisperiod(assets):
-    """Calculates the total return for the given multiple assets over the analysis-period.
+def calc_hpr_return_assets_analysisperiod(assets):
+    """Calculates the total return for the given asset(s) over the analysis-period.
+    If multiple assets are provided, the asset values are summed, and then the HPR is calculated.
     The values of the assets are summed up (daily) and the return is calculated for the accumulated values.
     It's the holding period return of the specified periods, see: https://en.wikipedia.org/wiki/Holding_period_return)
     The data is intended to be provided with a granularity of days.
     The analysis-data-range of each asset must be identical (in date and size)
-    :param assets: List of asset-objects
-    :param analyzer: Analyzer-instance, for cached date-conversions.
-    :return: Return of considered analysis-period, in percent.
+    :param assets: List of asset-objects, can be a single asset.
+    :return: Return of considered analysis-period, in percent, either of the single asset, or of the assets summed.
+     # Todo update documentation here, too. Holes are correctly being considered. etc.
     """
-    tot_dates = [asset.get_analysis_datelist() for asset in assets]
+    if not isinstance(assets, list):
+        assets = [assets]
+        filename = assets[0].get_filename()
+        latest_price_date = assets[0].get_latest_price_date()
+    else:
+        filename = "Multiple Assets"
+        latest_price_date = None
+    tot_dates = [asset.get_analysis_datelist() for asset in assets] # Todo does this work for a single list/element, too?
     if not helper.are_sublists_same_length(tot_dates):
         raise RuntimeError("List of dates are of unequal length")
     tot_balances = [asset.get_analysis_balances() for asset in assets]
@@ -383,97 +387,10 @@ def get_hpr_return_assets_accumulated_analysisperiod(assets):
 
     # Todo is this correct? Do the values contain values up until today in all cases? Test this.
     return calc_holding_period_return((datelist, balances, costs, payouts, None, inflows, outflows),
-                                      assets[0].get_dateformat(), "all assets", None, values)
+                                      assets[0].get_dateformat(), filename, latest_price_date, values)
 
-
-# Todo is this function still needed? Is it already covered above somehow? Continue here. 
-def calc_returns_analysisperiod(datelist, valuelist, costlist, payoutlist, inflowlist, outflowlist, analyzer):
-    # Todo merge the comments about holding period return to a sensible point.
-    # Todo bring the related functions together
-    # Todo eliminate superfluous functions
-    """Calculates the returns of an asset over a set of time periods.
-    It's the holding period return of the specified periods, see: https://en.wikipedia.org/wiki/Holding_period_return
-    Note that this caluclates the return relative to the _initial_ investment (but subsequent top-offs are correctly
-    considered). # Todo time-weighted return might be interesting for PROFIT...?
-    The data is intended to be provided with a granularity of days.
-    Costs, payouts, inflows and outflows are to be given for the corresponding days (as given by datelist)
-    The values are always given for the end of the day.
-    The last analyzed block might not be a full period, as the period may not fit an integer-amount of times into the
-    datelist
-    :param datelist: List of strings of dates (days). The return of the data corresponding to this date-list is analyzed
-    :param valuelist: List of asset-values, corresponding to the days in datelist
-    :param costlist: List of costs, corresponding to the days in datelist
-    :param payoutlist: List of payouts, corresponding to the days in datelist
-    :param inflowlist: List of inflows into the investment (e.g., "Buy" transactions),
-    corresponding to the days in datelist
-    :param outflowlist: List of outflows of the investment (e.g., "Sell" transactions),
-    corresponding to the days in datelist
-    :param period: Number of days for which the return is calculated. Must be integer. If len(datelist) > period,
-    the return is calculated for each block within the full date list. This is used by the plotting-functions, which
-    plot different returns for different time periods.
-    :param analyzer: Analyzer-object for cached datetime conversions.
-    :return: Tuple of two lists: (date, return). The returns of the periods in the datelist. They correspond to the
-    returned dates, whereas the last date of the analysis-interval is given. The return is in percent.
-    # Todo: Is this function also working correctly if there are "value-holes" in the list(s) of values? E.g.,
-    # If the values go to zero,and then back to some value, during the analyzed period? Is this the same case as for the
-    # holding period analysis, where individual blocks of ownership had to have the return calculated individually?
-    """
-
-    ret = []
-    ret_dates = []
-
-    # The determination of the period's first value is slightly tricky:
-    # It is possible that the provided lists do not contain values at the beginning. Thus, the first index must be
-    # found, where the asset contains value:
-    startidx = len(valuelist) + 1  # Todo this can surely be done better, to find the first index. itertools?
-    for idx, val in enumerate(valuelist):
-        if val > 1e-9:
-            startidx = idx
-            break
-
-    # The entire block contains no value: Its return cannot be determined.
-    if startidx == len(valuelist) + 1:
-        ret.append(0.0)
-        ret_dates.append(datelist[-1])
-
-    else:  # There is value in the current period: Determine, where the value starts
-        # The period contained some empty value at the beginning. Crop it.
-        if startidx > 0:
-            values = valuelist[startidx:]
-            costs = costlist[startidx:]
-            payouts = payoutlist[startidx:]
-            inflows = inflowlist[startidx:]
-            outflows = outflowlist[startidx:]
-            # Now, the first transaction is most likely the inflow which bought the asset. Then, this inflow must be
-            # subtracted to get the correct return (it happened in the "previous" period (which is nonexisting in
-            # the considered treatment of day-wise transactions)
-            val1 = values[0]  # asset-value at beginning of period
-            if helper.isclose(val1, inflows[0]) is True:  # If the first transaction is the "buy":
-                inflows[0] = 0.0  # Adjust the border-case
-        # The start-index is zero: The entire period contains value (at least at the beginning)
-        else:
-            val1 = valuelist[0]  # No other option
-            # If the first value is created with an inflow, the first inflow has to be ignored
-            # (it happened in the last period; same as above.
-            if val1 > 1e-9 and helper.isclose(val1, inflowlist[0]) is True:
-                inflowlist[0] = 0.0
-
-        # val2 is the asset-value at the end of the period
-        val2 = values[-1]
-
-        # Sum the individual contributions over the given period:
-        cost_tot = sum(costs)
-        payouts_tot = sum(payouts)
-        inflows_tot = sum(inflows)
-        outflows_tot = sum(outflows)
-
-        ret.append(calc_return(val1, val2, outflows_tot, inflows_tot, payouts_tot, cost_tot))
-        ret_dates.append(datelist[-1])  # Add the last date of the analyzed period
-
-    return ret_dates, ret
-
-
-def get_returns_asset_daily_absolute_analysisperiod(asset, dateformat, analyzer):
+# Todo rename to "calc"?
+def get_returns_asset_daily_absolute_analysisperiod(asset, analyzer):
     """Calculates the absolute returns of a given asset, for the analysis period
     The data is intended to be provided with a granularity of days.
     :param asset: Asset-object
@@ -481,10 +398,9 @@ def get_returns_asset_daily_absolute_analysisperiod(asset, dateformat, analyzer)
     :return: Tuple of two lists: (date, return). The returns of the periods in the datelist. They correspond to the
     returned dates, whereas the last date of the analysis-interval is given. The return is in the asset's currency
     """
-
     # The value of the asset of today must be known, otherwise, errors are thrown, as the holding period return is
     # otherwise not very meaningful.
-    today_dt = dateoperations.get_date_today(dateformat, datetime_obj=True)
+    today_dt = dateoperations.get_date_today(analyzer.get_dateformat(), datetime_obj=True)
 
     # If there is an asset-price available, get the latest possible one that is recorded:
     today_price_avail = False
@@ -528,7 +444,7 @@ def get_returns_asset_daily_absolute_analysisperiod(asset, dateformat, analyzer)
                                           analyzer)
     return datelist, returns
 
-
+    # Todo fuse these two functions together?
 def calc_returns_daily_absolute(datelist, valuelist, costlist, payoutlist, inflowlist, outflowlist, analyzer):
     """Calculates the absolute returns of an asset in the given period (analysis period).
     This function returns the gains (or losses) of the asset _since the start of the analysis period_.
@@ -567,8 +483,8 @@ def calc_returns_daily_absolute(datelist, valuelist, costlist, payoutlist, inflo
     return ret
 
 
-def calc_return(val1, val2, outflow, inflow, payout, cost):
-    """Calculates the return of an investment (in percent)
+def calc_hpr(val1, val2, outflow, inflow, payout, cost):
+    """Calculates the holding period return of an investment (in percent)
     :param val1: Value at beginning of period
     :param val2: Value at end of period
     :param outflow: Outflows (e.g., "Sell"-transactions) during period
@@ -583,13 +499,4 @@ def calc_return(val1, val2, outflow, inflow, payout, cost):
     else:
         return (val2 + outflow + payout - cost - inflow - val1) / val1 * 100.0
 
-
-def partition_list(inlist, blocksize):
-    """Partitions a list into several lists, of blocksize each (or smaller)
-    :param inlist: Input list
-    :param blocksize: Size of desired blocks, integer
-    :return: List of partitioned lists, each sub-list of length blocksize
-    """
-    # Make sure we are dealing with integers:
-    blocksize = int(round(blocksize, 0))
-    return [inlist[i:i + blocksize] for i in range(0, len(inlist), blocksize)]
+# Todo re-order the functions in here.
