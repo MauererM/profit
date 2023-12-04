@@ -90,7 +90,7 @@ def get_asset_inflows_summed(assets):
     return helper.sum_lists(lists)
 
 
-def get_asset_outflows_summed(assets):  # Todo are all these functions used? Check when done with overhauling analysis.py (and plotting.py?)
+def get_asset_outflows_summed(assets):
     """Sum the daily outflows of the given assets element-wise/daily"""
     lists = [asset.get_analysis_outflowlist() for asset in assets]
     return helper.sum_lists(lists)
@@ -108,45 +108,25 @@ def get_asset_costs_summed(assets):
     return helper.sum_lists(lists)
 
 
-def calc_return_holdingperiod_full_block(dateformat, filename, asset_data, latest_date_price, valuelist=None):
+def calc_hpr_full_block(dateformat, filename, asset_data, latest_date_price, valuelist=None):
     """Calculate the holding period of an asset for a full valid "block" (meaning: without containing periods
-    where the asset was fully sold. The asset may still be held today. The first balance must be nonzero.
+    where the asset was fully sold. https://en.wikipedia.org/wiki/Holding_period_return
+    The asset may still be held today. The first balance must be nonzero.
+    The data is intended to be provided with a granularity of days, as end-of-day values.
+    The holding period assumes that an investment is done once, and has no cashflows during its lifetime. Hence,
+    the return is calculated in relation to this initial investment. This function _does_ consider cashflows during
+    the investment period, however, it might muddle the "sharpness" of the HPR. Also, this function only calculates the
+    HPR for a single ownership-period of an investment (i.e., no zero-balances during the ownership).
+    # Todo Implement time-weighted return; this measure might be more interesting for PROFIT (?)
     :param dateformat: String of utilized dateformat
     :param filename: File name of the asset the calculation belongs to.
     :param asset_data: Tuple of lists containing the data ordered as dates, balances, costs, payouts,
-    prices, inflows, outflows
+    prices, inflows, outflows (individual lists). Price can be "None", then, valuelist is used.
     :param latest_date_price: Tuple of the asset's latest available date and corresponding price-data (date, price),
     or None
+    :param valuelist: List of values, can be used if prices are not available (e.g., during analysis period calcs).
     :return: The holding period return of the given holding period-block
-    # Todo finalize the documentation here
-    Calculates the returns of an asset over a set of time periods.
-    It's the holding period return of the specified periods, see: https://en.wikipedia.org/wiki/Holding_period_return
-    Note that this caluclates the return relative to the _initial_ investment (but subsequent top-offs are correctly
-    considered). # Todo time-weighted return might be interesting for PROFIT...?
-    The data is intended to be provided with a granularity of days.
-    Costs, payouts, inflows and outflows are to be given for the corresponding days (as given by datelist)
-    The values are always given for the end of the day.
-    The last analyzed block might not be a full period, as the period may not fit an integer-amount of times into the
-    datelist
-    :param datelist: List of strings of dates (days). The return of the data corresponding to this date-list is analyzed
-    :param valuelist: List of asset-values, corresponding to the days in datelist
-    :param costlist: List of costs, corresponding to the days in datelist
-    :param payoutlist: List of payouts, corresponding to the days in datelist
-    :param inflowlist: List of inflows into the investment (e.g., "Buy" transactions),
-    corresponding to the days in datelist
-    :param outflowlist: List of outflows of the investment (e.g., "Sell" transactions),
-    corresponding to the days in datelist
-    :param period: Number of days for which the return is calculated. Must be integer. If len(datelist) > period,
-    the return is calculated for each block within the full date list. This is used by the plotting-functions, which
-    plot different returns for different time periods.
-    :param analyzer: Analyzer-object for cached datetime conversions.
-    :return: Tuple of two lists: (date, return). The returns of the periods in the datelist. They correspond to the
-    returned dates, whereas the last date of the analysis-interval is given. The return is in percent.
-    # Todo: Is this function also working correctly if there are "value-holes" in the list(s) of values? E.g.,
-    # If the values go to zero,and then back to some value, during the analyzed period? Is this the same case as for the
-    # holding period analysis, where individual blocks of ownership had to have the return calculated individually?
     """
-
     dates, balances, costs, payouts, prices, inflows, outflows = asset_data
     if prices is None and valuelist is None:
         raise RuntimeError("Either prices or values must be given")
@@ -155,19 +135,16 @@ def calc_return_holdingperiod_full_block(dateformat, filename, asset_data, lates
             raise RuntimeError("Balances and value list must be of identical length")
     # Here, only the last balance may (or may not) be zero, there may not be any zero-balances within the interval that
     # we analyze here.
-    if any(x < 1e-9 for x in balances[0:-1]):
+    if any(x < 1e-9 for x in balances[0:]):
         raise RuntimeError("This function can only deal with contiguous balance-intervals, i.e., "
                            "no balance may be zero within this interval. Something went wrong elsewhere.")
     if balances[0] < 1e-9:
         raise RuntimeError("This can not be the case, the first balance must come from a buy-transaction. "
                            "Something went wrong elsewhere. Are the balance-blocks being correctly split up?")
 
-    # If the balance of the asset of today is zero, then find the last entry where the balance was nonzero,
-    # and calculate the price of that point (the last sell-transaction). Go backwards through the balance, find where
-    # it is zero for the last time (going backwards). This is the last sell-transaction that resulted in a zero-balance.
+    # If the balance of the asset of today is zero, then the value today is also zero.
     if balances[-1] < 1e-9:
-        val2 = 0.0  # No balance of today ==> No value.
-
+        val2 = 0.0
     else:  # There is still a balance today.
         today_dt = dateoperations.get_date_today(dateformat, datetime_obj=True)
         # If there is an asset-price available, get the latest possible one that is recorded:
@@ -219,13 +196,21 @@ def calc_return_holdingperiod_full_block(dateformat, filename, asset_data, lates
     return calc_hpr(val1, val2, outflow, inflow, payout, cost)
 
 
-def calc_holding_period_return(asset_data, dateformat, filename, latest_date_price, valuelist=None):
+def calc_hpr_blocks(asset_data, dateformat, filename, latest_date_price, valuelist=None):
     """Calculates the holding period return of the provided data. Note: The data can span any interval/time of the
     investment (i.e., it must not necessarily start at the beginning or end of an investment's lifetime).
     If there are several buy- or sell-events, and/or other cashflows during the provided data/duration, they will
     be correctly considered, but the holding period return is still being calculated relative to the _initial_
     investment (or, the value provided at the beginning of the data).
-    # Todo finalize the doc here
+    If there are several blocks of asset-ownership in the provided data, the HPR will be averaged for each block of
+    stock-ownership.
+    See the documentation in calc_hpr_full_block for more details/insights.
+    :param asset_data: Tuple of lists containing the balances and cashflows of the asset, as: datelist, balancelist,
+    costlist, payoutlist, pricelist, inflowlist, outflowlist
+    :param dateformat: String encoding the dateformat.
+    :param filename: File name of the considered asset
+    :param latest_date_price: Tuple of date-value of latest available asset price, or None
+    :param valuelist: List of values, corresponding to the lists in asset_data, can be used if prices are not available.
     """
     datelist, balancelist, costlist, payoutlist, pricelist, inflowlist, outflowlist = asset_data
 
@@ -242,12 +227,13 @@ def calc_holding_period_return(asset_data, dateformat, filename, latest_date_pri
     if 0 in zero_balance_idx:
         raise RuntimeError("Balance-list may not start with zero-balance.")
 
-    # Only a single block of asset-ownership, and asset has not been (fully) sold yet (i.e., all balances are >0)
+    # Only a single block of asset-ownership. Asset may still be owned (or not, both is fine).
+    # Todo there is a bug here. LYINR is failing, due to obvious reasons. Fix it. Find holes properly!
     if len(zero_balance_idx) == 0 or (len(zero_balance_idx) == 1 and balancelist[-1] < 1e-9):
-        return calc_return_holdingperiod_full_block(dateformat, filename, (datelist, balancelist, costlist,
-                                                                           payoutlist, pricelist, inflowlist,
-                                                                           outflowlist),
-                                                    latest_date_price, valuelist)
+        return calc_hpr_full_block(dateformat, filename, (datelist, balancelist, costlist,
+                                                          payoutlist, pricelist, inflowlist,
+                                                          outflowlist),
+                                   latest_date_price, valuelist)
 
     logging.info(f"Found multiple distinct blocks of asset-ownership in {filename}. Will average their "
                  f"respective holding period returns. ")
@@ -262,7 +248,6 @@ def calc_holding_period_return(asset_data, dateformat, filename, latest_date_pri
             # This essentially detects a transition from zero-balance back to nonzero balance (a repeat-buy condition).
             idx_start = idx_start + 1
             continue
-        # Todo: Do these large assignments via list comprehensions, much more readable.
         balances_block = balancelist[idx_start:idx + 1]
         dates_block = datelist[idx_start:idx + 1]
         costs_block = costlist[idx_start:idx + 1]
@@ -273,11 +258,11 @@ def calc_holding_period_return(asset_data, dateformat, filename, latest_date_pri
             prices_block = None
         inflows_block = inflowlist[idx_start:idx + 1]
         outflows_block = outflowlist[idx_start:idx + 1]
-        returns.append(calc_return_holdingperiod_full_block(dateformat, filename, (dates_block, balances_block,
-                                                                                   costs_block, payouts_block,
-                                                                                   prices_block, inflows_block,
-                                                                                   outflows_block),
-                                                            latest_date_price, valuelist))
+        returns.append(calc_hpr_full_block(dateformat, filename, (dates_block, balances_block,
+                                                                  costs_block, payouts_block,
+                                                                  prices_block, inflows_block,
+                                                                  outflows_block),
+                                           latest_date_price, valuelist))
         idx_start = idx + 1
     # If the last block of ownership is still "ongoing", i.e., assets are still owned, we need to calculate the last
     # holding period return, too.
@@ -294,11 +279,11 @@ def calc_holding_period_return(asset_data, dateformat, filename, latest_date_pri
             prices_block = None
         inflows_block = inflowlist[idx_start:idx_stop]
         outflows_block = outflowlist[idx_start:idx_stop]
-        returns.append(calc_return_holdingperiod_full_block(dateformat, filename, (dates_block, balances_block,
-                                                                                   costs_block, payouts_block,
-                                                                                   prices_block, inflows_block,
-                                                                                   outflows_block),
-                                                            latest_date_price, valuelist))
+        returns.append(calc_hpr_full_block(dateformat, filename, (dates_block, balances_block,
+                                                                  costs_block, payouts_block,
+                                                                  prices_block, inflows_block,
+                                                                  outflows_block),
+                                           latest_date_price, valuelist))
     if None in returns:
         return None
     return sum(returns) / len(returns)  # Build the average of all returns
@@ -338,8 +323,9 @@ def calc_hpr_return_asset_holdingperiod(asset):
         inflowlist = forex_obj.perform_conversion(datelist, inflowlist)
         outflowlist = forex_obj.perform_conversion(datelist, outflowlist)
 
-    return calc_holding_period_return((datelist, balancelist, costlist, payoutlist, pricelist, inflowlist, outflowlist),
-                                      asset.get_dateformat(), asset.get_filename(), asset.get_latest_price_date())
+    return calc_hpr_blocks((datelist, balancelist, costlist, payoutlist, pricelist, inflowlist, outflowlist),
+                    asset.get_dateformat(), asset.get_filename(), asset.get_latest_price_date())
+
 
 def calc_hpr_return_assets_analysisperiod(assets):
     """Calculates the total return for the given asset(s) over the analysis-period.
@@ -347,10 +333,11 @@ def calc_hpr_return_assets_analysisperiod(assets):
     The values of the assets are summed up (daily) and the return is calculated for the accumulated values.
     It's the holding period return of the specified periods, see: https://en.wikipedia.org/wiki/Holding_period_return)
     The data is intended to be provided with a granularity of days.
-    The analysis-data-range of each asset must be identical (in date and size)
+    The analysis-data-range of each asset must be identical (in date and size).
+    If there are several isolated blocks of asset-ownership, the holding period return of each block is calculated,
+    and this function returns the average of the returns of each block.
     :param assets: List of asset-objects, can be a single asset.
     :return: Return of considered analysis-period, in percent, either of the single asset, or of the assets summed.
-     # Todo update documentation here, too. Holes are correctly being considered. etc.
     """
     if not isinstance(assets, list):
         assets = [assets]
@@ -359,7 +346,7 @@ def calc_hpr_return_assets_analysisperiod(assets):
     else:
         filename = "Multiple Assets"
         latest_price_date = None
-    tot_dates = [asset.get_analysis_datelist() for asset in assets] # Todo does this work for a single list/element, too?
+    tot_dates = [asset.get_analysis_datelist() for asset in assets]
     if not helper.are_sublists_same_length(tot_dates):
         raise RuntimeError("List of dates are of unequal length")
     tot_balances = [asset.get_analysis_balances() for asset in assets]
@@ -386,8 +373,9 @@ def calc_hpr_return_assets_analysisperiod(assets):
     datelist, balances, values, costs, payouts, inflows, outflows = blocks
 
     # Todo is this correct? Do the values contain values up until today in all cases? Test this.
-    return calc_holding_period_return((datelist, balances, costs, payouts, None, inflows, outflows),
-                                      assets[0].get_dateformat(), filename, latest_price_date, values)
+    return calc_hpr_blocks((datelist, balances, costs, payouts, None, inflows, outflows),
+                    assets[0].get_dateformat(), filename, latest_price_date, values)
+
 
 # Todo rename to "calc"?
 def get_returns_asset_daily_absolute_analysisperiod(asset, analyzer):
@@ -445,6 +433,8 @@ def get_returns_asset_daily_absolute_analysisperiod(asset, analyzer):
     return datelist, returns
 
     # Todo fuse these two functions together?
+
+
 def calc_returns_daily_absolute(datelist, valuelist, costlist, payoutlist, inflowlist, outflowlist, analyzer):
     """Calculates the absolute returns of an asset in the given period (analysis period).
     This function returns the gains (or losses) of the asset _since the start of the analysis period_.

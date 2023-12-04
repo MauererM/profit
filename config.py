@@ -7,7 +7,7 @@ Copyright (c) 2018-2023 Mario Mauerer
 
 class ProfitConfig:
     # Data is always analyzed a certain number of days into the past, from today
-    DAYS_ANALYSIS = 365
+    DAYS_ANALYSIS = 3500
 
     # All asset values are calculated in the base currency.
     # Provide the commonly used string like "CHF", "USD", "HKD" etc.

@@ -52,7 +52,8 @@ def list_all_zero(vallist):
     return all(-1e-9 < x < 1e-9 for x in vallist)
 
 
-def accumulate_list(inlist): # Todo when done with plotting and analysis overhaul: Check which functions here are still needed in helper.py
+def accumulate_list(
+        inlist):  # Todo when done with plotting and analysis overhaul: Check which functions here are still needed in helper.py
     """Accumulates the values of a list
     :param inlist: List of values
     :return: List of identical lenght, with accumulated values
@@ -61,30 +62,34 @@ def accumulate_list(inlist): # Todo when done with plotting and analysis overhau
         return inlist
     accu = [inlist[0]]
     for val in inlist[1:]:
-        accu.append(accu[-1] + val) # Todo can this be done smarter, without appending?
+        accu.append(accu[-1] + val)  # Todo can this be done smarter, without appending?
     return accu
 
 
-def sum_lists(lists): # Todo test what happens if a single list is supplied?
+def sum_lists(lists):
     """Sum the values of two lists piecewise
     :param lists: List of lists to be piecewise summed. All sublists need to be of identical length.
     :return: List of summed values
     """
-    if not isinstance(lists, list) and not all(isinstance(sublist, list) for sublist in lists):
+    if not isinstance(lists, list):
+        lists = [lists]
+    if not all(isinstance(sublist, list) for sublist in lists):
         raise RuntimeError("Did not receive a list of lists")
     if not are_sublists_same_length(lists):
         raise RuntimeError("Sublists are of varying length")
     return [sum(values) for values in zip(*lists)]
 
-def are_sublists_same_length(lists): # Todo test what happens if a single list is supplied?
+
+def are_sublists_same_length(lists):
     """Checks if all sublists in a list of lists are of same length"""
-    if not isinstance(lists, list) and not all(isinstance(sublist, list) for sublist in lists):
+    if not isinstance(lists, list):
+        lists = [lists]
+    if not all(isinstance(sublist, list) for sublist in lists):
         raise RuntimeError("Did not receive a list of lists")
     lengths = [len(sublist) for sublist in lists]
     if len(set(lengths)) != 1:
         return False
     return True
-
 
 
 def diff_lists(lista, listb):
@@ -168,3 +173,12 @@ def partition_list(inlist, blocksize):
     # Make sure we are dealing with integers:
     blocksize = int(round(blocksize, 0))
     return [inlist[i:i + blocksize] for i in range(0, len(inlist), blocksize)]
+
+
+def contains_zeroes(inlist, exclude_trailing_zeroes=True, exclude_leading_zeroes=True, tol=1e-9):
+    """Checks if a list of floats contains (near-) zero elements.
+    Trailing or leading zeroes can be omitted/not considered.
+    """
+    if not isinstance(inlist, list):
+        raise RuntimeError("Need to receive a list.")
+
