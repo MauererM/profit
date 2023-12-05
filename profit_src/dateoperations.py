@@ -198,37 +198,31 @@ def extend_data_past(datelist, vallist, begin_date, analyzer, zero_padding):
     :param datelist: List of strings of dates
     :param vallist: List of values, corresponding to the dates in datelist
     :param begin_date: String, encoding the date in the past until which the lists are extended backwards
-    :param dateformat: String that encodes the format of the dates, e.g. "%d.%m.%Y"
+    :param analyzer: Analyzer-instance for cached str2datetime conversions
     :param zero_padding: Boolean. If true: Values are extended with zeros. Otherwise, with the last
                         known value (zero-order hold)
     :return: Tuple of two lists: The extended list of dates (as strings) and the extended list of values:
     (dates, values)
     """
-    # Use datetime (this also creates a local copy)
-    datelist_dt = [analyzer.str2datetime(x) for x in datelist]
-    begin_date_dt = analyzer.str2datetime(begin_date)
-    stop_date_dt = datelist_dt[0]
+    if len(datelist) != len(vallist):
+        raise RuntimeError("List of dates and values must be of identical length.")
 
-    if begin_date_dt > datelist_dt[0]:
+    datelist_dt_0 = analyzer.str2datetime(datelist[0])
+    begin_date_dt = analyzer.str2datetime(begin_date)
+
+    if begin_date_dt > datelist_dt_0:
         raise RuntimeError("Begin-date is later than beginning of datelist. Cannot extrapolate into the past.")
 
-    curdate = begin_date_dt
-    auxdates = []
-    auxvals = []
     # Create new lists, before the existing list. Then join the lists.
-    while curdate < stop_date_dt:
-        auxdates.append(curdate)
-        if zero_padding is True:
-            auxvals.append(0.0)
-        else:
-            auxvals.append(vallist[0])
-        curdate += datetime.timedelta(days=1)
-    datelist_dt = auxdates + datelist_dt
-    vallist_extended = auxvals + vallist
-
-    # Re-convert dates to strings:
-    datelist_str = [analyzer.datetime2str(x) for x in datelist_dt]
-    return datelist_str, vallist_extended
+    auxdates = create_datelist(begin_date, datelist[0], analyzer)
+    del auxdates[-1] # Avoid the duplicate date
+    if zero_padding is True:
+        auxvals = [0.0] * len(auxdates)
+    else:
+        auxvals = [vallist[0]] * len(auxdates)
+    datelist_full = auxdates + datelist
+    vallist_full = auxvals + vallist
+    return datelist_full, vallist_full
 
 
 def extend_data_future(datelist, vallist, stop_date, analyzer, zero_padding):
@@ -237,35 +231,32 @@ def extend_data_future(datelist, vallist, stop_date, analyzer, zero_padding):
     :param datelist: List of strings encoding the given dates
     :param vallist: List of values, corresponding to the dates in datelist
     :param stop_date: String, encodes the desired end of the extended dates/values
-    :param dateformat: String that encodes the format of the dates, e.g. "%d.%m.%Y"
+    :param analyzer: For cached string/datetime conversions
     :param zero_padding: Boolean. If true: Values are extended with zeros. Otherwise, with the last
                         known value (zero-order hold)
     :return: Tuple of two lists: The extended list of dates (as strings) and the extended list of values:
     (dates, values)
     """
-    # Sanity check:
     if len(datelist) != len(vallist):
         raise RuntimeError("List of dates and values must be of identical length.")
 
-    # Use datetime (this also creates a local copy)
-    datelist_dt = [analyzer.str2datetime(x) for x in datelist]
+    datelist_dt_end = analyzer.str2datetime(datelist[-1])
     stop_date_dt = analyzer.str2datetime(stop_date)
 
-    if stop_date_dt <= datelist_dt[-1]:
+    if stop_date_dt <= datelist_dt_end:
         raise RuntimeError("Stop-date is not in the future of the given datelist.")
 
-    # Create a local copy:
-    vallist_extended = list(vallist)
-    while datelist_dt[-1] < stop_date_dt:
-        datelist_dt.append(datelist_dt[-1] + datetime.timedelta(days=1))  # Add a day
-        if zero_padding is True:
-            vallist_extended.append(0.0)
-        else:
-            vallist_extended.append(vallist_extended[-1])
+    # Create new lists, before the existing list. Then join the lists.
+    auxdates = create_datelist(datelist[-1], stop_date, analyzer)
+    del auxdates[0]
+    if zero_padding is True:
+        auxvals = [0.0] * len(auxdates)
+    else:
+        auxvals = [vallist[-1]] * len(auxdates)
 
-    # Re-convert dates to strings:
-    datelist_str = [analyzer.datetime2str(x) for x in datelist_dt]
-    return datelist_str, vallist_extended
+    datelist_full = datelist + auxdates
+    vallist_full = vallist + auxvals
+    return datelist_full, vallist_full
 
 
 def get_date_today(dateformat, datetime_obj=False):
@@ -320,13 +311,11 @@ def create_datelist(startdate, stopdate, analyzer, dateformat=None):
 
     dur = stop - start
     dur = dur.days + 1
-
     datelist = [0] * dur
     curdate = start
     for i in range(dur):
         datelist[i] = datetime2str_lambda(curdate)
         curdate += datetime.timedelta(days=1)
-
     return datelist
 
 
@@ -343,16 +332,10 @@ def check_date_order(datelist, analyzer, allow_ident_days=False):
     # convert to datetime for handling:
     datelist_dt = [analyzer.str2datetime(x) for x in datelist]
     # Don't begin with the first element with the iteration:
-    oldday = datelist_dt[0]
-    for date in datelist_dt[1:]:  # Todo can this be made faster?
-        if allow_ident_days is True:
-            if date < oldday:
-                return False
-        else:
-            if date <= oldday:
-                return False
-        oldday = date
-    return True
+    if allow_ident_days:
+        return all(curr_date >= prev_date for prev_date, curr_date in zip(datelist_dt, datelist_dt[1:]))
+    else:
+        return all(curr_date > prev_date for prev_date, curr_date in zip(datelist_dt, datelist_dt[1:]))
 
 
 def find_holes_in_dates(datelist, analyzer):
@@ -381,13 +364,13 @@ def check_dates_consecutive(datelist, analyzer):
     """
     if len(datelist) == 0:
         return False
-    # Convert to datetime for handling:
+    if len(datelist) == 1:
+        return True
     datelist = [analyzer.str2datetime(x) for x in datelist]
-    for i, date in enumerate(datelist):
-        nextday = date + datetime.timedelta(days=1)
-        if i < len(datelist) - 1:
-            if datelist[i + 1] != nextday:
-                return False
+    for i in range(len(datelist)-1):
+        nextday = datelist[i] + datetime.timedelta(days=1)
+        if datelist[i+1] != nextday:
+            return False
     return True
 
 

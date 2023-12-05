@@ -14,6 +14,7 @@ from config import ProfitConfig
 # Note: Run this from the top-level directory (where profit_main.py) resides! It is stored here as it is a debug-tool.
 
 if __name__ == "__main__":
+    print("Starting Profiler")
     # Create a profiler object
     profiler = cProfile.Profile()
 
@@ -21,6 +22,7 @@ if __name__ == "__main__":
     config = ProfitConfig()
     dut_main(config)
     profiler.disable()
+    print("Profiler done")
 
     stats = Stats(profiler)
-    stats.sort_stats('cumtime').print_stats(100)
+    stats.sort_stats('tottime').print_stats(100)
