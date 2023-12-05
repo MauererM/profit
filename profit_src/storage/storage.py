@@ -343,6 +343,7 @@ class MarketDataMain:
         lines = []
         lines.append(f"{self.HEADER_STRING}{self.DELIMITER}")
         lines.append(f"{self.ID_STRING}{self.DELIMITER}{id_}")
+        lines.append(f"{self.OVERWRITE_STRING}{self.DELIMITER}{self.OVERWRITE_FALSE}")
         lines.append(f"{self.DATA_STRING}{self.DELIMITER}")
         return fn, lines
 
