@@ -307,13 +307,9 @@ class Investment:
         if len(trans_dates) != len(trans_amounts):
             raise RuntimeError("Lists of transaction-dates, actions and amounts must be of equal length.")
 
-        # Check, if transaction-dates are in order (they should be, it's checked when an account is generated)
-        if dateoperations.check_date_order(trans_dates, self.analyzer, allow_ident_days=True) is False:
-            raise RuntimeError("Specified transaction-date list is not in order.")
-
-        # Check, if the datelist is consecutive:
+        # Check, if the datelist is consecutive (this also checks that the dates are in order):
         if dateoperations.check_dates_consecutive(datelist, self.analyzer) is False:
-            raise RuntimeError("Specified datelist is not containing of consecutive days.")
+            raise RuntimeError("Specified datelist is not made of consecutive days.")
 
         value_list = [0] * len(datelist)
 
@@ -515,7 +511,7 @@ class Investment:
                     for i, entry in enumerate(mismatches):
                         print(f"{entry[0]};\t\t{entry[1]:.2f};\t\t\t{entry[2]:.2f};")
                     print("Could a split cause this? Potentially adjust via the split-option in the header "
-                          "in the storage-csv file.")
+                          "in the storage-csv file. Transaction-data is ground-truth.")
 
                 # Calculate the values of the investment:
                 self.analysis_values = []

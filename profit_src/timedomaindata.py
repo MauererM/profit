@@ -59,6 +59,10 @@ class StockMarketIndicesData:
                                                                                                    self.storage,
                                                                                                    self.storageobj,
                                                                                                    self.analyzer)
+        # Write the fused provider- and storge-data back to file:
+        if self.write_to_file is True:
+            self.storage.write_data_to_storage(self.storageobj, (self.full_dates, self.full_values))
+
         if isinstance(self.full_dates, list) and len(self.full_dates) > 0:
             # The index-data must be fully extrapolated:
             self.full_dates, self.full_values = dateoperations.format_datelist(self.full_dates, self.full_values,
@@ -447,7 +451,6 @@ def obtain_data_from_storage_and_provider(startdate_dataprovider, stopdate_datap
                 if len(splits) > 0:
                     providerdates, providerprices = storage.apply_splits(splits, (providerdates, providerprices))
                     print("Split(s) are detected in the storage-csv. Will modify provider data.")
-
             else:
                 logging.debug("Did not obtain provider-data.")
         except:
@@ -467,13 +470,12 @@ def post_process_provider_storage_data(storagedates, storageprices, providerdate
         full_prices = None
         write_to_file = False
     elif storagedates is None and providerdates is not None:
-        # Only online data available. We still merge with the storage-data (whicht might cover a different
+        # Only online data available. We still merge with the storage-data (which might cover a different
         # range, but that is OK; we do this to be able to write back to file below).
         full_dates, full_prices = storage.fuse_storage_and_provider_data(storageobj,
                                                                          (providerdates,
                                                                           providerprices),
-                                                                         tolerance_percent=3.0,
-                                                                         storage_is_groundtruth=True)
+                                                                         tolerance_percent=3.0)
         write_to_file = True
     elif storagedates is not None and providerdates is None:
         # Only storage data available
@@ -485,14 +487,16 @@ def post_process_provider_storage_data(storagedates, storageprices, providerdate
         full_dates, full_prices = storage.fuse_storage_and_provider_data(storageobj,
                                                                          (providerdates,
                                                                           providerprices),
-                                                                         tolerance_percent=3.0,
-                                                                         storage_is_groundtruth=True)
+                                                                         tolerance_percent=3.0)
         write_to_file = True
     else:
         raise RuntimeError("All cases should have been covered. Missing elif-statement?")
 
     if full_dates is not None:
-        if dateoperations.check_dates_consecutive(full_dates, analyzer) is False:
-            raise RuntimeError("The obtained market-price-dates are not consecutive.")
+        if dateoperations.check_date_order(full_dates, analyzer) is False:
+            raise RuntimeError("The obtained market-price-dates are not in order.")
+        # Note: Here we may not check for consecutiveness of the dates. It's OK if the dates have holes. The storage-
+        # data can have holes. If data from provider is not pulled for the full range of data that is stored, the
+        # holes from the storage can propagate up to there (but this is fine).
 
     return full_dates, full_prices, write_to_file

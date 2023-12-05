@@ -20,10 +20,11 @@ class ForexData(MarketDataStorage):
 
     FORMAT_FNAME_GROUPS = r'forex_([a-zA-Z0-9]{1,5})_([a-zA-Z0-9]{1,5})\.csv'
 
-    def __init__(self, pathname, id_, data, holes):
+    def __init__(self, pathname, id_, data, holes, overwrite_flag):
         self.pname = pathname
         self.id_ = id_
         self.holes = holes  # If the stored data is non-contiguous, this is a list of missing dates (or an empty list)
+        self.overwrite_flag = overwrite_flag
 
         dates = data[0]
         values = data[1]
@@ -86,3 +87,6 @@ class ForexData(MarketDataStorage):
 
     def get_splits(self):
         return []
+
+    def get_overwrite_flag(self):
+        return self.overwrite_flag

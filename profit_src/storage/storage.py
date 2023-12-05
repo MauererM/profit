@@ -7,6 +7,7 @@ Copyright (c) 2018-2023 Mario Mauerer
 
 import re
 import logging
+import bisect
 from pathlib import Path
 from .. import stringoperations
 from .. import dateoperations
@@ -20,13 +21,33 @@ from ..storage.index.index import IndexData
 class MarketDataMain:
     """
     Fundamental principles:
-    1) The data stored must not necessarily be contiguous (but in order). There can be "holes" in the data. However, whenever a hole is detected, the timedomain-class(es) will pull the full range from the provider, as it can not yet pull data granularly. Todo: Implement this at some point as well.
-    2) Marketdata-files have precedent/are ground truth. # Todo: Make this configurable via a setting in the header.
-    3) Stock splits can optionally be given in header of stock-files. Read data will be adjusted accordingly (but no stored data is overwritten). Reason: Some data providers do not reflect splits; This allows to correct this.  # Todo document this in the docs, also the fact how the headers should look.
+    1) The data stored must not necessarily be contiguous (but in order). There can be "holes" in the data. However,
+    whenever a hole is detected, the timedomain-class(es) will pull the full range from the provider,
+    as it can not yet pull data granularly. Todo: Implement this at some point as well, if it is desired to pull
+    less data from the provider(s).
+    2) Marketdata-files have precedent/are ground truth, but they have a header-setting that allows to override this.
+    3) Stock splits can optionally be given in header of stock-files. If this is done, then only data pulled from the
+    provider will be modified accordingly (and stored data is not modified). Hence, the header in the storage file
+    indicates that the related provider-data needs adjustment.
+    Reason: Some data providers do not reflect splits; This allows to correct this.
+    If a split is present in the storage-header, then the corresponding _provider_ data will be adjusted (and not the
+    stored csv-data!).
+
+    Note: The split-lines are optional. The split-value can be float. With this, reverse splits are also possible
+    Normal splits have a split-factor >1. Reverse splits are <1.
+    CAREFUL: Once the split-data is given in the header, any data from the corresponding provider will be modified and
+    written to the file (where it then becomes ground-truth).
+    NOTE: If you introduce or modify a new split in a storage-csv-file, you MUST delete all content fo the file (but keep
+    the header!). This forces profit to re-pull all data from the provider, and apply the split.
+    Alternatively, one can set the Overwrite_storage flag to "True", which overwrites data in the csv file with the new
+    (and split-adjusted) provider data).
+    You also might have to play with the day of the split in the storge-header by +/- 1 day to match the
+    recorded transactions.
 
     The content-format for forex- and stockmarket-index-files is as follows:
     Header;
     Id;<Name>
+    Overwrite_storage;<True/False>
     Data;
     08.03.2020;1.434
     ...
@@ -34,27 +55,22 @@ class MarketDataMain:
     The content-format for stock price-files is as follows:
     Header;
     Id;<Name>
+    Overwrite_storage;<True/False>
     Split;<date>;<float>
     Data;
     03.02.2020;134.30
     ...
-    Note: The split-lines are optional. The split-value can be float. With this, reverse splits are also possible
-    Normal splits have a split-factor >1. Reverse splits are <1.
-    If a split is present in the storage-header, then the corresponding _provider_ data will be adjusted (and not the
-    stored csv-data!).
-    CAREFUL: Once the split-data is given in the header, any data from the corresponding provider will be modified and
-    written to the file (where it then becomes ground-truth). # Todo: In future, a header-mechanism that steers what is ground-truth and what not will provide more control in cases where the provider changes the split-behavior
-    NOTE: If you introduce or modify a split in a storage-csv-file, you MUST delete all content fo the file (but keep
-    the header!). This forces profit to re-pull all data from the provider, and apply the split.
-    You also might have to play with the day of the split in the storge-header by +/- 1 day to match the
-    recorded transactions.
     """
     DELIMITER = ";"
     EXTENSION = "csv"
     HEADER_STRING = "Header"
     DATA_STRING = "Data"
+    OVERWRITE_STRING = "Overwrite_storage"
+    OVERWRITE_TRUE = "True"
+    OVERWRITE_FALSE = "False"
     SPLIT_STRING = "Split"
     ID_STRING = "Id"
+    # File names:
     # forex + Symbol A + Symbol B:
     FORMAT_FOREX = r'^forex_[a-zA-Z0-9]{1,5}_[a-zA-Z0-9]{1,5}\.csv$'
     # stock + Symbol + Exchange + Currency:
@@ -102,6 +118,7 @@ class MarketDataMain:
         lines = files.get_file_lines(fname)
         # Read the header:
         id_ = None
+        overwrite_flag = None
         dates = []
         vals = []
         for line_nr, line in enumerate(lines):
@@ -113,12 +130,24 @@ class MarketDataMain:
             elif line_nr == 1:
                 txt, val = stringoperations.read_crop_string_delimited(stripline, self.DELIMITER)
                 if txt != self.ID_STRING:
-                    raise RuntimeError(f"After Header, the Id-string must follow. File: {fname}")
+                    raise RuntimeError(f"After the Header-string, the Id-string must follow. File: {fname}")
                 id_ = val
             elif line_nr == 2:
+                txt, val = stringoperations.read_crop_string_delimited(stripline, self.DELIMITER)
+                if txt != self.OVERWRITE_STRING:
+                    raise RuntimeError(f"After the Id-string must follow the Overwrite-flag string. File: {fname}")
+                if val == self.OVERWRITE_TRUE:
+                    overwrite_flag = True
+                elif val == self.OVERWRITE_FALSE:
+                    overwrite_flag = False
+                else:
+                    raise RuntimeError(f"The overwrite-storage flag must be '{self.OVERWRITE_TRUE}' or "
+                                       f"'{self.OVERWRITE_FALSE}'")
+            elif line_nr == 3:
                 txt, _ = stringoperations.read_crop_string_delimited(stripline, self.DELIMITER)
                 if txt != self.DATA_STRING:
-                    raise RuntimeError(f"After Id-string must follow data-string. File: {fname}")
+                    raise RuntimeError(f"After the Overwrite-flag string must follow the data-string. File: {fname}")
+
             else:
                 ret = self.__read_data_line_from_storage_file(stripline)
                 if ret is None:
@@ -134,9 +163,9 @@ class MarketDataMain:
             raise RuntimeError(f"The dates in a stock-storage file must be in order! File: {fname}. Data corrupted?")
         holes = dateoperations.find_holes_in_dates(dates, self.analyzer)
         if is_index is False:
-            f = ForexData(fname, id_, (dates, vals), holes)
+            f = ForexData(fname, id_, (dates, vals), holes, overwrite_flag)
         else:
-            f = IndexData(fname, id_, (dates, vals), holes)
+            f = IndexData(fname, id_, (dates, vals), holes, overwrite_flag)
         return f
 
     def __parse_stock_file(self, fname):
@@ -146,6 +175,7 @@ class MarketDataMain:
         splits = []
         dates = []
         vals = []
+        overwrite_flag = None
         data_reached = False
         for line_nr, line in enumerate(lines):
             stripline = stringoperations.strip_whitespaces(line)
@@ -158,7 +188,18 @@ class MarketDataMain:
                 if txt != self.ID_STRING:
                     raise RuntimeError(f"After Header, the Id-string must follow. File: {fname}")
                 id_ = val
-            elif line_nr >= 2 and data_reached is False:  # Can be "SPLIT" or "Data"
+            elif line_nr == 2:
+                txt, val = stringoperations.read_crop_string_delimited(stripline, self.DELIMITER)
+                if txt != self.OVERWRITE_STRING:
+                    raise RuntimeError(f"After the Id-string must follow the Overwrite-flag string. File: {fname}")
+                if val == self.OVERWRITE_TRUE:
+                    overwrite_flag = True
+                elif val == self.OVERWRITE_FALSE:
+                    overwrite_flag = False
+                else:
+                    raise RuntimeError(f"The overwrite-storage flag must be '{self.OVERWRITE_TRUE}' or "
+                                       f"'{self.OVERWRITE_FALSE}'")
+            elif line_nr >= 3 and data_reached is False:  # Can be "SPLIT" or "Data"
                 begin, rest = stringoperations.read_crop_string_delimited(stripline, self.DELIMITER)
                 if begin == self.SPLIT_STRING:
                     split_date, split_value = stringoperations.read_crop_string_delimited(rest, self.DELIMITER)
@@ -169,7 +210,7 @@ class MarketDataMain:
                 elif begin == self.DATA_STRING:
                     data_reached = True
                 else:
-                    raise RuntimeError(f"After max. interpolation days must follow data- or split-string. "
+                    raise RuntimeError(f"After the Overwrite-flag string must follow data- or split-string(s). "
                                        f"File: {fname}")
             elif data_reached is True:
                 ret = self.__read_data_line_from_storage_file(stripline)
@@ -186,7 +227,7 @@ class MarketDataMain:
         if id_ is None:
             raise RuntimeError(f"The Id should have been read. File: {fname}")
         holes = dateoperations.find_holes_in_dates(dates, self.analyzer)
-        f = StockData(fname, id_, (dates, vals), splits, holes)
+        f = StockData(fname, id_, (dates, vals), splits, holes, overwrite_flag)
         return f
 
     def __read_data_line_from_storage_file(self, line):
@@ -329,10 +370,13 @@ class MarketDataMain:
         self.dataobjects.append(obj)
         return obj
 
-    def fuse_storage_and_provider_data(self, storage_obj, new_data, tolerance_percent=3.0, storage_is_groundtruth=True):
+    def fuse_storage_and_provider_data(self, storage_obj, new_data, tolerance_percent=3.0):
         """Take data from the provider. Merge/match it with the available data from storage. Return the fused
         data for further processing.
         """
+        # If overwrite_storage is True, then storage is not ground truth anymore
+        storage_is_groundtruth = not storage_obj.get_overwrite_flag()
+
         new_dates, new_values = new_data
         csv_dates = storage_obj.get_dates_list()
         csv_values = storage_obj.get_values()
@@ -356,18 +400,20 @@ class MarketDataMain:
                 price_csv = csv_values[idx]
                 price_new = new_values[idx_new]
                 # The values should match within the given tolerance.
-                if helper.within_tol(price_csv, price_new, tolerance_percent / 100.0) is False:
+                if not helper.within_tol(price_csv, price_new, tolerance_percent / 100.0):
                     if storage_is_groundtruth is True:
                         new_values[idx_new] = price_csv  # Adjust provider data to existing data
-                        logging.warning("Found a mismatch between provider- and market data. "
-                                        "Will prioritize market-data")
-                        logging.info(f"Date: {date_cur}\tStorage Value: {price_csv:.2f}\t"
+                        logging.debug("Found a mismatch between provider- and market data. "
+                                        "Will prioritize market-data (this behavior is configurable via the header in "
+                                        "the storage csv file).")
+                        logging.debug(f"Date: {date_cur}\tStorage Value: {price_csv:.2f}\t"
                                      f"Provider Value: {price_new:.2f}")
                     else:
                         values_merged[idx] = price_new  # Take the new/provider-data to write back to file
-                        logging.warning("Found a mismatch between provider- and market data. "
-                                        "Will prioritize provider-data")
-                        logging.info(f"Date: {date_cur}\tStorage Value: {price_csv:.2f}\t"
+                        logging.debug("Found a mismatch between provider- and market data. "
+                                        "Will prioritize provider-data (this behavior is configurable via the "
+                                        "header in the storage csv file)")
+                        logging.debug(f"Date: {date_cur}\tStorage Value: {price_csv:.2f}\t"
                                      f"Provider Value: {price_new:.2f}")
                     # Record a string for later output:
                     discrepancy_entries.append(f"{date_cur};\t{price_csv:.3f};\t{price_new:.3f}")
@@ -377,7 +423,8 @@ class MarketDataMain:
         if len(discrepancy_entries) > 0:
             logging.warning(f"{len(discrepancy_entries):d} obtained storage data entries do not match the "
                             f"recorded values (tolerance is set to: {tolerance_percent:.1f}%).")
-            logging.info(f"Storage data is ground truth is set to: {storage_is_groundtruth}")
+            logging.info(f"Storage overwrite flag is set to: '{not storage_is_groundtruth}' "
+                         f"(configurable via header in storage csv files)")
             logging.info(f"File: {storage_obj.get_filename()}. Entries (listing only first {numentry} elements):")
             logging.info("Date;\tRecorded Price;\tObtained Price")
             for i in range(numentry):
@@ -388,23 +435,13 @@ class MarketDataMain:
         csv_dates_dict = storage_obj.get_dates_dict()
 
         # Iterate over all new provider-data and sort it into the merged list:
-        for idx, newdate in enumerate(new_dates):
+        for new_date_idx, newdate in enumerate(new_dates):
             if newdate not in csv_dates_dict:  # The current new date is not in the market-data-list: it can be inserted!
                 newdate_dt = self.analyzer.str2datetime(newdate)
-                # Find the index, where it has to go:
-                inserted = False
-                for idxup, date_update in enumerate(dates_merged_dt):  # Todo Is there a way to make this faster?
-                    # Insert it according to the date:
-                    if newdate_dt < date_update:
-                        dates_merged_dt.insert(idxup, newdate_dt)
-                        values_merged.insert(idxup, new_values[idx])
-                        inserted = True
-                        break
-                # At end of for-loop, it must be inserted, as it has the newest date:
-                if inserted is False:
-                    lastidx = len(dates_merged_dt)
-                    dates_merged_dt.insert(lastidx, newdate_dt)
-                    values_merged.insert(lastidx, new_values[idx])
+                # Find the index, where it has to go, and insert it:
+                insert_idx = bisect.bisect_left(dates_merged_dt, newdate_dt)
+                dates_merged_dt.insert(insert_idx, newdate_dt)
+                values_merged.insert(insert_idx, new_values[new_date_idx])
 
         # Convert back to string-representation and check the consistency, to be sure nothing went wrong:
         dates_merged = [self.analyzer.datetime2str(x) for x in dates_merged_dt]

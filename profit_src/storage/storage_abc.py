@@ -50,3 +50,7 @@ class MarketDataStorage(ABC):
     @abstractmethod
     def get_splits(self):
         pass
+
+    @abstractmethod
+    def get_overwrite_flag(self):
+        pass

@@ -216,7 +216,7 @@ class DataproviderMain:
                 startdate = dateoperations.add_days(startdate, -2, self.dateformat)
                 stopdate = dateoperations.add_days(stopdate, -2, self.dateformat)
 
-        # Crop the data to the desired range. It may still contain non-consecutive days.
+        # Crop the data to the desired range. It may still contain non-consecutive days (i.e., holes).
         # The crop-function will not throw errors if the start/stop-dates are outside the date-list from
         # the data provider.
         dates, values = dateoperations.crop_datelist(dates_red, values_red, startdate, stopdate, self.analyzer)
@@ -228,8 +228,8 @@ class DataproviderMain:
             return None
 
         # Fill in missing data in the vector
-        dates_full, values_full = dateoperations.interpolate_data(dates, values,
-                                                                  self.analyzer)
+        dates_full, values_full = dateoperations.interpolate_data(dates, values, self.analyzer)
+
         MAX_PROVIDER_INTERPOLATION_DAYS = 10
         if abs(len(dates_full) - len(dates)) > MAX_PROVIDER_INTERPOLATION_DAYS:
             logging.warning(f"Interpolated more than {MAX_PROVIDER_INTERPOLATION_DAYS} days when retrieved "

@@ -191,7 +191,6 @@ class DataproviderYahoo(DataProvider):
         :param startdate, stopdate: String for the start/stop data of the intended period
         :return True if success, False otherwise
         """
-
         SYM_STOCK = "BAC"
         SYM_1_FOREX = "CHF"
         SYM_2_FOREX = "USD"

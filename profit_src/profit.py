@@ -30,7 +30,7 @@ from .plotting.plot_currency_values import plot_currency_values
 from .plotting.plot_forex_rates import plot_forex_rates
 
 # Version of PROFIT:
-PROFIT_VERSION = 1.4
+PROFIT_VERSION = 1.5
 
 # Configure the logger to output different colors to the terminal:
 COLORS = {
