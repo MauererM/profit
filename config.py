@@ -72,10 +72,10 @@ class ProfitConfig:
     INTEREST_PROJECTION_PERCENT = 6.0
 
     # This switch determines whether the plots are opened after creation or not.
-    # If set to True, many PDFs will be opened.
+    # If set to True, many PDFs will be opened (but still saved to the plots-folder).
     OPEN_PLOTS = False
 
-    # Select, if existing plots are deleted before new ones are created.
+    # Select, if existing plots are deleted before new ones are created. In any case, existing plots are overwritten.
     PURGE_OLD_PLOTS = True
 
     # Some colors for plotting.
