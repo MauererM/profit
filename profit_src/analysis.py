@@ -108,7 +108,7 @@ def get_asset_costs_summed(assets):
     return helper.sum_lists(lists)
 
 
-def calc_returns_asset_daily_absolute_analysisperiod(asset, analyzer):
+def calc_returns_asset_daily_absolute_analysisperiod(asset):
     """Calculates the absolute returns of a given asset, for the analysis period
     This function returns the gains (or losses) of the asset _since the start of the analysis period_.
     The data is intended to be provided with a granularity of days.
@@ -116,40 +116,6 @@ def calc_returns_asset_daily_absolute_analysisperiod(asset, analyzer):
     :return: Tuple of two lists: (date, return). The returns of the periods in the datelist. They correspond to the
     returned dates, whereas the last date of the analysis-interval is given. The return is in the asset's currency
     """
-    # The value of the asset of today must be known, otherwise, errors are thrown, as the holding period return is
-    # otherwise not very meaningful.
-    today_dt = dateoperations.get_date_today(analyzer.get_dateformat(), datetime_obj=True)
-
-    # If there is an asset-price available, get the latest possible one that is recorded:
-    today_price_avail = False
-    ret = asset.get_latest_price_date()
-    if ret is not None:
-        latest_date, _ = ret
-        latest_date_dt = analyzer.str2datetime(latest_date)
-        # The value can be determined from most recent price!
-        if latest_date_dt >= today_dt:  # We have a price, even for today; this is good.
-            today_price_avail = True
-
-    if today_price_avail is False:  # transactions-data needed to get price of today
-        datelist_check = asset.get_trans_datelist()
-        pricelist_check = asset.get_trans_pricelist()
-        latest_date_trans = analyzer.str2datetime(datelist_check[-1])
-        # Only allow if the transactions contain data from today:
-        if latest_date_trans >= today_dt and pricelist_check[-1] > 1e-9:
-            today_price_avail = True
-
-    if today_price_avail is False:
-        # Do not repeat this warning here, it's already outputted in the relative holding period calculation function.
-        # print("WARNING: Cannot calculate holding period return of "
-        #      + asset.get_filename() + " due to unavailable and missing price of today. "
-        #                               "Update the assets marketdata-file with values from today or "
-        #                               "add a price-defining update-transaction of today.")
-        # Return a seemingly impossible (negative!) value:
-        # return -1e10
-        # raise RuntimeError("Require price of today. Abort plotting")
-        pass  # Allow plotting anyways
-
-    # Create new copies - just to be sure (the get-functions should already return copies)
     # Get the analysis period data:
     datelist = asset.get_analysis_datelist()
     costlist = asset.get_analysis_costlist()
@@ -162,7 +128,7 @@ def calc_returns_asset_daily_absolute_analysisperiod(asset, analyzer):
     totlist = [datelist, valuelist, costlist, payoutlist, inflowlist, outflowlist]
     n = len(datelist)
     if all(len(x) == n for x in totlist) is False:
-        raise RuntimeError("The lists must all be of equal lenghts.")
+        raise RuntimeError("The lists must all be of equal lengths.")
 
     cumu_cost = list(itertools.accumulate(costlist))
     cumu_payout = list(itertools.accumulate(payoutlist))
@@ -179,6 +145,10 @@ def calc_returns_asset_daily_absolute_analysisperiod(asset, analyzer):
         abs_gain = value_current - inflow + payout - cost + outflow
         ret.append(abs_gain)
 
+    # Shift the whole data such that the first number starts at zero (the absolute return at the beginning of the
+    # analysis period should - by definition - be zero).
+    offs = ret[0]
+    ret = [val-offs for val in ret]
     return datelist, ret
 
 

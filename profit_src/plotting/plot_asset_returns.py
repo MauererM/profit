@@ -19,6 +19,9 @@ def plot_asset_total_absolute_returns_accumulated(dates, returns, fname, analyze
     """Plots the accumulated absolute returns
     :param dates: List of dates
     :param returns: List of day-wise, summed returns of all investments
+    :param fname: Name of the file/plot to be saved
+    :param analyzer: Analyzer-instance (cached datetime conversions)
+    :param config: PROFIT's config-instance
     """
     # Get the full path of the file:
     fname = plotting.modify_plot_path(config.PLOTS_FOLDER, fname)
@@ -69,6 +72,8 @@ def plot_asset_returns_individual_absolute(assetlist, fname, analyzer, config):
     The plots are created on a 2x3 grid
     :param assetlist: List of asset-objects
     :param fname: String of desired plot filename
+    :param analyzer: Analyzer-instance (cached datetime conversions)
+    :param config: PROFIT's config-instance
     """
     fname = plotting.modify_plot_path(config.PLOTS_FOLDER, fname)
     # Sanity Check:
@@ -101,7 +106,7 @@ def plot_asset_returns_individual_absolute(assetlist, fname, analyzer, config):
     ylabel = "Return (Absolute; Currency)"
 
     dates = assetlist_plot[0].get_analysis_datelist()
-    returns_total = [0.0 for _ in range(len(dates))]
+    returns_total = [0.0] * len(dates)
 
     for sheet_num, assets in enumerate(assetlists_sheet):
 
@@ -113,21 +118,13 @@ def plot_asset_returns_individual_absolute(assetlist, fname, analyzer, config):
             plotidx = idx + 1
             ax = fig.add_subplot(2, 3, plotidx)
             try:
-                dates, returns = analysis.calc_returns_asset_daily_absolute_analysisperiod(asset, analyzer)
+                dates, returns = analysis.calc_returns_asset_daily_absolute_analysisperiod(asset)
                 returns_total = [a + b for a, b in zip(returns, returns_total)]
-                if helper.list_all_zero(returns) is False:
-                    x = [analyzer.str2datetime(i) for i in dates]
-                    ax.plot(x, returns, alpha=1.0, zorder=3, clip_on=False, color=config.PLOTS_COLORS[0], marker='',
-                            label="Absolute Returns")
-                else:
-                    # Skip the plotting; no date of today available.
-                    plt.text(0.05, 0.5, "Something went wrong", horizontalalignment='left',
-                             verticalalignment='center',
-                             transform=ax.transAxes, fontsize=7,
-                             bbox=dict(facecolor='w', edgecolor='k', boxstyle='round'))
+                x = [analyzer.str2datetime(i) for i in dates]
+                ax.plot(x, returns, alpha=1.0, zorder=3, clip_on=False, color=config.PLOTS_COLORS[0], marker='',
+                        label="Absolute Returns")
             except:
-                # Skip the plotting; no date of today available.
-                plt.text(0.05, 0.5, "Missing price-data of today (or other error)", horizontalalignment='left',
+                plt.text(0.05, 0.5, "Something went wrong", horizontalalignment='left',
                          verticalalignment='center',
                          transform=ax.transAxes, fontsize=7, bbox=dict(facecolor='w', edgecolor='k', boxstyle='round'))
 
