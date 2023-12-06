@@ -2,7 +2,7 @@
 
 PROFIT - Python-Based Return on Investment and Financial Investigation Tool
 MIT License
-Copyright (c) 2018 Mario Mauerer
+Copyright (c) 2018-2023 Mario Mauerer
 """
 
 import itertools
@@ -148,7 +148,7 @@ def calc_returns_asset_daily_absolute_analysisperiod(asset):
     # Shift the whole data such that the first number starts at zero (the absolute return at the beginning of the
     # analysis period should - by definition - be zero).
     offs = ret[0]
-    ret = [val-offs for val in ret]
+    ret = [val - offs for val in ret]
     return datelist, ret
 
 
