@@ -1,8 +1,8 @@
-ID;		in_the_couch
+ID;			in_the_couch
 Type;		Account
 Purpose;	Cash
 Currency;	USD
 Transactions;
 Date(DD.MM.YYYY);	Action;		Amount;		Balance;	Notes;
-31.12.2017;		Update;		0;		70.0;		Yey, Money!
+31.12.2017;			Update;		0;			70.0;		Yey, Money!
 EOF
