@@ -22,7 +22,8 @@ from .plotting.plotting import PlottingConfig
 from .plotting.plot_asset_groups import plot_asset_groups
 from .plotting.plot_asset_projections import plot_asset_projections
 from .plotting.plot_asset_purposes import plot_asset_purposes
-from .plotting.plot_asset_returns import plot_asset_total_absolute_returns_accumulated, plot_asset_returns_individual_absolute
+from .plotting.plot_asset_returns import plot_asset_total_absolute_returns_accumulated, \
+    plot_asset_returns_individual_absolute
 from .plotting.plot_asset_values import plot_asset_values_indices, plot_asset_values_cost_payout_individual, \
     plot_asset_values_stacked
 from .plotting.plot_assets_grouped import plot_assets_grouped
@@ -43,6 +44,8 @@ COLORS = {
 
 
 class ColoredFormatter(logging.Formatter):
+    """A class to allow the logger output different colors to the terminal"""
+
     def format(self, record):
         levelname = record.levelname
         if levelname in COLORS:
@@ -52,7 +55,7 @@ class ColoredFormatter(logging.Formatter):
         return logging.Formatter.format(self, record)
 
 
-def main(config):
+def main(config, analysis_days_arg):
     """The main entry-point of PROFIT"""
 
     # Set logging:
@@ -89,13 +92,18 @@ def main(config):
     # Initialize the caching datetime/string converter class (used in analyzer below):
     datetimeconverter = stringoperations.DateTimeConversion()
 
-    """
-    Define Analysis-Range:
-    The analysis range always spans DAYS_ANALYSIS backwards from today.
-    """
+    # Define Analysis-Range: The analysis range always spans the given days backwards from today.
+    if analysis_days_arg is None:
+        analysis_days = config.DAYS_ANALYSIS
+    else:
+        analysis_days = analysis_days_arg
+    if not isinstance(analysis_days, int):
+        raise RuntimeError("analysis_days must be integer")
+    if analysis_days <= 0:
+        raise RuntimeError("analysis_days must be > 0")
     date_today = dateoperations.get_date_today(config.FORMAT_DATE, datetime_obj=True)
     date_today_str = dateoperations.get_date_today(config.FORMAT_DATE, datetime_obj=False)
-    date_analysis_start = date_today - datetime.timedelta(days=config.DAYS_ANALYSIS)
+    date_analysis_start = date_today - datetime.timedelta(days=analysis_days)
     date_analysis_start_str = stringoperations.datetime2str(date_analysis_start, config.FORMAT_DATE)
     print(f"\nData will be analyzed from the {date_analysis_start_str} to the {date_today_str}")
     # Create the analysis-instance that tracks some analysis-range-related data:
@@ -261,7 +269,7 @@ def main(config):
         # Calculate the return of all investments, for the considered analysis-period:
         tot_return = analysis.calc_hpr_return_assets_analysisperiod(investments)
         print(f"\nThe holding period return of the investments of the considered analysis-period "
-              f"(past {config.DAYS_ANALYSIS:d} days) is: {tot_return:.2f}%")
+              f"(past {analysis_days:d} days) is: {tot_return:.2f}%")
 
     if len(assets) > 0:
         # Plot the values of each asset purpose:
