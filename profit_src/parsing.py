@@ -152,7 +152,7 @@ class AccountFile:
 
         if self.profit_conf.INTERACTIVE_MODE is False or skip_interactive_mode is True:
             return self.__create_account_instance()
-        else:
+        else: # Interactive mode: Display what the current account is.
             print(f"\nAccount: {self.filepath.name} ({self.account_dict[self.parsing_conf.STRING_ID]}, "
                   f"{self.account_dict[self.parsing_conf.STRING_CURRENCY]})")
             ret = self.__ask_user_for_updated_balance()

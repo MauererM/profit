@@ -206,6 +206,8 @@ def append_transaction_line_to_file(fpath, strings, delimiter, eofstring, profit
     :param strings: List of strings containing the transaction-data to write to the file.
     :param delimiter: String of the desired delimiter to separate the strings in the list of strings.
     :param eofstring: String that indicates the end-of-file, e.g., "EOF".
+    :param profit_cfg: PROFIT's configuration instance
+    # Todo Clean up the input parameters; some are contained in profit_cfg already.
     """
     if not isinstance(fpath, Path):
         fpath = Path(fpath)
@@ -218,7 +220,7 @@ def append_transaction_line_to_file(fpath, strings, delimiter, eofstring, profit
 
     # Read the white space from the previous line (the last transactions-line):
     whitespaces = re.findall(r'[ \t]+', lines[-1])
-    if len(whitespaces) < len(strings)-1: # Note: There can be additional white spaces in the "notes" section.
+    if len(whitespaces) + 1 < len(strings)-1: # Note: There can be additional white spaces in the "notes" section.
         raise RuntimeError(f"Did not receive sufficient strings, or the whitespace-readout did not work properly. "
                            f"len(whitespaces) = {len(whitespaces)}. len(strings) = {len(strings)}.")
 

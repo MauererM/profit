@@ -67,7 +67,7 @@ def main(config):
     logger.setLevel(logging.INFO)
     matplotlib_logger = logging.getLogger('matplotlib')
     matplotlib_logger.setLevel(logging.INFO)  # Exclude matplotlib's debug-messages, as they otherwise spam a lot.
-    sys.stderr = sys.stdout  # Synchronize print() and logging-messages (use same output/buffering)
+    sys.stdout = sys.stderr  # Synchronize print() and logging-messages (use same output/buffering)
 
     # Print the current version of the tool
     print(f"PROFIT v{PROFIT_VERSION:.1f} starting")
@@ -142,7 +142,8 @@ def main(config):
     for file in accountfiles:
         filepath = file.resolve()
         account_file = parsing.AccountFile(parsing_config, config, filepath, analyzer)
-        accounts.append(account_file.parse_account_file())
+        account = account_file.parse_account_file()
+        accounts.append(account)
 
     if len(accounts) > 0:
         print(f"Successfully parsed {len(accounts)} accounts.")
@@ -161,7 +162,9 @@ def main(config):
     for file in invstmtfiles:
         filepath = file.resolve()
         investment_file = parsing.InvestmentFile(parsing_config, config, filepath, analyzer, provider, storage)
-        investments.append(investment_file.parse_investment_file())
+        investment = investment_file.parse_investment_file()
+        investments.append(investment)
+
     if len(investments) > 0:
         print(f"Successfully parsed {len(investments)} investments.")
 
@@ -211,10 +214,34 @@ def main(config):
     for asset in assets:
         asset.write_forex_obj(forexdict[asset.get_currency()])
 
-    # Set the analysis-data in the assets. This obtains market prices, among others, and may take a short while.
-    print("\nPreparing analysis-data for accounts and investments.")
-    for asset in assets:
-        asset.set_analysis_data(date_analysis_start_str, date_today_str)
+    # After having obtained the forex-data, we can set the analysis-data in the accounts and investments.
+    accounts_analyzed = []
+    for account in accounts:
+        account.set_analysis_data(date_analysis_start_str, date_today_str)
+        accounts_analyzed.append(account)
+
+    investments_analyzed = []
+    for investment in investments:
+        ret = investment.set_analysis_data(date_analysis_start_str, date_today_str)
+        if ret is True:
+            investments_analyzed.append(investment)
+        else:
+            # In investments, if in interactive mode, this can return false.
+            # This requires us to re-parse and re-analyze this investment.
+            print("Will re-read and re-analyze the updated investment CSV file.")
+            filepath = investment.get_filepath()
+            investment_file = parsing.InvestmentFile(parsing_config, config, filepath, analyzer, provider, storage)
+            investment = investment_file.parse_investment_file()
+            investment.write_forex_obj(forexdict[asset.get_currency()]) # Re-write the forex-data to the new instance
+            ret = investment.set_analysis_data(date_analysis_start_str, date_today_str)
+            if ret is True:
+                investments_analyzed.append(investment)
+            else:
+                raise RuntimeError("After a second iteration, this should have returned True?")
+
+    investments = investments_analyzed
+    accounts = accounts_analyzed
+    assets = accounts + investments
 
     # Obtain Stockmarket-Indices. The prices are obtained from the dataprovider, and a storage-object is generated.
     if len(investments) > 0:
