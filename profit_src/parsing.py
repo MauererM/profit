@@ -66,7 +66,7 @@ class ParsingConfig:
 
     # Strings for asset transactions-headers:
     # These are used for accounts and investments:
-    # This dateformat should be the same as the one specified in config.py # Todo un-hardcode this
+    # This dateformat should be the same as the one specified in config.py # Todo un-hardcode this.
     STRING_DATE = "Date(DD.MM.YYYY)"
     STRING_ACTION = "Action"
     STRING_AMOUNT = "Amount"
@@ -173,7 +173,7 @@ class AccountFile:
         strings = [date_today, action, amount, balance, note]
         # Write the data to file:
         files.append_transaction_line_to_file(self.filepath, strings, self.profit_conf.DELIMITER,
-                                              self.parsing_conf.STRING_EOF)
+                                              self.parsing_conf.STRING_EOF, self.profit_conf)
         # Reset and then update the local data of this instance:
         self.account_dict = {self.parsing_conf.STRING_ID: None,
                              self.parsing_conf.STRING_TYPE: None,
@@ -193,10 +193,10 @@ class AccountFile:
         user_input = input(f"The most recent balance ({self.transactions[self.parsing_conf.DICT_KEY_DATES][-1]}) is "
                            f"{self.account_dict[self.parsing_conf.STRING_CURRENCY]} "
                            f"{self.transactions[self.parsing_conf.DICT_KEY_BALANCES][-1]:.2f}. "
-                           f"Provide an updated balance, or press enter to continue:")
+                           f"Provide an updated balance, or press enter to continue: ")
         if user_input == "":
             return None
-        if helper.is_valid_float(user_input) is None:
+        if helper.is_valid_float(user_input) is False:
             print("Received an invalid number. Please re-try.")
             return self.__ask_user_for_updated_balance()
         try:

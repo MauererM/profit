@@ -8,6 +8,7 @@ Copyright (c) 2018 Mario Mauerer
 import logging
 from pathlib import Path
 import re
+from . import stringoperations
 
 
 def filename_append_number(fpath, separator, num):
@@ -195,10 +196,12 @@ def get_filename_from_path(fname):
     return fname.name
 
 
-def append_transaction_line_to_file(fpath, strings, delimiter, eofstring):
+def append_transaction_line_to_file(fpath, strings, delimiter, eofstring, profit_cfg):
     """Appends a line of new transactions-data to a account- or investment-file.
     Reads the file, appends the line, writes it back to disk.
-    White spaces are read from the previous line, to conserve the file's layout.
+    White spaces are read from the previous line, to conserve the file's layout. # Todo This is not really working yet.
+    # Todo The problem is that the files are mixed tab-space, and the editor is not always displaying a
+    tab with 4 spaces...
     :param fpath: Path-object to the file to modify.
     :param strings: List of strings containing the transaction-data to write to the file.
     :param delimiter: String of the desired delimiter to separate the strings in the list of strings.
@@ -213,17 +216,47 @@ def append_transaction_line_to_file(fpath, strings, delimiter, eofstring):
         raise RuntimeError(f"Last line is not end-of-file string. Expected: '{eofstring}'. Received: '{lines[-1]}'")
     del lines[-1] # EOF string removed; will be re-added later.
 
-    whitespaces = re.findall(r'[ \t]+', lines[-1])  # Read the white space from the previous line (the last transactions-line)
+    # Read the white space from the previous line (the last transactions-line):
+    whitespaces = re.findall(r'[ \t]+', lines[-1])
     if len(whitespaces) < len(strings)-1: # Note: There can be additional white spaces in the "notes" section.
         raise RuntimeError(f"Did not receive sufficient strings, or the whitespace-readout did not work properly. "
                            f"len(whitespaces) = {len(whitespaces)}. len(strings) = {len(strings)}.")
 
+    from .parsing import ParsingConfig # Needed here to avoid circular import
+    transactions_startidx = None
+    for idx, line in enumerate(lines):
+        data, remainder = stringoperations.read_crop_string_delimited(line, delimiter)
+        if data == ParsingConfig.STRING_TRANSACTIONS:
+            transactions_startidx = idx + 1
+            break
+    if transactions_startidx is None:
+        raise RuntimeError("Could not find start of transactions-block.")
+    transactions_lines = lines[transactions_startidx:-1]
+    column_widths = []
+    for line in transactions_lines:
+        col, remainder = stringoperations.read_crop_string_delimited(line, delimiter)
+        idx = 0
+        while col != remainder and idx < 8:
+            if idx > 0:
+                col, remainder = stringoperations.read_crop_string_delimited(remainder, delimiter)
+            # Pull the leading white space, as it also contributes to the column width:
+            whitespace, remainder = stringoperations.remove_leading_whitespace(remainder)
+            whitespace_len = stringoperations.count_whitespace_length(whitespace, profit_cfg.TAB_LEN)
+            colwidth = len(col) + 1 + whitespace_len # +1 for the delimiter
+            if len(column_widths) <= idx:
+                column_widths.append(colwidth)
+            else:
+                column_widths[idx] = max(column_widths[idx], colwidth)
+            idx += 1
 
-    strings_delimited = [f"{item}{delimiter}" for item in strings[0:-1]]  # Delimit all strings, apart from the last one
-    strings_delimited.append(strings[-1])  # Todo check if all this works in detail.
-    pairs = zip(strings_delimited, whitespaces) # Merge the strings with the white spaces
-    newstring = [item for pair in pairs for item in pair] # Flatten the list
-    newstring = "".join(newstring)
+    # Delimit all strings, apart from the last one (the notes are not needed):
+    strings_delimited = [f"{item}{delimiter}" for item in strings[0:-1]]
+    strings_delimited_padded = []
+    for idx, string in enumerate(strings_delimited):
+        string_extended = string.ljust(column_widths[idx])
+        strings_delimited_padded.append(string_extended)
+    strings_delimited_padded.append(strings[-1]) # Add the (empty) notes-string at the end. No padding needed here.
+    newstring = "".join(strings_delimited_padded)
     lines.append(newstring)
     lines.append(eofstring)
     write_file_lines(fpath, lines, overwrite=True)

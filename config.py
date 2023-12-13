@@ -90,3 +90,8 @@ class ProfitConfig:
 
     # Date-format used throughout PROFIT
     FORMAT_DATE = "%d.%m.%Y"
+
+    # The CSV files might use tabs and spaces. Define here the length of a tab in number of spaces for proper display
+    # and modification of the used CSV files (e.g., when using interactive mode, where PROFIT writes transactions data
+    # to the user-supplied CSV files
+    TAB_LEN = 4
