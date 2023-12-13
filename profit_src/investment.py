@@ -531,7 +531,6 @@ class Investment:
                 # Check if a) the investment has a balance today, and b) if there is a price for today (which has
                 # not been extrapolated forward).
                 # Depending on this, execute interactive mode or not.
-                # Todo test if we reach here, and if this works.
                 date_today_dt = dateoperations.get_date_today(self.dateformat, datetime_obj=True)
                 latest_date_transactions = self.analyzer.str2datetime(transactions_dates[-1])
                 latest_date_full = self.analyzer.str2datetime(full_dates[-1])
@@ -540,7 +539,7 @@ class Investment:
                     if self.__handle_interactive_mode() is False:
                         return False
 
-            elif full_dates is None:  # Transactions-data needed! # Todo the order of the print- and logging.warning is still not correct, i.e., logging.warning can be output quite late/not in order still.
+            elif full_dates is None:  # Transactions-data needed!
                 # Check how recent the transactions-data is:
                 transactions_dates = self.transactions[self.config.DICT_KEY_DATES]
                 last_transaction_date_dt = self.analyzer.str2datetime(transactions_dates[-1])
@@ -636,8 +635,7 @@ class Investment:
         note = ""
         strings = [date_today, action, quantity, price, cost, payout, balance, note]
         # Write the data to file:
-        files.append_transaction_line_to_file(self.filename, strings, self.profit_conf.DELIMITER,
-                                              self.config.STRING_EOF, self.profit_conf)
+        files.append_transaction_line_to_file(self.filename, strings, self.config.STRING_EOF, self.profit_conf)
 
     def __ask_user_for_update_transaction(self):
         """Ask the user to provide the most recent end-of-day price for the asset/investment.

@@ -47,7 +47,7 @@ def read_crop_string_delimited(string, delim):
         string = string[delim_idx + 1:]  # Crop the remainder of the string
         return result, string
     # Delimiter not found:
-    return string, string # Todo is this really needed? Who needs this? Why is this returned? Rather return None?
+    return string, string
 
 
 class DateTimeConversion:

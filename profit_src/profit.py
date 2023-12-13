@@ -93,7 +93,7 @@ def main(config):
     datetimeconverter = stringoperations.DateTimeConversion()
 
     # Define Analysis-Range: The analysis range always spans the given days backwards from today.
-    if not hasattr(config, "DAYS_ANALYSIS_ARGPARSE"):  # Todo add also a check to check for the interactive mode
+    if not hasattr(config, "DAYS_ANALYSIS_ARGPARSE"):
         raise RuntimeError("This should have be given by the launcher script...")
     if config.DAYS_ANALYSIS_ARGPARSE is None:
         analysis_days = config.DAYS_ANALYSIS
@@ -232,7 +232,7 @@ def main(config):
             filepath = investment.get_filepath()
             investment_file = parsing.InvestmentFile(parsing_config, config, filepath, analyzer, provider, storage)
             investment = investment_file.parse_investment_file()
-            investment.write_forex_obj(forexdict[asset.get_currency()]) # Re-write the forex-data to the new instance
+            investment.write_forex_obj(forexdict[investment.get_currency()]) # Re-write the forex-data to the new instance
             ret = investment.set_analysis_data(date_analysis_start_str, date_today_str)
             if ret is True:
                 investments_analyzed.append(investment)

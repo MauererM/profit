@@ -196,7 +196,7 @@ def get_filename_from_path(fname):
     return fname.name
 
 
-def append_transaction_line_to_file(fpath, strings, delimiter, eofstring, profit_cfg):
+def append_transaction_line_to_file(fpath, strings, eofstring, profit_cfg):
     """Appends a line of new transactions-data to a account- or investment-file.
     Reads the file, appends the line, writes it back to disk.
     White spaces are read from the previous line, to conserve the file's layout. # Todo This is not really working yet.
@@ -204,10 +204,8 @@ def append_transaction_line_to_file(fpath, strings, delimiter, eofstring, profit
     tab with 4 spaces...
     :param fpath: Path-object to the file to modify.
     :param strings: List of strings containing the transaction-data to write to the file.
-    :param delimiter: String of the desired delimiter to separate the strings in the list of strings.
     :param eofstring: String that indicates the end-of-file, e.g., "EOF".
     :param profit_cfg: PROFIT's configuration instance
-    # Todo Clean up the input parameters; some are contained in profit_cfg already.
     """
     if not isinstance(fpath, Path):
         fpath = Path(fpath)
@@ -227,7 +225,7 @@ def append_transaction_line_to_file(fpath, strings, delimiter, eofstring, profit
     from .parsing import ParsingConfig # Needed here to avoid circular import
     transactions_startidx = None
     for idx, line in enumerate(lines):
-        data, remainder = stringoperations.read_crop_string_delimited(line, delimiter)
+        data, remainder = stringoperations.read_crop_string_delimited(line, profit_cfg.DELIMITER)
         if data == ParsingConfig.STRING_TRANSACTIONS:
             transactions_startidx = idx + 1
             break
@@ -236,11 +234,14 @@ def append_transaction_line_to_file(fpath, strings, delimiter, eofstring, profit
     transactions_lines = lines[transactions_startidx:-1]
     column_widths = []
     for line in transactions_lines:
-        col, remainder = stringoperations.read_crop_string_delimited(line, delimiter)
+        col, remainder = stringoperations.read_crop_string_delimited(line, profit_cfg.DELIMITER)
         idx = 0
         while col != remainder and idx < 8:
+            # If the delimiter is not found, col and remainder will be the same
+            # (this is the case when we run to the end of the line). Also: Add the safety-check idx < 8 just to make
+            # sure this will stop.
             if idx > 0:
-                col, remainder = stringoperations.read_crop_string_delimited(remainder, delimiter)
+                col, remainder = stringoperations.read_crop_string_delimited(remainder, profit_cfg.DELIMITER)
             # Pull the leading white space, as it also contributes to the column width:
             whitespace, remainder = stringoperations.remove_leading_whitespace(remainder)
             whitespace_len = stringoperations.count_whitespace_length(whitespace, profit_cfg.TAB_LEN)
@@ -252,7 +253,7 @@ def append_transaction_line_to_file(fpath, strings, delimiter, eofstring, profit
             idx += 1
 
     # Delimit all strings, apart from the last one (the notes are not needed):
-    strings_delimited = [f"{item}{delimiter}" for item in strings[0:-1]]
+    strings_delimited = [f"{item}{profit_cfg.DELIMITER}" for item in strings[0:-1]]
     strings_delimited_padded = []
     for idx, string in enumerate(strings_delimited):
         string_extended = string.ljust(column_widths[idx])

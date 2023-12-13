@@ -172,8 +172,7 @@ class AccountFile:
         note = ""
         strings = [date_today, action, amount, balance, note]
         # Write the data to file:
-        files.append_transaction_line_to_file(self.filepath, strings, self.profit_conf.DELIMITER,
-                                              self.parsing_conf.STRING_EOF, self.profit_conf)
+        files.append_transaction_line_to_file(self.filepath, strings, self.parsing_conf.STRING_EOF, self.profit_conf)
         # Reset and then update the local data of this instance:
         self.account_dict = {self.parsing_conf.STRING_ID: None,
                              self.parsing_conf.STRING_TYPE: None,
