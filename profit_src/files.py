@@ -116,6 +116,7 @@ def file_exists(filepath):
         filepath = Path(filepath)
     return filepath.exists()
 
+
 def check_create_folder(folderpath, create_if_missing=False):
     """Checks if a folder exists at the specified path (i.e., if the path points to a folder).
     :param folderpath: Path-object of the folder (or string, will be converted).
@@ -131,6 +132,7 @@ def check_create_folder(folderpath, create_if_missing=False):
             return True
         return False
     return True
+
 
 def create_path(folderpath, filename):
     """Simply creates a path from a folder-name (which resides inside the project directory) and a file within.
@@ -191,3 +193,37 @@ def get_filename_from_path(fname):
     if not isinstance(fname, Path):
         fname = Path(fname)
     return fname.name
+
+
+def append_transaction_line_to_file(fpath, strings, delimiter, eofstring):
+    """Appends a line of new transactions-data to a account- or investment-file.
+    Reads the file, appends the line, writes it back to disk.
+    White spaces are read from the previous line, to conserve the file's layout.
+    :param fpath: Path-object to the file to modify.
+    :param strings: List of strings containing the transaction-data to write to the file.
+    :param delimiter: String of the desired delimiter to separate the strings in the list of strings.
+    :param eofstring: String that indicates the end-of-file, e.g., "EOF".
+    """
+    if not isinstance(fpath, Path):
+        fpath = Path(fpath)
+    if not file_exists(fpath):
+        raise RuntimeError(f"File does not exist, can not append transactions-data. Path: {fpath}")
+    lines = get_file_lines(fpath)
+    if lines[-1] != eofstring:
+        raise RuntimeError(f"Last line is not end-of-file string. Expected: '{eofstring}'. Received: '{lines[-1]}'")
+    del lines[-1] # EOF string removed; will be re-added later.
+
+    whitespaces = re.findall(r'[ \t]+', lines[-1])  # Read the white space from the previous line (the last transactions-line)
+    if len(whitespaces) < len(strings)-1: # Note: There can be additional white spaces in the "notes" section.
+        raise RuntimeError(f"Did not receive sufficient strings, or the whitespace-readout did not work properly. "
+                           f"len(whitespaces) = {len(whitespaces)}. len(strings) = {len(strings)}.")
+
+
+    strings_delimited = [f"{item}{delimiter}" for item in strings[0:-1]]  # Delimit all strings, apart from the last one
+    strings_delimited.append(strings[-1])  # Todo check if all this works in detail.
+    pairs = zip(strings_delimited, whitespaces) # Merge the strings with the white spaces
+    newstring = [item for pair in pairs for item in pair] # Flatten the list
+    newstring = "".join(newstring)
+    lines.append(newstring)
+    lines.append(eofstring)
+    write_file_lines(fpath, lines, overwrite=True)

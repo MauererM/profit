@@ -55,7 +55,7 @@ class ColoredFormatter(logging.Formatter):
         return logging.Formatter.format(self, record)
 
 
-def main(config, analysis_days_arg):
+def main(config):
     """The main entry-point of PROFIT"""
 
     # Set logging:
@@ -93,10 +93,12 @@ def main(config, analysis_days_arg):
     datetimeconverter = stringoperations.DateTimeConversion()
 
     # Define Analysis-Range: The analysis range always spans the given days backwards from today.
-    if analysis_days_arg is None:
+    if not hasattr(config, "DAYS_ANALYSIS_ARGPARSE"):  # Todo add also a check to check for the interactive mode
+        raise RuntimeError("This should have be given by the launcher script...")
+    if config.DAYS_ANALYSIS_ARGPARSE is None:
         analysis_days = config.DAYS_ANALYSIS
     else:
-        analysis_days = analysis_days_arg
+        analysis_days = config.DAYS_ANALYSIS_ARGPARSE
     if not isinstance(analysis_days, int):
         raise RuntimeError("analysis_days must be integer")
     if analysis_days <= 0:
@@ -122,6 +124,9 @@ def main(config, analysis_days_arg):
     if len(config.ASSET_GROUPNAMES) != len(config.ASSET_GROUPS):
         raise RuntimeError("ASSET_GROUPNAMES and ASSET_GROUPS (in the user configuration section of PROFIT_main) must "
                            "be lists with identical length.")
+
+    if not hasattr(config, "INTERACTIVE_MODE"):
+        raise RuntimeError("This should have be given by the launcher script...")
 
     # Parse Accounts:
     print("\nAcquiring and parsing account files")

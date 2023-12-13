@@ -9,6 +9,8 @@ from . import stringoperations
 from . import files
 from . import account
 from . import investment
+from . import helper
+from . import dateoperations
 
 
 def read_strip_file_lines(fpath):
@@ -124,7 +126,7 @@ class AccountFile:
         # Get the lines, strip all white spaces:
         self.lines = read_strip_file_lines(self.filepath)
 
-    def parse_account_file(self):
+    def parse_account_file(self, skip_interactive_mode=False):
         """Parses an account-file.
         Calls the constructor of the account-class at the end, and returns the account-instance.
         Any relevant information in the file may not contain whitespaces! They are all eliminated while parsing.
@@ -148,7 +150,62 @@ class AccountFile:
         # Parse the transactions:
         self.__parse_transactions_table(self.lines[LAST_HEADER_LINE:])
 
-        # Create the account-instance, and return it
+        if self.profit_conf.INTERACTIVE_MODE is False or skip_interactive_mode is True:
+            return self.__create_account_instance()
+        else:
+            print(f"\nAccount: {self.filepath.name} ({self.account_dict[self.parsing_conf.STRING_ID]}, "
+                  f"{self.account_dict[self.parsing_conf.STRING_CURRENCY]})")
+            ret = self.__ask_user_for_updated_balance()
+            if ret is None:  # No balance-update needed
+                return self.__create_account_instance()
+            self.__append_file_with_newest_balance(ret)  # Update the file and local data
+            return self.__create_account_instance()
+
+    def __append_file_with_newest_balance(self, balance):
+        """The user wants to update the file with a new balance.
+        Craft the newest transaction-string, write it to file, and update all data within this instance accordingly.
+        """
+        date_today = dateoperations.get_date_today(self.profit_conf.FORMAT_DATE)
+        action = self.parsing_conf.STRING_ACCOUNT_ACTION_UPDATE
+        amount = "0"
+        balance = f"{balance:.2f}"
+        note = ""
+        strings = [date_today, action, amount, balance, note]
+        # Write the data to file:
+        files.append_transaction_line_to_file(self.filepath, strings, self.profit_conf.DELIMITER,
+                                              self.parsing_conf.STRING_EOF)
+        # Reset and then update the local data of this instance:
+        self.account_dict = {self.parsing_conf.STRING_ID: None,
+                             self.parsing_conf.STRING_TYPE: None,
+                             self.parsing_conf.STRING_PURPOSE: None,
+                             self.parsing_conf.STRING_CURRENCY: None}
+        self.transactions = {self.parsing_conf.DICT_KEY_DATES: None,
+                             self.parsing_conf.DICT_KEY_ACTIONS: None,
+                             self.parsing_conf.DICT_KEY_AMOUNTS: None,
+                             self.parsing_conf.DICT_KEY_BALANCES: None,
+                             self.parsing_conf.DICT_KEY_NOTES: None}
+        self.lines = read_strip_file_lines(self.filepath)  # Re-read the new file
+        self.parse_account_file(skip_interactive_mode=True)  # Re-parse the file, and don't ask again for an update
+
+    def __ask_user_for_updated_balance(self):
+        """Show the user the current balance. They can provide a new value.
+        Sanitize the input, and return the value if given."""
+        user_input = input(f"The most recent balance ({self.transactions[self.parsing_conf.DICT_KEY_DATES][-1]}) is "
+                           f"{self.account_dict[self.parsing_conf.STRING_CURRENCY]} "
+                           f"{self.transactions[self.parsing_conf.DICT_KEY_BALANCES][-1]:.2f}. "
+                           f"Provide an updated balance, or press enter to continue:")
+        if user_input == "":
+            return None
+        if helper.is_valid_float(user_input) is None:
+            print("Received an invalid number. Please re-try.")
+            return self.__ask_user_for_updated_balance()
+        try:
+            return float(user_input)
+        except ValueError:
+            raise RuntimeError("Could not convert the float. Is the float-checking-function not working?")
+
+    def __create_account_instance(self):
+        """Create and return the account-instance from the parsed data"""
         acnt = account.Account(self.account_dict, self.filepath, self.transactions, self.analyzer, self.parsing_conf,
                                self.profit_conf)
         return acnt
