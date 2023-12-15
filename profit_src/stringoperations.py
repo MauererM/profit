@@ -106,6 +106,7 @@ def remove_leading_whitespace(s):
         return leading_whitespace, trimmed_string
     return '', s
 
+
 def count_whitespace_length(s, tab_length=4):
     """Counts the length of the white space given in s as equivalent spaces.
     :param s: String of white spaces (tabs or spaces).
@@ -122,6 +123,5 @@ def count_whitespace_length(s, tab_length=4):
         elif char == ' ':
             space_cnt += 1
         else:
-            raise RuntimeError(f"This function can only accept tabs or spaces.")
+            raise RuntimeError("This function can only accept tabs or spaces.")
     return space_cnt + tab_cnt * tab_length
-

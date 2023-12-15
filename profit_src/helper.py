@@ -179,7 +179,7 @@ def contains_zeroes(inlist, trim_trailing_zeroes=True, trim_leading_zeroes=True,
 
     return any(is_near_zero(val, tol) for val in trimmed)
 
+
 def is_valid_float(input_str):
     """Checks if a string is a valid floating point number, or not"""
     return re.match(r'^[+-]?(\d+(\.\d*)?|\.\d+)$', input_str) is not None
-

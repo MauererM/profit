@@ -25,7 +25,7 @@ def main():
 
     config = ProfitConfig()
 
-    # Add the parsed data:
+    # Add the parsed data to the main config-class:
     config.DAYS_ANALYSIS_ARGPARSE = args.days
     config.INTERACTIVE_MODE = args.interactive
 

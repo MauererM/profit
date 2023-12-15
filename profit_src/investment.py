@@ -416,7 +416,8 @@ class Investment:
         than recorded data.
         :param date_stop: String of a date that designates the stop-date. Cannot be in the future.
         """
-        print(f"\n{self.symbol} ({self.filename.name}):")  # Show in the terminal what's going on/which investment is getting processed
+        print(
+            f"\n{self.symbol} ({self.filename.name}):")  # Show in the terminal what's going on/which investment is getting processed
 
         # Extrapolate or crop the data:
         # The balance is extrapolated with zeroes into the past, and with the last known values into the future,
@@ -618,7 +619,7 @@ class Investment:
         if ret is None:
             return True
         self.__append_file_with_newest_price(ret)
-        return False # Changes have been made to the investment-file.
+        return False  # Changes have been made to the investment-file.
 
     def __append_file_with_newest_price(self, price):
         """The user wants to update the file with a new balance.
@@ -652,7 +653,6 @@ class Investment:
             return float(user_input)
         except ValueError:
             raise RuntimeError("Could not convert the float. Is the float-checking-function not working?")
-
 
     def get_trans_datelist(self):
         """Return the list of transaction-dates (as strings)"""

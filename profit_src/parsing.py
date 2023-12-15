@@ -80,7 +80,6 @@ def clean_asset_whitespaces(filepath, transactions_string, eof_string, delimiter
     else:  # EOF not reached/found in above's for-loop
         raise RuntimeError(f"Did not find the eof-string when cleaning white spaces in file {filepath}")
     files.write_file_lines(filepath, lines_formatted, overwrite=True)  # Write back to disk
-    return None
 
 
 class ParsingConfig:
@@ -178,9 +177,9 @@ class AccountFile:
         self.lines = read_strip_file_lines(self.filepath)
 
     def clean_account_whitespaces(self):
-        return clean_asset_whitespaces(self.filepath, self.parsing_conf.STRING_TRANSACTIONS,
-                                       self.parsing_conf.STRING_EOF, self.profit_conf.DELIMITER,
-                                       self.parsing_conf.COLUMN_WIDTHS_ACCOUNTS)
+        clean_asset_whitespaces(self.filepath, self.parsing_conf.STRING_TRANSACTIONS,
+                                self.parsing_conf.STRING_EOF, self.profit_conf.DELIMITER,
+                                self.parsing_conf.COLUMN_WIDTHS_ACCOUNTS)
 
     def parse_account_file(self, skip_interactive_mode=False):
         """Parses an account-file.
@@ -208,14 +207,14 @@ class AccountFile:
 
         if self.profit_conf.INTERACTIVE_MODE is False or skip_interactive_mode is True:
             return self.__create_account_instance()
-        else:  # Interactive mode: Display what the current account is.
-            print(f"\nAccount: {self.filepath.name} ({self.account_dict[self.parsing_conf.STRING_ID]}, "
-                  f"{self.account_dict[self.parsing_conf.STRING_CURRENCY]})")
-            ret = self.__ask_user_for_updated_balance()
-            if ret is None:  # No balance-update needed
-                return self.__create_account_instance()
-            self.__append_file_with_newest_balance(ret)  # Update the file and local data
+        # Else: Interactive mode: Display what the current account is.
+        print(f"\nAccount: {self.filepath.name} ({self.account_dict[self.parsing_conf.STRING_ID]}, "
+              f"{self.account_dict[self.parsing_conf.STRING_CURRENCY]})")
+        ret = self.__ask_user_for_updated_balance()
+        if ret is None:  # No balance-update needed
             return self.__create_account_instance()
+        self.__append_file_with_newest_balance(ret)  # Update the file and local data
+        return self.__create_account_instance()
 
     def __append_file_with_newest_balance(self, balance):
         """The user wants to update the file with a new balance.
@@ -418,9 +417,9 @@ class InvestmentFile:
         self.lines = read_strip_file_lines(self.filepath)
 
     def clean_investment_whitespaces(self):
-        return clean_asset_whitespaces(self.filepath, self.parsing_conf.STRING_TRANSACTIONS,
-                                       self.parsing_conf.STRING_EOF, self.profit_conf.DELIMITER,
-                                       self.parsing_conf.COLUMN_WIDTHS_INVESTMENTS)
+        clean_asset_whitespaces(self.filepath, self.parsing_conf.STRING_TRANSACTIONS,
+                                self.parsing_conf.STRING_EOF, self.profit_conf.DELIMITER,
+                                self.parsing_conf.COLUMN_WIDTHS_INVESTMENTS)
 
     def parse_investment_file(self):
         """Parses an investment-file.
