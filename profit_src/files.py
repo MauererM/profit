@@ -197,11 +197,9 @@ def get_filename_from_path(fname):
 
 
 def append_transaction_line_to_file(fpath, strings, eofstring, profit_cfg):
-    """Appends a line of new transactions-data to a account- or investment-file.
+    """Appends a line of new transactions-data to an account- or investment-file.
     Reads the file, appends the line, writes it back to disk.
-    White spaces are read from the previous line, to conserve the file's layout. # Todo This is not really working yet.
-    # Todo The problem is that the files are mixed tab-space, and the editor is not always displaying a
-    tab with 4 spaces...
+    White spaces are read from the previous line, to conserve the file's layout.
     :param fpath: Path-object to the file to modify.
     :param strings: List of strings containing the transaction-data to write to the file.
     :param eofstring: String that indicates the end-of-file, e.g., "EOF".
@@ -214,51 +212,59 @@ def append_transaction_line_to_file(fpath, strings, eofstring, profit_cfg):
     lines = get_file_lines(fpath)
     if lines[-1] != eofstring:
         raise RuntimeError(f"Last line is not end-of-file string. Expected: '{eofstring}'. Received: '{lines[-1]}'")
-    del lines[-1] # EOF string removed; will be re-added later.
+    del lines[-1]  # EOF string removed; will be re-added later.
 
-    # Read the white space from the previous line (the last transactions-line):
+    # Read the white space blocks from the previous line (the last transactions-line):
     whitespaces = re.findall(r'[ \t]+', lines[-1])
-    if len(whitespaces) + 1 < len(strings)-1: # Note: There can be additional white spaces in the "notes" section.
+    if len(whitespaces) + 1 < len(strings) - 1:  # Note: There can be additional white spaces in the "notes" section.
         raise RuntimeError(f"Did not receive sufficient strings, or the whitespace-readout did not work properly. "
                            f"len(whitespaces) = {len(whitespaces)}. len(strings) = {len(strings)}.")
 
-    from .parsing import ParsingConfig # Needed here to avoid circular import
-    transactions_startidx = None
-    for idx, line in enumerate(lines):
-        data, remainder = stringoperations.read_crop_string_delimited(line, profit_cfg.DELIMITER)
-        if data == ParsingConfig.STRING_TRANSACTIONS:
-            transactions_startidx = idx + 1
-            break
+    from .parsing import ParsingConfig  # Needed here to avoid circular import
+
+    transactions_startidx = next((i + 1 for i, line in enumerate(lines) if
+                                  line[0:len(ParsingConfig.STRING_TRANSACTIONS)] ==
+                                  ParsingConfig.STRING_TRANSACTIONS), None)
     if transactions_startidx is None:
         raise RuntimeError("Could not find start of transactions-block.")
+
     transactions_lines = lines[transactions_startidx:-1]
+
+    # Next, we read the column-widths from the existing transactions-data. We do not use the pre-defined column widths
+    # in the parsing-config, as the user might opt to modify the white spaces of the CSV file himself. We strive to
+    # preserve this.
     column_widths = []
     for line in transactions_lines:
-        col, remainder = stringoperations.read_crop_string_delimited(line, profit_cfg.DELIMITER)
         idx = 0
-        while col != remainder and idx < ParsingConfig.INVESTMENTS_NUMCOL:
+        col = None
+        while col != line and idx < max(len(ParsingConfig.COLUMN_WIDTHS_ACCOUNTS),
+                                        len(ParsingConfig.COLUMN_WIDTHS_INVESTMENTS)):
             # If the delimiter is not found, col and remainder will be the same
             # (this is the case when we run to the end of the line). Also: Add the safety-check idx < 8 just to make
             # sure this will stop.
-            if idx > 0:
-                col, remainder = stringoperations.read_crop_string_delimited(remainder, profit_cfg.DELIMITER)
+            col, line = stringoperations.read_crop_string_delimited(line, profit_cfg.DELIMITER)
+            col = col.lstrip() # Strip any leading white characters here.
             # Pull the leading white space, as it also contributes to the column width:
-            whitespace, remainder = stringoperations.remove_leading_whitespace(remainder)
+            whitespace, _ = stringoperations.remove_leading_whitespace(line)
             whitespace_len = stringoperations.count_whitespace_length(whitespace, profit_cfg.TAB_LEN)
-            colwidth = len(col) + 1 + whitespace_len # +1 for the delimiter
+            colwidth = len(col) + 1 + whitespace_len  # +1 for the delimiter
             if len(column_widths) <= idx:
                 column_widths.append(colwidth)
             else:
                 column_widths[idx] = max(column_widths[idx], colwidth)
             idx += 1
 
-    # Delimit all strings, apart from the last one (the notes are not needed):
+    # Delimit all strings, apart from the last column (the notes are not needed to be delimited).
+    # Note, depending on how many white spaces are written in the "notes" section, the above column_widths can contain
+    # some garbage-data after the "notes" section (including the notes-column). This does not matter, as we process the
+    # columns below only until (not including) the notes-section. We simply append the notes at the end, unchanged.
     strings_delimited = [f"{item}{profit_cfg.DELIMITER}" for item in strings[0:-1]]
+    # Now, pad each column's string to the obove measured width of the column.
     strings_delimited_padded = []
     for idx, string in enumerate(strings_delimited):
         string_extended = string.ljust(column_widths[idx])
         strings_delimited_padded.append(string_extended)
-    strings_delimited_padded.append(strings[-1]) # Add the (empty) notes-string at the end. No padding needed here.
+    strings_delimited_padded.append(strings[-1])  # Add the (empty) notes-string at the end. No padding needed here.
     newstring = "".join(strings_delimited_padded)
     lines.append(newstring)
     lines.append(eofstring)

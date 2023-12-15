@@ -9,5 +9,5 @@ Date(DD.MM.YYYY);    Action;      Amount;      Balance;     Notes;
 31.12.2015;          Interest;    5.90;        5116.60;      
 31.12.2015;          Fee;         10.00;       5100.00;     Multiple transactions with the same date are OK
 31.12.2016;          Interest;    3.75;        5120.35;      
-31.12.2017;          Interest;    2.35;        5222.70;     Yey, Money!
+31.12.2017;          Interest;    2.35;        5222.70;     Yey, Money!  
 EOF

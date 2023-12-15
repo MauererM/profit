@@ -133,9 +133,10 @@ def main(config):
     accountfiles = files.get_file_list(account_path, ".txt")
     accountfiles.sort()  # Sort alphabetically
     if len(accountfiles) > 0:
-        print(f"Found the following {len(accountfiles)} textfiles (.txt) in the account-folder:")
+        print(f"Found {len(accountfiles)} text files (.txt) in the accounts-folder")
+        logging.debug(f"Found the following {len(accountfiles)} textfiles (.txt) in the account-folder:")
         for x in accountfiles:
-            print(x.name)
+            logging.debug(x.name)
     else:
         logging.warning(f"Found no account files in folder {account_path}")
     accounts = []
@@ -156,9 +157,10 @@ def main(config):
     invstmtfiles = files.get_file_list(investment_path, ".txt")
     invstmtfiles.sort()  # Sort alphabetically
     if len(invstmtfiles) > 0:
-        print(f"Found the following {len(invstmtfiles)} textfiles (.txt) in the investment-folder:")
+        print(f"Found {len(invstmtfiles)} text files (.txt) in the investment-folder")
+        logging.debug(f"Found the following {len(invstmtfiles)} textfiles (.txt) in the investment-folder:")
         for x in invstmtfiles:
-            print(x.name)
+            logging.debug(x.name)
     else:
         logging.warning(f"Found no investment files in folder {investment_path}")
     investments = []

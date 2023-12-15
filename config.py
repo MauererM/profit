@@ -5,6 +5,7 @@ MIT License
 Copyright (c) 2018-2023 Mario Mauerer
 """
 
+
 class ProfitConfig:
     # Data is always analyzed a certain number of days into the past, from today
     DAYS_ANALYSIS = 2000
@@ -96,3 +97,10 @@ class ProfitConfig:
 
     # Date-format used throughout PROFIT
     FORMAT_DATE = "%d.%m.%Y"
+
+    # The length of tabs as measured in spaces. In interactive mode, PROFIT tries to keep the formatting of the
+    # accounts- and investment CSV files. If they have mixed tabs- and space-layouts, this can be used to ensure
+    # the layout remains the same when PROFIT writes to these files in --interactive mode. However, mixed tab-space-
+    # separated files might not always work (it depends on the editor...). Use CLEAN_WHITESPACES = True above to unify
+    # the files to space-separated only.
+    TAB_LEN = 4
