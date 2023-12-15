@@ -37,6 +37,52 @@ def parse_transaction_amount(line, delimiter, error_msg, error_line_nr, filepath
     return val, remainder
 
 
+def clean_asset_whitespaces(filepath, transactions_string, eof_string, delimiter, col_widths):
+    """Unifies the white-spaces in the transactions-block of accounts or investments. Removes all tabs, inserts spaces.
+    This writes an updated file to disk.
+    Run this function _after_ the parsing is done, as parsing ensures the file is correctly formatted.
+    :param filepath: Path-object of the file to be cleaned
+    :param transactions_string: String indicating the start of the transactions-block in the file
+    :param eof_string: End-of-file string, e.g., "EOF"
+    :param delimiter: String of the delimiter of the file, e.g., ";"
+    :param col_widths: List of column-widths of the transactions-blocks
+    """
+    try:
+        lines = files.get_file_lines(filepath)  # Do not strip white spaces - we preserve them in the header
+    except:
+        raise RuntimeError(f"Could not read the file lines for whitespace-stripping. File: {filepath}")
+    # Find the "Transactions-String" (don't forget about the delimiter and potential white spaces also still here):
+    idx_transactions = next((i for i, line in enumerate(lines) if
+                             line[0:len(transactions_string)] == transactions_string), None)
+    if idx_transactions is None:
+        raise RuntimeError(f"Could not find the transactions-string. File seems wrongly formatted? "
+                           f"File: {filepath}")
+    # We preserve the header as-is, strip only the white spaces in the transactions-block
+    lines_formatted = lines[0:idx_transactions + 1]
+    for line_idx, line in enumerate(lines[idx_transactions + 1:]):
+        # When EOF reached, we are done
+        if line[0:len(eof_string)] == eof_string:
+            lines_formatted.append(line)
+            break
+        line_cleaned = ""
+        for col_idx in range(len(col_widths)):
+            col_str, line = stringoperations.read_crop_string_delimited(line, delimiter)
+            if col_idx < len(col_widths) - 1:  # Don't strip the white spaces out of the notes.
+                col_str = stringoperations.strip_whitespaces(col_str)
+                col_str = f"{col_str}{delimiter}"
+            else:
+                col_str = col_str.lstrip()  # But strip the leading white spaces from the notes
+                if line_idx == 0:  # Add the delimiter to the notes in the header-line of the transactions only
+                    col_str = f"{col_str}{delimiter}"
+            col_str = col_str.ljust(col_widths[col_idx])
+            line_cleaned = f"{line_cleaned}{col_str}"
+        lines_formatted.append(line_cleaned)
+    else:  # EOF not reached/found in above's for-loop
+        raise RuntimeError(f"Did not find the eof-string when cleaning white spaces in file {filepath}")
+    files.write_file_lines(filepath, lines_formatted, overwrite=True)  # Write back to disk
+    return None
+
+
 class ParsingConfig:
     """Common configuration data for parsing the text-files"""
 
@@ -103,9 +149,6 @@ class ParsingConfig:
     COLUMN_WIDTHS_ACCOUNTS = [21, 13, 13, 13, 1]  # date, action, amount, balance, notes
     COLUMN_WIDTHS_INVESTMENTS = [21, 13, 13, 13, 13, 13, 13, 1]  # date, action, quantity, price, cost, payout,
     # balance, notes
-    # Number of columns in the files, incl. notes
-    ACCOUNTS_NUMCOL = 5
-    INVESTMENTS_NUMCOL = 8
 
 
 class AccountFile:
@@ -135,42 +178,9 @@ class AccountFile:
         self.lines = read_strip_file_lines(self.filepath)
 
     def clean_account_whitespaces(self):
-        """Unifies the white-spaces in the transactions-block. Removes all tabs, inserts spaces.
-        This writes an updated file to disk.
-        Run this function _after_ the parsing is done, as parsing ensures the file is correctly formatted."""
-        try:
-            lines = files.get_file_lines(self.filepath)  # Do not strip white spaces - we preserve them in the header
-        except:
-            raise RuntimeError(f"Could not read the file lines for whitespace-stripping. File: {self.filepath}")
-        # Find the "Transactions-String" (don't forget about the delimiter and potential white spaces also still here):
-        idx_transactions = next((i for i, line in enumerate(lines)
-                                 if line[0:len(self.parsing_conf.STRING_TRANSACTIONS)] ==
-                                 self.parsing_conf.STRING_TRANSACTIONS), None)
-        if idx_transactions is None:
-            raise RuntimeError(f"Could not find the transactions-string. File seems wrongly formatted? "
-                               f"File: {self.filepath}")
-        # We preserve the header as-is, strip only the white spaces in the transactions-block
-        lines_formatted = lines[0:idx_transactions + 1]
-        for line_idx, line in enumerate(lines[idx_transactions + 1:]):
-            if line[0:len(self.parsing_conf.STRING_EOF)] == self.parsing_conf.STRING_EOF:
-                lines_formatted.append(line)
-                break
-            line_cleaned = ""
-            for col_idx in range(self.parsing_conf.ACCOUNTS_NUMCOL):
-                col_str, line = stringoperations.read_crop_string_delimited(line, self.profit_conf.DELIMITER)
-                if col_idx < self.parsing_conf.ACCOUNTS_NUMCOL-1: # Don't strip the white spaces out of the notes.
-                    col_str = stringoperations.strip_whitespaces(col_str)
-                    col_str = f"{col_str}{self.profit_conf.DELIMITER}"
-                else:
-                    col_str = col_str.lstrip() # But strip the leading white spaces from the notes
-                    if line_idx == 0: # Add the delimiter to the notes in the header-line of the transactions only
-                        col_str = f"{col_str}{self.profit_conf.DELIMITER}"
-                col_str = col_str.ljust(self.parsing_conf.COLUMN_WIDTHS_ACCOUNTS[col_idx])
-                line_cleaned = f"{line_cleaned}{col_str}"
-            lines_formatted.append(line_cleaned)
-        else:
-            raise RuntimeError(f"Did not find the eof-string when cleaning white spaces in file {self.filepath}")
-        files.write_file_lines(self.filepath, lines_formatted, overwrite=True)  # Write back to disk
+        return clean_asset_whitespaces(self.filepath, self.parsing_conf.STRING_TRANSACTIONS,
+                                       self.parsing_conf.STRING_EOF, self.profit_conf.DELIMITER,
+                                       self.parsing_conf.COLUMN_WIDTHS_ACCOUNTS)
 
     def parse_account_file(self, skip_interactive_mode=False):
         """Parses an account-file.
@@ -406,6 +416,11 @@ class InvestmentFile:
         self.storage = storage
         # Get the lines, strip all white spaces:
         self.lines = read_strip_file_lines(self.filepath)
+
+    def clean_investment_whitespaces(self):
+        return clean_asset_whitespaces(self.filepath, self.parsing_conf.STRING_TRANSACTIONS,
+                                       self.parsing_conf.STRING_EOF, self.profit_conf.DELIMITER,
+                                       self.parsing_conf.COLUMN_WIDTHS_INVESTMENTS)
 
     def parse_investment_file(self):
         """Parses an investment-file.

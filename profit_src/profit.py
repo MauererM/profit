@@ -166,7 +166,9 @@ def main(config):
         filepath = file.resolve()
         investment_file = parsing.InvestmentFile(parsing_config, config, filepath, analyzer, provider, storage)
         investment = investment_file.parse_investment_file()
-        # Todo clean the investment-file, too
+        # Clean the white spaces after parsing, as parsing ensures file is correct.
+        if config.CLEAN_WHITESPACES is True:
+            investment_file.clean_investment_whitespaces()
         investments.append(investment)
 
     if len(investments) > 0:
@@ -236,7 +238,7 @@ def main(config):
             filepath = investment.get_filepath()
             investment_file = parsing.InvestmentFile(parsing_config, config, filepath, analyzer, provider, storage)
             investment = investment_file.parse_investment_file()
-            investment.write_forex_obj(forexdict[investment.get_currency()]) # Re-write the forex-data to the new instance
+            investment.write_forex_obj(forexdict[investment.get_currency()]) # Re-write forex-data to the new instance
             ret = investment.set_analysis_data(date_analysis_start_str, date_today_str)
             if ret is True:
                 investments_analyzed.append(investment)
