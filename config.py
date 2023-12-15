@@ -78,6 +78,12 @@ class ProfitConfig:
     # Select, if existing plots are deleted before new ones are created. In any case, existing plots are overwritten.
     PURGE_OLD_PLOTS = True
 
+    # If set to true, the white spaces in the accounts- and investment-CSV-files will be unified to spaces.
+    # Every time PROFIT is run, the transactions-sections of the CSV files are first cleaned up, then parsed.
+    # This ensures that in all editors, the transactions-table in the accounts and investment CSV files looks pretty,
+    # and using PROFIT's interactive mode, automatic modifications also do not mess up the space-formatting.
+    CLEAN_WHITESPACES = True
+
     # Some colors for plotting.
     # Determined using http://colorbrewer2.org/
     PLOTS_COLORS = ["#d7191c", "#fdae61", "#5e3c99", "#2c7bb6", "k", "r", "g", "b"]
@@ -90,8 +96,3 @@ class ProfitConfig:
 
     # Date-format used throughout PROFIT
     FORMAT_DATE = "%d.%m.%Y"
-
-    # The CSV files might use tabs and spaces. Define here the length of a tab in number of spaces for proper display
-    # and modification of the used CSV files (e.g., when using interactive mode, where PROFIT writes transactions data
-    # to the user-supplied CSV files
-    TAB_LEN = 4

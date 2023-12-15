@@ -98,6 +98,15 @@ class ParsingConfig:
     STRING_EXCHANGE = "Exchange"
     STRING_TRANSACTIONS = "Transactions"
 
+    # Column widths for accounting and investment files (their transactions-section)
+    # (measured in spaces). The notes-column width is set to 1 (prevents unnecessary padding).
+    COLUMN_WIDTHS_ACCOUNTS = [21, 13, 13, 13, 1]  # date, action, amount, balance, notes
+    COLUMN_WIDTHS_INVESTMENTS = [21, 13, 13, 13, 13, 13, 13, 1]  # date, action, quantity, price, cost, payout,
+    # balance, notes
+    # Number of columns in the files, incl. notes
+    ACCOUNTS_NUMCOL = 5
+    INVESTMENTS_NUMCOL = 8
+
 
 class AccountFile:
     """Creates the structure/template for an account-file.
@@ -123,8 +132,45 @@ class AccountFile:
                              self.parsing_conf.DICT_KEY_NOTES: None}
         self.filepath = filepath
         self.analyzer = analyzer
-        # Get the lines, strip all white spaces:
         self.lines = read_strip_file_lines(self.filepath)
+
+    def clean_account_whitespaces(self):
+        """Unifies the white-spaces in the transactions-block. Removes all tabs, inserts spaces.
+        This writes an updated file to disk.
+        Run this function _after_ the parsing is done, as parsing ensures the file is correctly formatted."""
+        try:
+            lines = files.get_file_lines(self.filepath)  # Do not strip white spaces - we preserve them in the header
+        except:
+            raise RuntimeError(f"Could not read the file lines for whitespace-stripping. File: {self.filepath}")
+        # Find the "Transactions-String" (don't forget about the delimiter and potential white spaces also still here):
+        idx_transactions = next((i for i, line in enumerate(lines)
+                                 if line[0:len(self.parsing_conf.STRING_TRANSACTIONS)] ==
+                                 self.parsing_conf.STRING_TRANSACTIONS), None)
+        if idx_transactions is None:
+            raise RuntimeError(f"Could not find the transactions-string. File seems wrongly formatted? "
+                               f"File: {self.filepath}")
+        # We preserve the header as-is, strip only the white spaces in the transactions-block
+        lines_formatted = lines[0:idx_transactions + 1]
+        for line_idx, line in enumerate(lines[idx_transactions + 1:]):
+            if line[0:len(self.parsing_conf.STRING_EOF)] == self.parsing_conf.STRING_EOF:
+                lines_formatted.append(line)
+                break
+            line_cleaned = ""
+            for col_idx in range(self.parsing_conf.ACCOUNTS_NUMCOL):
+                col_str, line = stringoperations.read_crop_string_delimited(line, self.profit_conf.DELIMITER)
+                if col_idx < self.parsing_conf.ACCOUNTS_NUMCOL-1: # Don't strip the white spaces out of the notes.
+                    col_str = stringoperations.strip_whitespaces(col_str)
+                    col_str = f"{col_str}{self.profit_conf.DELIMITER}"
+                else:
+                    col_str = col_str.lstrip() # But strip the leading white spaces from the notes
+                    if line_idx == 0: # Add the delimiter to the notes in the header-line of the transactions only
+                        col_str = f"{col_str}{self.profit_conf.DELIMITER}"
+                col_str = col_str.ljust(self.parsing_conf.COLUMN_WIDTHS_ACCOUNTS[col_idx])
+                line_cleaned = f"{line_cleaned}{col_str}"
+            lines_formatted.append(line_cleaned)
+        else:
+            raise RuntimeError(f"Did not find the eof-string when cleaning white spaces in file {self.filepath}")
+        files.write_file_lines(self.filepath, lines_formatted, overwrite=True)  # Write back to disk
 
     def parse_account_file(self, skip_interactive_mode=False):
         """Parses an account-file.
@@ -152,7 +198,7 @@ class AccountFile:
 
         if self.profit_conf.INTERACTIVE_MODE is False or skip_interactive_mode is True:
             return self.__create_account_instance()
-        else: # Interactive mode: Display what the current account is.
+        else:  # Interactive mode: Display what the current account is.
             print(f"\nAccount: {self.filepath.name} ({self.account_dict[self.parsing_conf.STRING_ID]}, "
                   f"{self.account_dict[self.parsing_conf.STRING_CURRENCY]})")
             ret = self.__ask_user_for_updated_balance()
@@ -192,7 +238,7 @@ class AccountFile:
         user_input = input(f"The most recent balance ({self.transactions[self.parsing_conf.DICT_KEY_DATES][-1]}) is "
                            f"{self.account_dict[self.parsing_conf.STRING_CURRENCY]} "
                            f"{self.transactions[self.parsing_conf.DICT_KEY_BALANCES][-1]:.2f}. "
-                           f"Provide an updated balance, or press enter to continue: ")
+                           f"Provide an updated balance (+enter), or press enter to skip: ")
         if user_input == "":
             return None
         if helper.is_valid_float(user_input) is False:

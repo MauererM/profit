@@ -21,7 +21,7 @@ def main():
     if args.interactive is True:
         print("Will run PROFIT in interactive mode.")
     else:
-        print("Will run PROFIT not in interactive mode.")
+        print("Will run PROFIT not in interactive mode (can be enabled via --interactive).")
 
     config = ProfitConfig()
 

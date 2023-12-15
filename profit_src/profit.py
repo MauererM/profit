@@ -143,6 +143,9 @@ def main(config):
         filepath = file.resolve()
         account_file = parsing.AccountFile(parsing_config, config, filepath, analyzer)
         account = account_file.parse_account_file()
+        # Clean the white spaces after parsing, as parsing ensures file is correct.
+        if config.CLEAN_WHITESPACES is True:
+            account_file.clean_account_whitespaces()
         accounts.append(account)
 
     if len(accounts) > 0:
@@ -163,6 +166,7 @@ def main(config):
         filepath = file.resolve()
         investment_file = parsing.InvestmentFile(parsing_config, config, filepath, analyzer, provider, storage)
         investment = investment_file.parse_investment_file()
+        # Todo clean the investment-file, too
         investments.append(investment)
 
     if len(investments) > 0:

@@ -236,7 +236,7 @@ def append_transaction_line_to_file(fpath, strings, eofstring, profit_cfg):
     for line in transactions_lines:
         col, remainder = stringoperations.read_crop_string_delimited(line, profit_cfg.DELIMITER)
         idx = 0
-        while col != remainder and idx < 8:
+        while col != remainder and idx < ParsingConfig.INVESTMENTS_NUMCOL:
             # If the delimiter is not found, col and remainder will be the same
             # (this is the case when we run to the end of the line). Also: Add the safety-check idx < 8 just to make
             # sure this will stop.
