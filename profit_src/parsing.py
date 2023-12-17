@@ -248,7 +248,7 @@ class AccountFile:
         user_input = input(f"The most recent balance ({self.transactions[self.parsing_conf.DICT_KEY_DATES][-1]}) is "
                            f"{self.account_dict[self.parsing_conf.STRING_CURRENCY]} "
                            f"{self.transactions[self.parsing_conf.DICT_KEY_BALANCES][-1]:.2f}. "
-                           f"Provide an updated balance (+enter), or press enter to skip: ")
+                           f"Provide an updated balance or press enter to skip: ")
         if user_input == "":
             return None
         if helper.is_valid_float(user_input) is False:

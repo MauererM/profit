@@ -643,7 +643,7 @@ class Investment:
         Sanitize the input, and return the newest value/price.
         """
         user_input = input(f"A manually updated price is needed. Provide the most recent end-of-day price "
-                           f"(in {self.currency})(+enter), or press enter to skip: ")
+                           f"(in {self.currency}) or press enter to skip: ")
         if user_input == "":
             return None
         if helper.is_valid_float(user_input) is False:
