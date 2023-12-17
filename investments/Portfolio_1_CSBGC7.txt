@@ -5,13 +5,13 @@ Currency;	CHF
 Symbol;		CSBGC7.SW
 Exchange;	SWX
 Transactions;
-Date(DD.MM.YYYY);    Action;      Quantity;    Price;       Cost;        Payout;      Balance;     Notes;
-19.11.2008;          Buy;         50;          96.35;       0;           0;           50;          The first transaction must be a buy with investments!
-21.01.2016;          Payout;      0;           0;           0;           51.50;       50;           
-21.07.2016;          Payout;      0;           0;           0;           54.90;       50;           
-19.01.2017;          Payout;      0;           0;           0;           53.75;       50;           
-20.07.2017;          Payout;      0;           0;           0;           53.75;       50;           
-20.12.2017;          Fee;         0;           0;           7.93;        0;           50;           
-15.01.2018;          Payout;      0;           0;           0;           51.50;       50;           
-16.04.2018;          Update;      0;           89.12;       0;           0;           50;           
+Date(DD.MM.YYYY);   Action;     Quantity;   Price;      Cost;       Payout;     Balance;    Notes;
+19.11.2008;         Buy;        50;         96.35;      0;          0;          50;         The first transaction must be a buy with investments!
+21.01.2016;         Payout;     0;          0;          0;          51.50;      50;          
+21.07.2016;         Payout;     0;          0;          0;          54.90;      50;          
+19.01.2017;         Payout;     0;          0;          0;          53.75;      50;          
+20.07.2017;         Payout;     0;          0;          0;          53.75;      50;          
+20.12.2017;         Fee;        0;          0;          7.93;       0;          50;          
+15.01.2018;         Payout;     0;          0;          0;          51.50;      50;          
+16.04.2018;         Update;     0;          89.12;      0;          0;          50;          
 EOF

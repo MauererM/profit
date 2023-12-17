@@ -145,8 +145,9 @@ class ParsingConfig:
 
     # Column widths for accounting and investment files (their transactions-section)
     # (measured in spaces). The notes-column width is set to 1 (prevents unnecessary padding).
-    COLUMN_WIDTHS_ACCOUNTS = [21, 13, 13, 13, 1]  # date, action, amount, balance, notes
-    COLUMN_WIDTHS_INVESTMENTS = [21, 13, 13, 13, 13, 13, 13, 1]  # date, action, quantity, price, cost, payout,
+    # Use multiples of 4 to tab-align it a bit better, in case a user wants to use tabs.
+    COLUMN_WIDTHS_ACCOUNTS = [20, 12, 12, 12, 1]  # date, action, amount, balance, notes
+    COLUMN_WIDTHS_INVESTMENTS = [20, 12, 12, 12, 12, 12, 12, 1]  # date, action, quantity, price, cost, payout,
     # balance, notes
 
 

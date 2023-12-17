@@ -5,11 +5,11 @@ Currency;	CHF
 Symbol;		IEAC.SW
 Exchange;	SWX
 Transactions;
-Date(DD.MM.YYYY);    Action;      Quantity;    Price;       Cost;        Payout;      Balance;     Notes;
-09.02.2016;          Buy;         60;          138.61;      83.11;       0.0;         60;          The first transaction must be a buy with investments!
-29.07.2016;          Payout;      0;           0;           0;           43.25;       60;           
-27.01.2017;          Payout;      0;           0;           0;           41.50;       60;           
-31.07.2017;          Payout;      0;           0;           0;           42.80;       60;           
-20.12.2017;          Fee;         0;           0;           7.93;        0;           60;           
-10.01.2018;          Payout;      0;           0;           0;           22.45;       60;           
+Date(DD.MM.YYYY);   Action;     Quantity;   Price;      Cost;       Payout;     Balance;    Notes;
+09.02.2016;         Buy;        60;         138.61;     83.11;      0.0;        60;         The first transaction must be a buy with investments!
+29.07.2016;         Payout;     0;          0;          0;          43.25;      60;          
+27.01.2017;         Payout;     0;          0;          0;          41.50;      60;          
+31.07.2017;         Payout;     0;          0;          0;          42.80;      60;          
+20.12.2017;         Fee;        0;          0;          7.93;       0;          60;          
+10.01.2018;         Payout;     0;          0;          0;          22.45;      60;          
 EOF

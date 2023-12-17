@@ -3,8 +3,8 @@ Type;		Account
 Purpose;	Retirement_Closed
 Currency;	CHF
 Transactions;
-Date(DD.MM.YYYY);    Action;      Amount;      Balance;     Notes;
-09.03.2015;          Update;      0;           4500.00;      
-12.01.2016;          Update;      0;           7863.00;     Yey, Money!
-03.01.2017;          Update;      0;           8320.00;      
+Date(DD.MM.YYYY);   Action;     Amount;     Balance;    Notes;
+09.03.2015;         Update;     0;          4500.00;     
+12.01.2016;         Update;     0;          7863.00;    Yey, Money!
+03.01.2017;         Update;     0;          8320.00;     
 EOF
