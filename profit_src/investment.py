@@ -552,7 +552,7 @@ class Investment:
                 if last_transaction_date_dt < date_today_dt:
                     logging.warning(f"No financial data available for {self.symbol}.")
                     logging.warning("Provide an update-transaction to deliver the most recent price of the asset. "
-                                    "Otherwise, the holding period returns cannot be calculated. Consider using the "
+                                    "\nOtherwise, the holding period returns cannot be calculated. Consider using the "
                                     "interactive mode to provide the data quickly.")
                 else:
                     logging.info("Deriving prices (purely) from transactions-data, which is available for today.")

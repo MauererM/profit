@@ -171,10 +171,10 @@ class ForexTimeDomainData:
         if dates_full_start > self.analysis_startdate_dt:
             logging.warning(f"Available rates (data provider and stored market-data) are only available from "
                             f"the {self.full_dates[0]} onwards. "
-                            f"Earliest available data will be extrapolated backwards.")
+                            f"\nEarliest available data will be extrapolated backwards.")
         if dates_full_stop < self.analysis_stopdate_dt:
             logging.warning(f"Available rates (data provider and stored market-data) are only available until "
-                            f"the {self.full_dates[-1]}. Latest available data will be extrapolated forwards.")
+                            f"the {self.full_dates[-1]}. \nLatest available data will be extrapolated forwards.")
 
         # Crop the data to the desired period:
         self.full_dates, self.full_prices = dateoperations.format_datelist(self.full_dates, self.full_prices,
@@ -287,14 +287,14 @@ class StockTimeDomainData:
             full_dates_stop = self.analyzer.str2datetime(self.full_dates[-1])
             if full_dates_start > startdate_analysis_dt:
                 logging.warning(f"Available prices (provider and stored data) are only available "
-                                f"from the {self.full_dates[0]} onwards. Earliest available data will be "
+                                f"from the {self.full_dates[0]} onwards. \nEarliest available data will be "
                                 f"extrapolated backwards and merged with the manually entered prices.")
             if full_dates_stop < stopdate_analysis_dt:
                 logging.warning(f"Available prices (data provider and stored market-data) are only available until "
-                                f"the {self.full_dates[-1]}. Latest available data will be extrapolated forwards "
+                                f"the {self.full_dates[-1]}. \nLatest available data will be extrapolated forwards "
                                 f"and merged with the manually entered prices.")
                 if self.has_balance_today is True and self.profit_conf.INTERACTIVE_MODE is False:
-                    logging.warning("Update the storage data file or transactions-list "
+                    logging.warning("\nUpdate the storage data file or transactions-list "
                                     "for correct returns calculation!")
 
     def __create_new_stock_storage_file(self):
