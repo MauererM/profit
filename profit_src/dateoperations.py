@@ -215,7 +215,7 @@ def extend_data_past(datelist, vallist, begin_date, analyzer, zero_padding):
 
     # Create new lists, before the existing list. Then join the lists.
     auxdates = create_datelist(begin_date, datelist[0], analyzer)
-    del auxdates[-1] # Avoid the duplicate date
+    del auxdates[-1]  # Avoid the duplicate date
     if zero_padding is True:
         auxvals = [0.0] * len(auxdates)
     else:
@@ -334,8 +334,7 @@ def check_date_order(datelist, analyzer, allow_ident_days=False):
     # Don't begin with the first element with the iteration:
     if allow_ident_days:
         return all(curr_date >= prev_date for prev_date, curr_date in zip(datelist_dt, datelist_dt[1:]))
-    else:
-        return all(curr_date > prev_date for prev_date, curr_date in zip(datelist_dt, datelist_dt[1:]))
+    return all(curr_date > prev_date for prev_date, curr_date in zip(datelist_dt, datelist_dt[1:]))
 
 
 def find_holes_in_dates(datelist, analyzer):
@@ -367,9 +366,9 @@ def check_dates_consecutive(datelist, analyzer):
     if len(datelist) == 1:
         return True
     datelist = [analyzer.str2datetime(x) for x in datelist]
-    for i in range(len(datelist)-1):
+    for i in range(len(datelist) - 1):
         nextday = datelist[i] + datetime.timedelta(days=1)
-        if datelist[i+1] != nextday:
+        if datelist[i + 1] != nextday:
             return False
     return True
 

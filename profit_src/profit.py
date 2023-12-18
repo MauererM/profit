@@ -55,7 +55,7 @@ class ColoredFormatter(logging.Formatter):
         return logging.Formatter.format(self, record)
 
 
-def main(config, analysis_days_arg):
+def main(config):
     """The main entry-point of PROFIT"""
 
     # Set logging:
@@ -67,7 +67,7 @@ def main(config, analysis_days_arg):
     logger.setLevel(logging.INFO)
     matplotlib_logger = logging.getLogger('matplotlib')
     matplotlib_logger.setLevel(logging.INFO)  # Exclude matplotlib's debug-messages, as they otherwise spam a lot.
-    sys.stderr = sys.stdout  # Synchronize print() and logging-messages (use same output/buffering)
+    sys.stdout = sys.stderr  # Synchronize print() and logging-messages (use same output/buffering)
 
     # Print the current version of the tool
     print(f"PROFIT v{PROFIT_VERSION:.1f} starting")
@@ -93,10 +93,12 @@ def main(config, analysis_days_arg):
     datetimeconverter = stringoperations.DateTimeConversion()
 
     # Define Analysis-Range: The analysis range always spans the given days backwards from today.
-    if analysis_days_arg is None:
+    if not hasattr(config, "DAYS_ANALYSIS_ARGPARSE"):
+        raise RuntimeError("This should have be given by the launcher script...")
+    if config.DAYS_ANALYSIS_ARGPARSE is None:
         analysis_days = config.DAYS_ANALYSIS
     else:
-        analysis_days = analysis_days_arg
+        analysis_days = config.DAYS_ANALYSIS_ARGPARSE
     if not isinstance(analysis_days, int):
         raise RuntimeError("analysis_days must be integer")
     if analysis_days <= 0:
@@ -123,21 +125,29 @@ def main(config, analysis_days_arg):
         raise RuntimeError("ASSET_GROUPNAMES and ASSET_GROUPS (in the user configuration section of PROFIT_main) must "
                            "be lists with identical length.")
 
+    if not hasattr(config, "INTERACTIVE_MODE"):
+        raise RuntimeError("This should have be given by the launcher script...")
+
     # Parse Accounts:
     print("\nAcquiring and parsing account files")
     accountfiles = files.get_file_list(account_path, ".txt")
     accountfiles.sort()  # Sort alphabetically
     if len(accountfiles) > 0:
-        print(f"Found the following {len(accountfiles)} textfiles (.txt) in the account-folder:")
+        print(f"Found {len(accountfiles)} text files (.txt) in the accounts-folder")
+        logging.debug(f"Found the following {len(accountfiles)} textfiles (.txt) in the account-folder:")
         for x in accountfiles:
-            print(x.name)
+            logging.debug(x.name)
     else:
         logging.warning(f"Found no account files in folder {account_path}")
     accounts = []
     for file in accountfiles:
         filepath = file.resolve()
         account_file = parsing.AccountFile(parsing_config, config, filepath, analyzer)
-        accounts.append(account_file.parse_account_file())
+        account = account_file.parse_account_file()
+        # Clean the white spaces after parsing, as parsing ensures file is correct.
+        if config.CLEAN_WHITESPACES is True:
+            account_file.clean_account_whitespaces()
+        accounts.append(account)
 
     if len(accounts) > 0:
         print(f"Successfully parsed {len(accounts)} accounts.")
@@ -147,16 +157,22 @@ def main(config, analysis_days_arg):
     invstmtfiles = files.get_file_list(investment_path, ".txt")
     invstmtfiles.sort()  # Sort alphabetically
     if len(invstmtfiles) > 0:
-        print(f"Found the following {len(invstmtfiles)} textfiles (.txt) in the investment-folder:")
+        print(f"Found {len(invstmtfiles)} text files (.txt) in the investment-folder")
+        logging.debug(f"Found the following {len(invstmtfiles)} textfiles (.txt) in the investment-folder:")
         for x in invstmtfiles:
-            print(x.name)
+            logging.debug(x.name)
     else:
         logging.warning(f"Found no investment files in folder {investment_path}")
     investments = []
     for file in invstmtfiles:
         filepath = file.resolve()
         investment_file = parsing.InvestmentFile(parsing_config, config, filepath, analyzer, provider, storage)
-        investments.append(investment_file.parse_investment_file())
+        investment = investment_file.parse_investment_file()
+        # Clean the white spaces after parsing, as parsing ensures file is correct.
+        if config.CLEAN_WHITESPACES is True:
+            investment_file.clean_investment_whitespaces()
+        investments.append(investment)
+
     if len(investments) > 0:
         print(f"Successfully parsed {len(investments)} investments.")
 
@@ -206,10 +222,34 @@ def main(config, analysis_days_arg):
     for asset in assets:
         asset.write_forex_obj(forexdict[asset.get_currency()])
 
-    # Set the analysis-data in the assets. This obtains market prices, among others, and may take a short while.
-    print("\nPreparing analysis-data for accounts and investments.")
-    for asset in assets:
-        asset.set_analysis_data(date_analysis_start_str, date_today_str)
+    # After having obtained the forex-data, we can set the analysis-data in the accounts and investments.
+    accounts_analyzed = []
+    for account in accounts:
+        account.set_analysis_data(date_analysis_start_str, date_today_str)
+        accounts_analyzed.append(account)
+
+    investments_analyzed = []
+    for investment in investments:
+        ret = investment.set_analysis_data(date_analysis_start_str, date_today_str)
+        if ret is True:
+            investments_analyzed.append(investment)
+        else:
+            # In investments, if in interactive mode, this can return false.
+            # This requires us to re-parse and re-analyze this investment.
+            print("Will re-read and re-analyze the updated investment CSV file.")
+            filepath = investment.get_filepath()
+            investment_file = parsing.InvestmentFile(parsing_config, config, filepath, analyzer, provider, storage)
+            investment = investment_file.parse_investment_file()
+            investment.write_forex_obj(forexdict[investment.get_currency()])  # Re-write forex-data to the new instance
+            ret = investment.set_analysis_data(date_analysis_start_str, date_today_str)
+            if ret is True:
+                investments_analyzed.append(investment)
+            else:
+                raise RuntimeError("After a second iteration, this should have returned True?")
+
+    investments = investments_analyzed
+    accounts = accounts_analyzed
+    assets = accounts + investments
 
     # Obtain Stockmarket-Indices. The prices are obtained from the dataprovider, and a storage-object is generated.
     if len(investments) > 0:

@@ -78,15 +78,15 @@ class DataproviderYahoo(DataProvider):
         param['includeAdjustedClose'] = 'true'
         param['crumb'] = self.crumb
         params = urllib.parse.urlencode(param)
-        url = 'http://query1.finance.yahoo.com/v7/finance/download/{}?{}'.format(curr_str, params)
+        url = f"http://query1.finance.yahoo.com/v7/finance/download/{curr_str}?{params}"
         req = urllib.request.Request(url, headers=self.useragent)
         try:
             # There is no need to enter the cookie here, as it is automatically handled by opener
-            f = urllib.request.urlopen(req, timeout=6)
+            with urllib.request.urlopen(req, timeout=6) as f:
+                strlines = f.read().decode('utf-8')
         except:
             return None
 
-        strlines = f.read().decode('utf-8')
         if len(strlines) < 2:
             return None
 
@@ -132,16 +132,16 @@ class DataproviderYahoo(DataProvider):
             'includeAdjustedClose'] = 'true'
         param['crumb'] = self.crumb
         params = urllib.parse.urlencode(param)
-        url = 'http://query1.finance.yahoo.com/v7/finance/download/{}?{}'.format(symbol, params)
+        url = f"http://query1.finance.yahoo.com/v7/finance/download/{symbol}?{params}"
         req = urllib.request.Request(url, headers=self.useragent)
 
         try:
             # There is no need to enter the cookie here, as it is automatically handled by opener
-            f = urllib.request.urlopen(req, timeout=6)
+            with urllib.request.urlopen(req, timeout=6) as f:
+                strlines = f.read().decode('utf-8')
         except:
             return None
 
-        strlines = f.read().decode('utf-8')
         if len(strlines) < 2:
             return None
 
@@ -161,8 +161,8 @@ class DataproviderYahoo(DataProvider):
     def __obtain_cookie_crumb(self):
         self.cooker.cookiejar.clear()
         req = urllib.request.Request('http://finance.yahoo.com/quote/TSLA', headers=self.useragent)
-        f = urllib.request.urlopen(req, timeout=6)
-        strlines = f.read().decode('utf-8')
+        with urllib.request.urlopen(req, timeout=6) as f:
+            strlines = f.read().decode('utf-8')
 
         # Find the crumb in the response. Code from Stackoverflow.
         cs = strlines.find('CrumbStore')

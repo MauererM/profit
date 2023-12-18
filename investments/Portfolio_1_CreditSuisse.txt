@@ -5,9 +5,9 @@ Currency;	CHF
 Symbol;		CSGN.SW
 Exchange;	VTX
 Transactions;
-Date(DD.MM.YYYY);	Action;		Quantity;	Price;	Cost;	Payout;		Balance;	Notes;
-06.09.2012;			Buy;		100;		19.13;	0.0;	0.0;		100;		The first transaction must be a buy with investments!
-06.06.2016;			Payout;		0;			0;		0;		114.80;		100;
-20.12.2017;			Fee;		0;			0;		7.93;	0.0;		100;
-16.04.2018;			Update;		0;			15.75;	0;		0;			100;
+Date(DD.MM.YYYY);   Action;     Quantity;   Price;      Cost;       Payout;     Balance;    Notes;
+06.09.2012;         Buy;        100;        19.13;      0.0;        0.0;        100;        The first transaction must be a buy with investments!
+06.06.2016;         Payout;     0;          0;          0;          114.80;     100;         
+20.12.2017;         Fee;        0;          0;          7.93;       0.0;        100;         
+16.04.2018;         Update;     0;          15.75;      0;          0;          100;         
 EOF

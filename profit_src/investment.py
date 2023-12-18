@@ -10,6 +10,7 @@ from . import dateoperations
 from . import stringoperations
 from . import helper
 from .timedomaindata import StockTimeDomainData
+from . import files
 
 
 class Investment:
@@ -30,6 +31,7 @@ class Investment:
         :param profit_config: The main config-class/instance of PROFIT
         """
         self.config = parsing_config
+        self.profit_conf = profit_config
         self.id = investment_dict[self.config.STRING_ID]
         self.type = investment_dict[self.config.STRING_TYPE]
         self.purpose = investment_dict[self.config.STRING_PURPOSE]
@@ -44,6 +46,7 @@ class Investment:
         self.provider = dataprovider
         self.storage = storage
         self.assetpurposes = profit_config.ASSET_PURPOSES
+        self.interactive_mode = profit_config.INTERACTIVE_MODE
         # Data not known yet:
         self.analysis_data_done = False  # Analysis data is not yet prepared
         self.forex_data_given = False
@@ -56,7 +59,7 @@ class Investment:
         self.analysis_costs = None
         self.analysis_payouts = None
         self.latestpricedata = None
-        self.has_value_today = None
+        self.has_nonzero_balance_today = None
 
         # Check, if the transaction-dates are in order. Allow identical successive days
         if dateoperations.check_date_order(self.transactions[self.config.DICT_KEY_DATES], self.analyzer,
@@ -98,9 +101,9 @@ class Investment:
                                                               self.transactions[self.config.DICT_KEY_BALANCES],
                                                               self.analyzer)
         if self.balancelist[-1] < 1e-9:
-            self.has_value_today = False
+            self.has_nonzero_balance_today = False
         else:
-            self.has_value_today = True
+            self.has_nonzero_balance_today = True
 
         # The cost and payouts does not need interpolation. Lists are populated (corresponding to datelist), that
         # contain the transactions.
@@ -413,7 +416,8 @@ class Investment:
         than recorded data.
         :param date_stop: String of a date that designates the stop-date. Cannot be in the future.
         """
-        print(f"\n{self.symbol}:")  # Show in the terminal what's going on/which investment is getting processed
+        print(
+            f"\n{self.symbol} ({self.filename.name}):")  # Show in the terminal what's going on/which investment is getting processed
 
         # Extrapolate or crop the data:
         # The balance is extrapolated with zeroes into the past, and with the last known values into the future,
@@ -473,13 +477,11 @@ class Investment:
 
             # Check if data is available from storage and/or obtain data via data provider:
             stockdata = StockTimeDomainData(self.symbol, self.exchange, self.currency, (startdate_prices, date_stop),
-                                            self.analyzer, self.storage, self.provider, self.has_value_today)
+                                            self.analyzer, self.storage, self.provider, self.has_nonzero_balance_today,
+                                            self.profit_conf)
             full_dates, full_prices = stockdata.get_price_data()
 
             if full_dates is not None:
-                # Store the latest available price and date, for the holding-period return analysis
-                self.latestpricedata = (full_dates[-1], full_prices[-1])
-
                 # The provided market-data can be incomplete. It is consecutive, but might not span the entire
                 # analysis-range. We must merge it with the transactions-data and potentially extrapolate forwards and
                 # backwards to get a combined, proper list of prices.
@@ -524,12 +526,37 @@ class Investment:
                     else:
                         self.analysis_values.append(0.0)
 
+                # Store the latest available price and date, for the holding-period return analysis
+                self.latestpricedata = (full_dates[-1], full_prices[-1])
+
+                # Check if a) the investment has a balance today, and b) if there is a price for today (which has
+                # not been extrapolated forward).
+                # Depending on this, execute interactive mode or not.
+                date_today_dt = dateoperations.get_date_today(self.dateformat, datetime_obj=True)
+                latest_date_transactions = self.analyzer.str2datetime(transactions_dates[-1])
+                latest_date_full = self.analyzer.str2datetime(full_dates[-1])
+                latest_date = max(latest_date_full, latest_date_transactions)
+                if self.has_nonzero_balance_today is True and latest_date < date_today_dt:
+                    if self.__handle_interactive_mode() is False:
+                        return False
+
             elif full_dates is None:  # Transactions-data needed!
-                print(f"No financial data available for {self.symbol}")
-                if self.has_value_today is True:
+                # Check how recent the transactions-data is:
+                transactions_dates = self.transactions[self.config.DICT_KEY_DATES]
+                last_transaction_date_dt = self.analyzer.str2datetime(transactions_dates[-1])
+                date_today_dt = dateoperations.get_date_today(self.dateformat, datetime_obj=True)
+                # We have holdings today, but no price of today.
+                if self.has_nonzero_balance_today is True and last_transaction_date_dt < date_today_dt:
+                    if self.__handle_interactive_mode() is False:
+                        return False
+                if last_transaction_date_dt < date_today_dt:
+                    logging.warning(f"No financial data available for {self.symbol}.")
                     logging.warning("Provide an update-transaction to deliver the most recent price of the asset. "
-                                    "Otherwise, the holding period returns cannot be calculated.")
-                print("Deriving prices from transactions-data.")
+                                    "\nOtherwise, the holding period returns cannot be calculated. Consider using the "
+                                    "interactive mode to provide the data quickly.")
+                else:
+                    logging.info("Deriving prices (purely) from transactions-data, which is available for today.")
+
                 trans_values_interp = self.__get_format_transactions_values()
                 # Crop the values to the desired analysis-range; in this case, we can not merge data with market-prices:
                 _, self.analysis_values = dateoperations.format_datelist(self.datelist,
@@ -541,9 +568,18 @@ class Investment:
 
         # Investment is not a security: Derive value from given transaction-prices
         else:
+            # Check how recent the transactions-data is:
+            transactions_dates = self.transactions[self.config.DICT_KEY_DATES]
+            last_transaction_date_dt = self.analyzer.str2datetime(transactions_dates[-1])
+            date_today_dt = dateoperations.get_date_today(self.dateformat, datetime_obj=True)
+            # We have holdings today, but no price of today.
+            if self.has_nonzero_balance_today is True and last_transaction_date_dt < date_today_dt:
+                if self.__handle_interactive_mode() is False:
+                    return False
             print(f"Investment is not listed as security. Deriving prices from transactions-data. "
                   f"File: {self.filename}")
             trans_values_interp = self.__get_format_transactions_values()
+
             # Crop the values to the desired analysis-range; in this case, we can not merge data with market-prices:
             _, self.analysis_values = dateoperations.format_datelist(self.datelist,
                                                                      trans_values_interp,
@@ -573,6 +609,50 @@ class Investment:
             self.analysis_costs = self.forex_obj.perform_conversion(self.analysis_dates, self.analysis_costs)
 
         self.analysis_data_done = True
+        return True
+
+    def __handle_interactive_mode(self):
+        """Returns True if no interactions have happened. Returns False if the user has provided new data"""
+        if self.interactive_mode is False:
+            return True
+        ret = self.__ask_user_for_update_transaction()
+        if ret is None:
+            return True
+        self.__append_file_with_newest_price(ret)
+        return False  # Changes have been made to the investment-file.
+
+    def __append_file_with_newest_price(self, price):
+        """The user wants to update the file with a new balance.
+        Craft the newest transaction-string, write it to file, and update all data within this instance accordingly.
+        """
+        date_today = dateoperations.get_date_today(self.dateformat)
+        action = self.config.STRING_ACCOUNT_ACTION_UPDATE
+        quantity = "0"
+        price = f"{price:.2f}"
+        cost = "0"
+        payout = "0"
+        balance = self.transactions[self.config.DICT_KEY_BALANCES][-1]
+        balance = f"{balance:.4f}"
+        note = ""
+        strings = [date_today, action, quantity, price, cost, payout, balance, note]
+        # Write the data to file:
+        files.append_transaction_line_to_file(self.filename, strings, self.config.STRING_EOF, self.profit_conf)
+
+    def __ask_user_for_update_transaction(self):
+        """Ask the user to provide the most recent end-of-day price for the asset/investment.
+        Sanitize the input, and return the newest value/price.
+        """
+        user_input = input(f"A manually updated price is needed. Provide the most recent end-of-day price "
+                           f"(in {self.currency}) or press enter to skip: ")
+        if user_input == "":
+            return None
+        if helper.is_valid_float(user_input) is False:
+            print("Received an invalid number. Please re-try.")
+            return self.__ask_user_for_update_transaction()
+        try:
+            return float(user_input)
+        except ValueError:
+            raise RuntimeError("Could not convert the float. Is the float-checking-function not working?")
 
     def get_trans_datelist(self):
         """Return the list of transaction-dates (as strings)"""
@@ -636,6 +716,9 @@ class Investment:
     def get_filename(self):
         """Return the filename of the associated investment-file (as string)"""
         return self.filename.name
+
+    def get_filepath(self):
+        return self.filename
 
     def get_currency(self):
         """Return the currency of the investment (as string)"""

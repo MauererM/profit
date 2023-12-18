@@ -95,3 +95,33 @@ def datetime2str(datetimeobj, fmt):
     :return: datetime object
     """
     return datetimeobj.strftime(fmt)
+
+
+def remove_leading_whitespace(s):
+    """Removes the leading white space of a string. Returns the white space and remainder of the string."""
+    match = re.match(r'(\s*)', s)
+    if match:
+        leading_whitespace = match.group(1)
+        trimmed_string = s[len(leading_whitespace):]
+        return leading_whitespace, trimmed_string
+    return '', s
+
+
+def count_whitespace_length(s, tab_length=4):
+    """Counts the length of the white space given in s as equivalent spaces.
+    :param s: String of white spaces (tabs or spaces).
+    :param tab_length: Integer, how many spaces are one tab?
+    :return: Length of the white spaces in s, but expressed as spaces (i.e., a tab gets converted to spaces)
+    """
+    if len(s) == 0:
+        return 0
+    tab_cnt = 0
+    space_cnt = 0
+    for char in s:
+        if char == '\t':
+            tab_cnt += 1
+        elif char == ' ':
+            space_cnt += 1
+        else:
+            raise RuntimeError("This function can only accept tabs or spaces.")
+    return space_cnt + tab_cnt * tab_length

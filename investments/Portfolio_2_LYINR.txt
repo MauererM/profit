@@ -5,8 +5,8 @@ Currency;	USD
 Symbol;		LYINR.SW
 Exchange;	SWX
 Transactions;
-Date(DD.MM.YYYY);	Action;		Quantity;	Price;	Cost;	Payout;		Balance;	Notes;
-04.01.2016;			Buy;		200;		14.52;	15.37;	0.0;		200;		The first transaction must be a buy with investments!
-02.02.2018;			Sell;		100;		19.67;	14.36;	0.0;		100;
-07.03.2018;			Sell;		100;		18.58;	14.24;	0.0;		0;
+Date(DD.MM.YYYY);   Action;     Quantity;   Price;      Cost;       Payout;     Balance;    Notes;
+04.01.2016;         Buy;        200;        14.52;      15.37;      0.0;        200;        The first transaction must be a buy with investments!
+02.02.2018;         Sell;       100;        19.67;      14.36;      0.0;        100;         
+07.03.2018;         Sell;       100;        18.58;      14.24;      0.0;        0;           
 EOF

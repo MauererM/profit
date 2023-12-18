@@ -122,7 +122,7 @@ class DataproviderMain:
         if res is not None:
             pricedates, stockprices = res  # List of strings and floats
         else:
-            logging.warning(f"Failed to obtain data for stock symbol: {sym_stock}")
+            logging.warning(f"Failed to obtain provider data for stock symbol: {sym_stock}")
             return None
 
         res = self.__post_process_dataprovider_data(pricedates, stockprices, startdate, stopdate)

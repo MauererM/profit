@@ -9,6 +9,8 @@ from . import stringoperations
 from . import files
 from . import account
 from . import investment
+from . import helper
+from . import dateoperations
 
 
 def read_strip_file_lines(fpath):
@@ -33,6 +35,51 @@ def parse_transaction_amount(line, delimiter, error_msg, error_line_nr, filepath
     except:
         raise RuntimeError(f"{error_msg}.File: {filepath}. Transaction-Line-Nr: {error_line_nr:d}")
     return val, remainder
+
+
+def clean_asset_whitespaces(filepath, transactions_string, eof_string, delimiter, col_widths):
+    """Unifies the white-spaces in the transactions-block of accounts or investments. Removes all tabs, inserts spaces.
+    This writes an updated file to disk.
+    Run this function _after_ the parsing is done, as parsing ensures the file is correctly formatted.
+    :param filepath: Path-object of the file to be cleaned
+    :param transactions_string: String indicating the start of the transactions-block in the file
+    :param eof_string: End-of-file string, e.g., "EOF"
+    :param delimiter: String of the delimiter of the file, e.g., ";"
+    :param col_widths: List of column-widths of the transactions-blocks
+    """
+    try:
+        lines = files.get_file_lines(filepath)  # Do not strip white spaces - we preserve them in the header
+    except:
+        raise RuntimeError(f"Could not read the file lines for whitespace-stripping. File: {filepath}")
+    # Find the "Transactions-String" (don't forget about the delimiter and potential white spaces also still here):
+    idx_transactions = next((i for i, line in enumerate(lines) if
+                             line[0:len(transactions_string)] == transactions_string), None)
+    if idx_transactions is None:
+        raise RuntimeError(f"Could not find the transactions-string. File seems wrongly formatted? "
+                           f"File: {filepath}")
+    # We preserve the header as-is, strip only the white spaces in the transactions-block
+    lines_formatted = lines[0:idx_transactions + 1]
+    for line_idx, line in enumerate(lines[idx_transactions + 1:]):
+        # When EOF reached, we are done
+        if line[0:len(eof_string)] == eof_string:
+            lines_formatted.append(line)
+            break
+        line_cleaned = ""
+        for col_idx in range(len(col_widths)):
+            col_str, line = stringoperations.read_crop_string_delimited(line, delimiter)
+            if col_idx < len(col_widths) - 1:  # Don't strip the white spaces out of the notes.
+                col_str = stringoperations.strip_whitespaces(col_str)
+                col_str = f"{col_str}{delimiter}"
+            else:
+                col_str = col_str.lstrip()  # But strip the leading white spaces from the notes
+                if line_idx == 0:  # Add the delimiter to the notes in the header-line of the transactions only
+                    col_str = f"{col_str}{delimiter}"
+            col_str = col_str.ljust(col_widths[col_idx])
+            line_cleaned = f"{line_cleaned}{col_str}"
+        lines_formatted.append(line_cleaned)
+    else:  # EOF not reached/found in above's for-loop
+        raise RuntimeError(f"Did not find the eof-string when cleaning white spaces in file {filepath}")
+    files.write_file_lines(filepath, lines_formatted, overwrite=True)  # Write back to disk
 
 
 class ParsingConfig:
@@ -64,7 +111,7 @@ class ParsingConfig:
 
     # Strings for asset transactions-headers:
     # These are used for accounts and investments:
-    # This dateformat should be the same as the one specified in config.py # Todo un-hardcode this
+    # This dateformat should be the same as the one specified in config.py # Todo un-hardcode this.
     STRING_DATE = "Date(DD.MM.YYYY)"
     STRING_ACTION = "Action"
     STRING_AMOUNT = "Amount"
@@ -96,6 +143,13 @@ class ParsingConfig:
     STRING_EXCHANGE = "Exchange"
     STRING_TRANSACTIONS = "Transactions"
 
+    # Column widths for accounting and investment files (their transactions-section)
+    # (measured in spaces). The notes-column width is set to 1 (prevents unnecessary padding).
+    # Use multiples of 4 to tab-align it a bit better, in case a user wants to use tabs.
+    COLUMN_WIDTHS_ACCOUNTS = [20, 12, 12, 12, 1]  # date, action, amount, balance, notes
+    COLUMN_WIDTHS_INVESTMENTS = [20, 12, 12, 12, 12, 12, 12, 1]  # date, action, quantity, price, cost, payout,
+    # balance, notes
+
 
 class AccountFile:
     """Creates the structure/template for an account-file.
@@ -121,10 +175,14 @@ class AccountFile:
                              self.parsing_conf.DICT_KEY_NOTES: None}
         self.filepath = filepath
         self.analyzer = analyzer
-        # Get the lines, strip all white spaces:
         self.lines = read_strip_file_lines(self.filepath)
 
-    def parse_account_file(self):
+    def clean_account_whitespaces(self):
+        clean_asset_whitespaces(self.filepath, self.parsing_conf.STRING_TRANSACTIONS,
+                                self.parsing_conf.STRING_EOF, self.profit_conf.DELIMITER,
+                                self.parsing_conf.COLUMN_WIDTHS_ACCOUNTS)
+
+    def parse_account_file(self, skip_interactive_mode=False):
         """Parses an account-file.
         Calls the constructor of the account-class at the end, and returns the account-instance.
         Any relevant information in the file may not contain whitespaces! They are all eliminated while parsing.
@@ -148,7 +206,61 @@ class AccountFile:
         # Parse the transactions:
         self.__parse_transactions_table(self.lines[LAST_HEADER_LINE:])
 
-        # Create the account-instance, and return it
+        if self.profit_conf.INTERACTIVE_MODE is False or skip_interactive_mode is True:
+            return self.__create_account_instance()
+        # Else: Interactive mode: Display what the current account is.
+        print(f"\nAccount: {self.filepath.name} ({self.account_dict[self.parsing_conf.STRING_ID]}, "
+              f"{self.account_dict[self.parsing_conf.STRING_CURRENCY]})")
+        ret = self.__ask_user_for_updated_balance()
+        if ret is None:  # No balance-update needed
+            return self.__create_account_instance()
+        self.__append_file_with_newest_balance(ret)  # Update the file and local data
+        return self.__create_account_instance()
+
+    def __append_file_with_newest_balance(self, balance):
+        """The user wants to update the file with a new balance.
+        Craft the newest transaction-string, write it to file, and update all data within this instance accordingly.
+        """
+        date_today = dateoperations.get_date_today(self.profit_conf.FORMAT_DATE)
+        action = self.parsing_conf.STRING_ACCOUNT_ACTION_UPDATE
+        amount = "0"
+        balance = f"{balance:.2f}"
+        note = ""
+        strings = [date_today, action, amount, balance, note]
+        # Write the data to file:
+        files.append_transaction_line_to_file(self.filepath, strings, self.parsing_conf.STRING_EOF, self.profit_conf)
+        # Reset and then update the local data of this instance:
+        self.account_dict = {self.parsing_conf.STRING_ID: None,
+                             self.parsing_conf.STRING_TYPE: None,
+                             self.parsing_conf.STRING_PURPOSE: None,
+                             self.parsing_conf.STRING_CURRENCY: None}
+        self.transactions = {self.parsing_conf.DICT_KEY_DATES: None,
+                             self.parsing_conf.DICT_KEY_ACTIONS: None,
+                             self.parsing_conf.DICT_KEY_AMOUNTS: None,
+                             self.parsing_conf.DICT_KEY_BALANCES: None,
+                             self.parsing_conf.DICT_KEY_NOTES: None}
+        self.lines = read_strip_file_lines(self.filepath)  # Re-read the new file
+        self.parse_account_file(skip_interactive_mode=True)  # Re-parse the file, and don't ask again for an update
+
+    def __ask_user_for_updated_balance(self):
+        """Show the user the current balance. They can provide a new value.
+        Sanitize the input, and return the value if given."""
+        user_input = input(f"The most recent balance ({self.transactions[self.parsing_conf.DICT_KEY_DATES][-1]}) is "
+                           f"{self.account_dict[self.parsing_conf.STRING_CURRENCY]} "
+                           f"{self.transactions[self.parsing_conf.DICT_KEY_BALANCES][-1]:.2f}. "
+                           f"Provide an updated balance or press enter to skip: ")
+        if user_input == "":
+            return None
+        if helper.is_valid_float(user_input) is False:
+            print("Received an invalid number. Please re-try.")
+            return self.__ask_user_for_updated_balance()
+        try:
+            return float(user_input)
+        except ValueError:
+            raise RuntimeError("Could not convert the float. Is the float-checking-function not working?")
+
+    def __create_account_instance(self):
+        """Create and return the account-instance from the parsed data"""
         acnt = account.Account(self.account_dict, self.filepath, self.transactions, self.analyzer, self.parsing_conf,
                                self.profit_conf)
         return acnt
@@ -304,6 +416,11 @@ class InvestmentFile:
         self.storage = storage
         # Get the lines, strip all white spaces:
         self.lines = read_strip_file_lines(self.filepath)
+
+    def clean_investment_whitespaces(self):
+        clean_asset_whitespaces(self.filepath, self.parsing_conf.STRING_TRANSACTIONS,
+                                self.parsing_conf.STRING_EOF, self.profit_conf.DELIMITER,
+                                self.parsing_conf.COLUMN_WIDTHS_INVESTMENTS)
 
     def parse_investment_file(self):
         """Parses an investment-file.

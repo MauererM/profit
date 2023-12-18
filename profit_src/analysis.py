@@ -408,7 +408,7 @@ def calc_hpr_full_block(dateformat, filename, asset_data, latest_date_price, val
             else:
                 logging.warning(f"Cannot calculate holding period return of {filename} "
                                 f"(with nonzero balance as of today) due to unavailable price of today. "
-                                f"Update the assets marketdata storage file or transactions-data with "
+                                f"\nUpdate the assets marketdata storage file or transactions-data with "
                                 f"values from today.")
                 return None
 
