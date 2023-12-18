@@ -78,7 +78,7 @@ class DataproviderYahoo(DataProvider):
         param['includeAdjustedClose'] = 'true'
         param['crumb'] = self.crumb
         params = urllib.parse.urlencode(param)
-        url = 'http://query1.finance.yahoo.com/v7/finance/download/{}?{}'.format(curr_str, params)
+        url = f"http://query1.finance.yahoo.com/v7/finance/download/{curr_str}?{params}"
         req = urllib.request.Request(url, headers=self.useragent)
         try:
             # There is no need to enter the cookie here, as it is automatically handled by opener
@@ -132,7 +132,7 @@ class DataproviderYahoo(DataProvider):
             'includeAdjustedClose'] = 'true'
         param['crumb'] = self.crumb
         params = urllib.parse.urlencode(param)
-        url = 'http://query1.finance.yahoo.com/v7/finance/download/{}?{}'.format(symbol, params)
+        url = f"http://query1.finance.yahoo.com/v7/finance/download/{symbol}?{params}"
         req = urllib.request.Request(url, headers=self.useragent)
 
         try:
