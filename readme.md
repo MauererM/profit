@@ -2,13 +2,19 @@
 ##### Python-Based Return On Investment and Financial Investigation Tool
 The core idea of PROFIT is to aggregate (personal) financial data from different sources (e.g., different banks, accounts, portfolios) in order to provide an overview of one's holistic financial situation. 
 
-There are two core asset categories that can be tracked and analyzed by PROFIT: (Bank) accounts, and investments (like stocks). Assets can be grouped and plotted as such.
+There are two core asset categories that can be tracked and analyzed by PROFIT: (Bank) accounts, and investments (like stocks). 
+Assets can be grouped via user-configurable settings, and plotted accordingly (e.g., groups for savings, retirement etc.).
 
 All data is managed locally with human-readable CSV files.
 
+### Try it out:
+1. Some example data is provided already: Simply run ```python3 profit_main.py``` in the top-level directory and look at the results in the terminal and *plots* folder. Some packages, most notably *matplotlib* or *pandas*, might require installation first.
+2. You can also run it with these flags:
+  ```--days <N>```, where ```<N>``` is the number of days into the past that the analysis should be performed for. 
+  ```--interactive```, where PROFIT will prompt you to update missing or new data on-the-fly via the terminal.
+
 ### Features
 * Data aggregation and plotting: Accounts, investments, cash etc.
-* Personal financial data analysis, tracking and plotting
     - Asset values and returns
     - Payouts and fees
     - Consideration of different asset purposes/groups (e.g., retirement, liquidity etc.)
@@ -22,13 +28,10 @@ All data is stored and manipulated locally, using simple text files that are hum
 Two asset classes are considered: Accounts simply hold balances, whereas investments (e.g., stocks or funds) are analyzed in more detail with respect to valuation and returns. Market prices of traded securities are obtained automatically, if possible. The data can also be provided manually. The assets can be of any currency. Foreign exchange rates are also obtained automatically.
 
 ### Screenshots:
-Below are some of the outputs of the tool. Different PDF plots are created. Assets can be grouped for more detailed insights.
 ![screenshot all assets stackedplot](https://github.com/MauererM/profit/raw/master/doc/screenshots/screen_all_assets.png)
 ![screenshot all assets stackedplot](https://github.com/MauererM/profit/raw/master/doc/screenshots/screen_indices.png)
-![screenshot all assets stackedplot](https://github.com/MauererM/profit/raw/master/doc/screenshots/screen_returns.png)
+![screenshot all assets stackedplot](https://github.com/MauererM/profit/raw/master/doc/screenshots/screen_returns_abs.png)
+![screenshot all assets stackedplot](https://github.com/MauererM/profit/raw/master/doc/screenshots/screen_values.png)
 ![screenshot all assets stackedplot](https://github.com/MauererM/profit/raw/master/doc/screenshots/screen_values_groups.png)
-![screenshot all assets stackedplot](https://github.com/MauererM/profit/raw/master/doc/figures/Account_Example_Labelled.png)
 
-### Try it out::
-1. Run *profit_main.py* (with a Python 3 interpreter) and look at the results in the *plots* folder (Some exemplary assets are provided). Some packages might have to be installed.
 
