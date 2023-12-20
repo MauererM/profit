@@ -118,7 +118,7 @@ def main(config):
     storage = MarketDataMain(storage_path, config.FORMAT_DATE, analyzer)
 
     # Initialize the file parser config:
-    parsing_config = parsing.ParsingConfig()
+    parsing_config = parsing.ParsingConfig(config)
 
     # Sanity checks:
     if len(config.ASSET_GROUPNAMES) != len(config.ASSET_GROUPS):

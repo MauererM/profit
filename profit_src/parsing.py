@@ -111,8 +111,7 @@ class ParsingConfig:
 
     # Strings for asset transactions-headers:
     # These are used for accounts and investments:
-    # This dateformat should be the same as the one specified in config.py # Todo un-hardcode this.
-    STRING_DATE = "Date(DD.MM.YYYY)"
+    STRING_DATE = None # This one will be set up in the constructor, as it is format-specific.
     STRING_ACTION = "Action"
     STRING_AMOUNT = "Amount"
     STRING_BALANCE = "Balance"
@@ -149,6 +148,20 @@ class ParsingConfig:
     COLUMN_WIDTHS_ACCOUNTS = [20, 12, 12, 12, 1]  # date, action, amount, balance, notes
     COLUMN_WIDTHS_INVESTMENTS = [20, 12, 12, 12, 12, 12, 12, 1]  # date, action, quantity, price, cost, payout,
     # balance, notes
+
+    def __init__(self, profit_config):
+        """Constructor, to set up some profit-config-specific topics"""
+
+        # Convert the datetime-format-string from PROFIT to the appropriate name for the "Date" Column in the
+        # CSV files:
+        date_format = profit_config.FORMAT_DATE
+        format_mappings = {'%d': 'DD', '%m': 'MM', '%Y': 'YYYY'}
+        for key, value in format_mappings.items():
+            if key not in date_format:
+                raise RuntimeError(f"Specifier '{key}' not found in the date format string of config.py.")
+            date_format = date_format.replace(key, value)
+        self.STRING_DATE = f"Date({date_format})" # (this will take precedent over the None-defined class attribute)
+
 
 
 class AccountFile:

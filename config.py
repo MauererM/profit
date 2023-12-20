@@ -95,7 +95,8 @@ class ProfitConfig:
     # Delimiter used in all text- and csv-files throughout PROFIT
     DELIMITER = ";"
 
-    # Date-format used throughout PROFIT
+    # Date-format used throughout PROFIT. Make sure to retain the formatting (e.g., %d., %m., %Y) and only change the
+    # order of these substrings if desired (e.g., in the US, the format "%m.%d.%Y" might be more common).
     FORMAT_DATE = "%d.%m.%Y"
 
     # The length of tabs as measured in spaces. In interactive mode, PROFIT tries to keep the formatting of the
