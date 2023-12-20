@@ -8,10 +8,12 @@ Assets can be grouped via user-configurable settings, and plotted accordingly (e
 All data is managed locally with human-readable CSV files.
 
 ### Try it out:
-1. Some example data is provided already: Simply run ```python3 profit_main.py``` in the top-level directory and look at the results in the terminal and *plots* folder. Some packages, most notably *matplotlib* or *pandas*, might require installation first.
+1. Some example data is provided already: Simply run ```python3 profit_main.py``` in the top-level directory and look at the results in the terminal and *plots* folder.   
+Some packages, most notably *matplotlib* or *pandas*, might require installation first.
 2. You can also run it with these flags:
-  ```--days <N>```, where ```<N>``` is the number of days into the past that the analysis should be performed for. 
-  ```--interactive```, where PROFIT will prompt you to update missing or new data on-the-fly via the terminal.
+
+   ```--days <N>```, where ```<N>``` is the number of days into the past that the analysis should be performed for.   
+   ```--interactive```, where PROFIT will prompt you to update missing or new data on-the-fly via the terminal.
 
 ### Features
 * Data aggregation and plotting: Accounts, investments, cash etc.
